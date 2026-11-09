@@ -5,7 +5,7 @@
 - **Builder:** Sabrina Tang (`@sabtyt`)
 - **Pod:** 13
 - **Product Page & Living PRD:** https://building-with-ai-f26.github.io/tyt223-dailytask/
-- **App:** runs locally through Week 4; a cloud URL comes in Build 5.
+- **Try it:** https://building-with-ai-f26.github.io/tyt223-dailytask/app/
 - **Course:** Building with AI, NYU Stern, Fall 2026
 
 ![DailyQuest prototype showing the Week tab with weekly goals](./docs/prototype.png)
@@ -35,16 +35,18 @@ People juggling busy lives end up managing them across too many apps. MBA studen
 | `coffee chat at 3pm` | Adds a start time and places it on the Schedule |
 | `pset tomorrow hard` | Schedules it for tomorrow as a Hard quest |
 
-## Run it locally
+## Try it
 
-No install, server, or API keys are needed.
+The easiest way is the [live app](https://building-with-ai-f26.github.io/tyt223-dailytask/app/), which works on a phone or laptop with no sign-up.
+
+To run it on your own computer, no install, server, or API keys are needed.
 
 ```bash
 git clone https://github.com/building-with-ai-f26/tyt223-dailytask.git
 cd tyt223-dailytask
 ```
 
-Double-click [`app/index.html`](./app/index.html) to open it in your browser, or run `start app/index.html` (Windows) or `open app/index.html` (Mac) from the repo folder.
+Double-click [`docs/app/index.html`](./docs/app/index.html) to open it in your browser, or run `start docs/app/index.html` (Windows) or `open docs/app/index.html` (Mac) from the repo folder.
 
 The app opens with sample quests, rewards, and calendar events. On the **Profile** tab, **Simulate next day** demos rollover and streaks, **Reload sample data** resets the demo, and **Start empty** clears everything so you can use it for real.
 
@@ -63,7 +65,7 @@ One HTML file with plain CSS and JavaScript and no packages. Your data stays in 
 
 | File / folder | Purpose |
 | --- | --- |
-| [`app/index.html`](./app/index.html) | The DailyQuest prototype |
+| [`docs/app/index.html`](./docs/app/index.html) | The DailyQuest prototype, published by GitHub Pages |
 | [`docs/index.html`](./docs/index.html) | Public product page, living PRD, and weekly build log |
 | [`AGENTS.md`](./AGENTS.md) | Run commands, project context, and rules for coding agents |
 | [`Intent.md`](./Intent.md), [`Plan.md`](./Plan.md), [`journal/`](./journal/) | Optional drafting notes |

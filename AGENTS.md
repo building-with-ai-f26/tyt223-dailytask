@@ -9,7 +9,7 @@
 
 ## 2. Commands
 - **Install dependencies:** None. The prototype is one static page with no packages.
-- **Run locally:** Double-click `app/index.html`, or run `start app/index.html` (Windows) / `open app/index.html` (Mac). Data is stored in the browser's `localStorage`.
+- **Run locally:** Double-click `docs/app/index.html`, or run `start docs/app/index.html` (Windows) / `open docs/app/index.html` (Mac). GitHub Pages publishes it at `/app/` on the Product Page site. Data is stored in the browser's `localStorage`.
 - **Run deterministic tests:** `[e.g., pytest / npm test]`
 - **Run model evals:** `[e.g., python tests/eval.py]`
 
