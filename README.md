@@ -1,51 +1,71 @@
-# [Project Name]
+# DailyQuest
 
-> **One-line pitch:** [Who is this for, and what job does it do for them?]
+> A gamified task planner that helps busy MBA students plan their week once, then open the app each day to see exactly what to do and earn rewards for finishing it.
 
 - **Builder:** Sabrina Tang (`@sabtyt`)
 - **Pod:** 13
-- **Product Page & Living PRD:** [Add your GitHub Pages URL]
-- **App:** runs locally through Week 4; add a cloud URL in Build 5.
+- **Product Page & Living PRD:** https://building-with-ai-f26.github.io/tyt223-dailytask/
+- **App:** runs locally through Week 4; a cloud URL comes in Build 5.
+- **Course:** Building with AI, NYU Stern, Fall 2026
 
-## Start here: Build 1
+![DailyQuest prototype showing the Week tab with weekly goals](./docs/prototype.png)
 
-**Due Monday, November 9 at noon, New York time.** No class November 3; keep building that week.
+## Why it exists
 
-1. Join the [class organization](https://github.com/building-with-ai-f26), then use this template to create a **public** repo named `<netid>-<project-slug>`. Ask Christian or Hew if the organization is missing from the owner list.
-2. Set up Git and one coding agent during the week of October 27. Follow the [Icerynk setup guide](https://www.icerynk.com/c/fa26-tech-gb-2160-dm2-f2/content/pre-class-setup-github-openrouter-your-coding-agent).
-3. Publish [`docs/index.html`](./docs/index.html): **Settings → Pages → Deploy from a branch → main → /docs → Save**. When deployment finishes, open `https://building-with-ai-f26.github.io/<your-repo-name>/`.
-4. Fill in PRD v1: a reachable user, their painful before/after workflow, one core workflow, and three non-goals.
-5. Build a rough local prototype. Add a screenshot or GIF and an honest Build 1 log to the Product Page, including progress, learning, problems, costs, and hours.
-6. Push meaningful commits on **at least two separate days each week outside class**, including the November 3 break.
-7. Submit your **Product Page URL and repository URL in Icerynk**. Come ready to demo the prototype in two minutes on November 10.
+People juggling busy lives end up managing them across too many apps. MBA students track classes in Brightspace, recruiting in email and LinkedIn, events in Slack, and everything else in their notes, then piece it all together again every day. DailyQuest puts it in one place and makes staying on top of it feel like progress instead of pressure.
 
-Create your PostHog account in Week 1. Install it on the Product Page and local app in **Build 2**, then verify events. The Product Page is public from Build 1; the app can stay local through Week 4.
+## What it does
+
+- **Type to add:** open the page and start typing. DailyQuest works out the date, time, category, difficulty, and repeats.
+- **Quick templates:** tap a chip like "Send thank-you note to ___", fill in the blank, and press Enter. You can save your own.
+- **Today's Quests:** only what's due today, with overdue quests on top in red. Tap a circle to finish one.
+- **Rewards:** earn XP, levels, badges, and streaks, then spend coins on real-life rewards you choose.
+- **Week view:** weekly goals, repeating quests, what's coming up, and a summary of the week.
+- **Schedule view:** a timeline of today's timed quests and calendar events, with untimed quests below.
+- **Calendar import:** load a `.ics` file exported from Google Calendar. Events show as read-only and earn no XP.
+
+### Things you can type
+
+| You type | What happens |
+| --- | --- |
+| `exercise 3 times a week` | Adds a weekly goal with a 0/3 tracker on the Week tab |
+| `meditate every day` | Repeats on Today every day |
+| `yoga every mon and wed at 7am` | Repeats on those days at that time |
+| `thank-you note by friday` | Sets a due date and files it under Recruiting |
+| `coffee chat at 3pm` | Adds a start time and places it on the Schedule |
+| `pset tomorrow hard` | Schedules it for tomorrow as a Hard quest |
+
+## Run it locally
+
+No install, server, or API keys are needed.
+
+```bash
+git clone https://github.com/building-with-ai-f26/tyt223-dailytask.git
+cd tyt223-dailytask
+```
+
+Double-click [`app/index.html`](./app/index.html) to open it in your browser, or run `start app/index.html` (Windows) or `open app/index.html` (Mac) from the repo folder.
+
+The app opens with sample quests, rewards, and calendar events. On the **Profile** tab, **Simulate next day** demos rollover and streaks, **Reload sample data** resets the demo, and **Start empty** clears everything so you can use it for real.
+
+## How it's built
+
+One HTML file with plain CSS and JavaScript and no packages. Your data stays in your browser's local storage, and `.ics` files are read in the browser without being uploaded. The only network request is for Google Fonts, and the app uses system fonts if those can't load. Typed quests are understood by fixed rules, not AI.
+
+## Current limits
+
+- Data stays in one browser on one computer.
+- Unusual phrasing becomes a plain task for today.
+- No live Google Calendar sync yet; that's planned for a later build.
+- `.ics` repeats like "2nd Tuesday of the month" only show their first date.
 
 ## Repository map
 
 | File / folder | Purpose |
 | --- | --- |
-| [`docs/index.html`](./docs/index.html) | Required public pitch, living PRD, and weekly build log. Update with actual work and evidence. |
-| [`Intent.md`](./Intent.md), [`Plan.md`](./Plan.md), [`journal/`](./journal/) | Optional drafting aids. No duplicate submission is required. |
-| [`AGENTS.md`](./AGENTS.md) | Local run commands, project context, and agent rules. Build 2 onward. |
-| [`tests/`](./tests/) | Verification guidance. Build 4 offers Track A domain evals **or** Track B user replays. |
-| [`SPONSOR_MEMO.md`](./SPONSOR_MEMO.md) | One-page recommendation backed by actual usage, full costs, and risks. Due December 14 at noon. |
-
-[Icerynk](https://www.icerynk.com/c/fa26-tech-gb-2160-dm2-f2/content) holds the assignment instructions and submissions.
-
-## Local setup
-
-Clone **your own repository** and ask your coding agent to document the exact install and run commands here and in `AGENTS.md`.
-
-```bash
-git clone https://github.com/building-with-ai-f26/<your-repo-name>.git
-cd <your-repo-name>
-```
-
-### Run the DailyQuest prototype
-
-No install, server, or API keys are needed. Double-click [`app/index.html`](./app/index.html) to open it in your browser, or run `start app/index.html` (Windows) or `open app/index.html` (Mac) from the repo folder.
-
-Your data saves in that browser's local storage on this computer. To demo rollover and streaks, use **Simulate next day** on the Profile tab, where **Reload sample data** and **Start empty** also reset the demo.
-
-If your app needs API keys, use a local environment file such as `.env`. Keep private keys out of source code, browser code, screenshots, and commits. The template ignores `.env`; `.env.example` contains placeholders only.
+| [`app/index.html`](./app/index.html) | The DailyQuest prototype |
+| [`docs/index.html`](./docs/index.html) | Public product page, living PRD, and weekly build log |
+| [`AGENTS.md`](./AGENTS.md) | Run commands, project context, and rules for coding agents |
+| [`Intent.md`](./Intent.md), [`Plan.md`](./Plan.md), [`journal/`](./journal/) | Optional drafting notes |
+| [`tests/`](./tests/) | Verification guidance for Build 4 |
+| [`SPONSOR_MEMO.md`](./SPONSOR_MEMO.md) | One-page recommendation, due December 14 |
