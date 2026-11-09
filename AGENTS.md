@@ -8,8 +8,8 @@
 - **Tech stack:** [e.g., Python 3.12 / FastAPI / Next.js / SQLite / OpenRouter API]
 
 ## 2. Commands
-- **Install dependencies:** `[e.g., npm install / uv sync]`
-- **Run locally:** `[e.g., npm run dev]`
+- **Install dependencies:** None. The prototype is one static page with no packages.
+- **Run locally:** Double-click `app/index.html`, or run `start app/index.html` (Windows) / `open app/index.html` (Mac). Data is stored in the browser's `localStorage`.
 - **Run deterministic tests:** `[e.g., pytest / npm test]`
 - **Run model evals:** `[e.g., python tests/eval.py]`
 

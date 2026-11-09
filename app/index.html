@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>DailyQuest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@600;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f4e3c1; --bg-dot: #ead4a6; --card: #fffaf0; --ink: #3b2a1e; --muted: #75604a; --border: #e6cfa3;
+      --accent: #6d3bd8; --accent-2: #a85be8; --accent-soft: #eee3ff; --danger: #d0342c; --danger-soft: #ffe5e1; --gold: #f5b82e;
+      --display: "Baloo 2", "Trebuchet MS", "Segoe UI", sans-serif;
+      --body: "Nunito", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    [data-theme="ocean"]  { --bg: #cfe9f1; --bg-dot: #b6dbe6; --accent: #0b6f94; --accent-2: #21a6b8; --accent-soft: #d9f1f6; --border: #b9dde6; }
+    [data-theme="sunset"] { --bg: #fbdcc4; --bg-dot: #f5c8a6; --accent: #bd4a17; --accent-2: #ee8a34; --accent-soft: #ffe8d6; --border: #f0c8a6; }
+    [data-theme="forest"] { --bg: #d6e8c8; --bg-dot: #c2dbb1; --accent: #2b7236; --accent-2: #5da53f; --accent-soft: #e0f2dc; --border: #c3dcb4; }
+    .cat-class      { --c: #2373d9; --c-soft: #dcebff; }
+    .cat-recruiting { --c: #7a45d6; --c-soft: #ece1ff; }
+    .cat-events     { --c: #d93a72; --c-soft: #ffe0ea; }
+    .cat-personal   { --c: #23874a; --c-soft: #dcf5e3; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0; color: var(--ink); font-family: var(--body); font-weight: 600; line-height: 1.4;
+      background-color: var(--bg);
+      background-image: radial-gradient(var(--bg-dot) 1.5px, transparent 1.5px); background-size: 18px 18px;
+      padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding-inline: 16px; }
+    h2 { font-family: var(--display); font-weight: 800; font-size: 22px; margin: 0; line-height: 1.2; }
+    h3 { font-family: var(--display); font-weight: 800; font-size: 17px; margin: 0 0 8px; }
+    .muted { color: var(--muted); font-size: 13px; }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    input, select { background: #fff; border: 2px solid var(--border); border-radius: 12px; padding: 9px 11px; min-width: 0; width: 100%; font-size: 15px; }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
+
+    /* Player header */
+    .player {
+      display: flex; align-items: center; gap: 12px; color: #fff; padding: 14px 16px; border-radius: 0 0 22px 22px;
+      background: linear-gradient(120deg, var(--accent), var(--accent-2)); box-shadow: 0 5px 0 rgba(59, 42, 30, .18);
+      max-width: 720px; margin: 0 auto; padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    }
+    .avatar { flex: none; width: 58px; height: 58px; padding: 6px; border-radius: 18px; background: rgba(255,255,255,.22); }
+    .avatar svg { display: block; width: 100%; height: 100%; animation: bob 1.2s steps(2) infinite; }
+    .player-main { flex: 1; min-width: 0; }
+    .player-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .level { font-family: var(--display); font-weight: 800; font-size: 20px; line-height: 1.1; }
+    .counters { display: flex; gap: 10px; font-weight: 800; font-size: 15px; white-space: nowrap; }
+    .xpbar { height: 12px; border-radius: 99px; background: rgba(0,0,0,.25); overflow: hidden; margin-top: 6px; }
+    .xpbar div { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #ffd65a, var(--gold)); transition: width .55s cubic-bezier(.2,.9,.3,1); }
+    .xptext { font-size: 12px; margin-top: 3px; opacity: .95; }
+
+    /* Quick add */
+    .quick { margin-top: 16px; }
+    .addbar { display: flex; gap: 8px; }
+    #captureInput { font-size: 18px; padding: 13px 16px; border-radius: 16px; border-color: var(--accent); font-weight: 700; }
+    #captureInput:focus { box-shadow: 0 0 0 4px var(--accent-soft); }
+    .addbtn { flex: none; width: 54px; border: 0; border-radius: 16px; background: var(--accent); color: #fff; font-size: 26px; font-weight: 800; box-shadow: 0 3px 0 rgba(59,42,30,.25); }
+    .preview, .confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 8px; font-size: 13px; overflow-wrap: anywhere; }
+    .chips { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip { flex: none; border: 0; border-radius: 99px; padding: 6px 12px; font-size: 13px; font-weight: 800; background: var(--c-soft, var(--card)); color: var(--c, var(--ink)); }
+    .chip.new { background: var(--card); color: var(--accent); border: 2px dashed var(--accent); }
+    .pill { display: inline-flex; align-items: center; gap: 3px; border-radius: 99px; padding: 2px 9px; font-size: 12px; font-weight: 800; background: var(--c-soft, var(--accent-soft)); color: var(--c, var(--ink)); }
+    .pill.red { background: var(--danger); color: #fff; }
+    .tpl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; background: var(--card); border: 2px solid var(--c); border-radius: 14px; padding: 10px 12px; margin-top: 10px; font-weight: 800; }
+    .tpl input { flex: 1 1 110px; width: auto; background: #fff3b0; border-color: var(--gold); padding: 5px 9px; font-weight: 800; }
+    .iconbtn { background: none; border: 0; font-size: 16px; padding: 2px 6px; color: var(--muted); }
+    .linkbtn { background: none; border: 0; padding: 2px 4px; color: var(--accent); font-weight: 800; font-size: 13px; text-decoration: underline; }
+
+    /* Board */
+    .board-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin: 16px 0 8px; }
+    .segment { display: flex; background: var(--card); border-radius: 12px; padding: 3px; border: 2px solid var(--border); }
+    .segment button { border: 0; background: none; border-radius: 9px; padding: 4px 12px; font-size: 13px; font-weight: 800; }
+    .segment button.on { background: var(--accent); color: #fff; }
+    .panel { background: var(--card); border: 2px solid var(--border); border-radius: 18px; padding: 14px; margin-top: 14px; box-shadow: 0 3px 0 var(--border); }
+    .qcard {
+      display: flex; align-items: center; gap: 10px; background: var(--card); border: 2px solid var(--border); border-left: 7px solid var(--c);
+      border-radius: 16px; padding: 10px 12px; margin-bottom: 9px; box-shadow: 0 3px 0 var(--border);
+    }
+    .qcard.overdue { border-color: var(--danger); background: var(--danger-soft); box-shadow: 0 3px 0 #f0b3ab; }
+    .qcard.overdue .qname { color: var(--danger); }
+    .qcard.done { opacity: .62; }
+    .qcard.done .qname { text-decoration: line-through; }
+    .qcard.leaving { animation: leave .38s ease-in forwards; pointer-events: none; }
+    @keyframes leave { 30% { transform: scale(1.03); } 100% { transform: translateX(70px) scale(.8); opacity: 0; } }
+    .circle { flex: none; width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--c); background: #fff; color: var(--c); font-weight: 800; font-size: 18px; line-height: 1; padding: 0; }
+    .circle:hover:not(:disabled) { background: var(--c-soft); }
+    .circle:disabled { background: var(--c); color: #fff; cursor: default; }
+    .qbody { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 0; overflow-wrap: anywhere; }
+    .qbody.static { cursor: default; }
+    .qname { display: block; font-size: 16px; font-weight: 800; }
+    .qmeta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; align-items: center; }
+    .stars { color: #d79200; letter-spacing: 1px; font-size: 12px; }
+    .stars .off { color: #d9ccb0; }
+    .reward { flex: none; font-family: var(--display); font-weight: 800; color: var(--accent); font-size: 15px; white-space: nowrap; }
+    .pips { display: inline-flex; gap: 3px; }
+    .pips i { width: 12px; height: 12px; border-radius: 4px; border: 2px solid var(--c); background: #fff; }
+    .pips i.on { background: var(--c); }
+    .empty { text-align: center; padding: 26px 10px; background: var(--card); border: 2px dashed var(--border); border-radius: 16px; }
+    details summary { cursor: pointer; font-weight: 800; color: var(--muted); margin: 8px 0; }
+
+    /* Schedule */
+    .tl-row { display: grid; grid-template-columns: 66px 16px 1fr; gap: 6px; }
+    .tl-time { font-family: var(--display); font-weight: 800; font-size: 13px; text-align: right; padding-top: 13px; }
+    .tl-rail { position: relative; }
+    .tl-rail::before { content: ""; position: absolute; left: 6px; top: 0; bottom: 0; width: 4px; background: var(--border); }
+    .tl-rail::after { content: ""; position: absolute; left: 1px; top: 17px; width: 14px; height: 14px; border-radius: 50%; background: var(--c, var(--muted)); border: 2px solid var(--card); }
+    .event { background: repeating-linear-gradient(135deg, #eef1f6, #eef1f6 8px, #e2e7ef 8px, #e2e7ef 16px); border: 2px dashed #8a97ab; border-radius: 14px; padding: 9px 12px; margin-bottom: 9px; color: #2f3a4b; overflow-wrap: anywhere; }
+    .event .qname { font-size: 15px; }
+    .now { display: flex; align-items: center; gap: 6px; color: var(--danger); font-weight: 800; font-size: 12px; margin: 2px 0 8px 22px; }
+    .now::after { content: ""; flex: 1; height: 2px; background: var(--danger); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .btn { border: 0; border-radius: 12px; padding: 9px 14px; background: var(--accent); color: #fff; font-weight: 800; font-size: 14px; box-shadow: 0 3px 0 rgba(59,42,30,.25); }
+    .btn.soft { background: var(--card); color: var(--ink); border: 2px solid var(--border); box-shadow: none; }
+    .btn.danger { background: var(--danger); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+
+    /* Shop */
+    .shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .item { position: relative; background: var(--card); border: 2px solid var(--gold); border-radius: 18px; padding: 14px 10px 12px; text-align: center; box-shadow: 0 4px 0 #e0ab3a; overflow-wrap: anywhere; }
+    .item .art { font-size: 40px; line-height: 1.1; }
+    .item .title { font-weight: 800; min-height: 40px; margin: 4px 0; }
+    .item .price { font-family: var(--display); font-weight: 800; font-size: 17px; margin-bottom: 8px; }
+    .item .del { position: absolute; top: 4px; right: 4px; }
+    .item.locked { filter: grayscale(1); opacity: .62; border-color: var(--border); box-shadow: 0 4px 0 var(--border); }
+    .item.claimed { animation: pop .45s ease; }
+    @keyframes pop { 40% { transform: scale(1.12) rotate(-3deg); } 70% { transform: scale(.96) rotate(2deg); } }
+
+    /* Profile */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+    .stat { background: var(--accent-soft); border-radius: 14px; padding: 10px; text-align: center; }
+    .stat b { display: block; font-family: var(--display); font-size: 24px; line-height: 1.1; }
+    .badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+    .badge { text-align: center; font-size: 12px; font-weight: 800; }
+    .badge span { display: block; font-size: 34px; }
+    .badge.locked { filter: grayscale(1); opacity: .45; }
+
+    table { border-collapse: collapse; width: 100%; font-size: 14px; }
+    th, td { text-align: left; padding: 7px 8px; border-top: 1px solid var(--border); vertical-align: top; }
+    tr.today td { background: var(--accent-soft); }
+    .scroll { overflow-x: auto; }
+
+    /* Bottom tabs */
+    .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--card); border-top: 3px solid var(--border); padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .tabs nav { display: flex; max-width: 720px; margin: 0 auto; }
+    .tabs button { flex: 1; border: 0; background: none; padding: 8px 2px 9px; font-size: 12px; font-weight: 800; color: var(--muted); }
+    .tabs button span { display: block; font-size: 22px; line-height: 1.2; }
+    .tabs button.active { color: var(--accent); }
+
+    /* Sheet, popup, effects */
+    .overlay { position: fixed; inset: 0; z-index: 40; background: rgba(40, 25, 15, .55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .sheet { width: 100%; max-width: 440px; max-height: 88vh; overflow-y: auto; background: var(--card); border-radius: 20px; padding: 18px; }
+    .field { display: block; font-size: 12px; font-weight: 800; color: var(--muted); margin-top: 10px; }
+    .field input, .field select { margin-top: 3px; color: var(--ink); }
+    .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .daypick { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+    .daypick label { cursor: pointer; }
+    .daypick input { position: absolute; opacity: 0; width: 0; }
+    .daypick span { display: block; padding: 6px 9px; border-radius: 10px; background: var(--accent-soft); font-size: 13px; font-weight: 800; }
+    .daypick input:checked + span { background: var(--accent); color: #fff; }
+    .daypick input:focus-visible + span { outline: 2px solid var(--ink); }
+    .sheet-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .moment { width: 100%; max-width: 360px; text-align: center; background: var(--card); border: 4px solid var(--gold); border-radius: 26px; padding: 24px 20px; animation: pop .5s ease; }
+    .moment .big { font-size: 66px; line-height: 1.1; }
+    .moment h2 { font-size: 32px; color: var(--accent); }
+    .moment svg { width: 96px; height: 96px; display: block; margin: 0 auto; }
+    #toast { position: fixed; z-index: 50; left: 50%; transform: translateX(-50%); bottom: calc(82px + env(safe-area-inset-bottom, 0px)); max-width: calc(100% - 32px); background: var(--ink); color: #fff; border-radius: 12px; padding: 9px 14px; font-weight: 800; }
+    .floater { position: fixed; z-index: 45; pointer-events: none; font-family: var(--display); font-weight: 800; font-size: 24px; color: var(--accent); text-shadow: 0 2px 0 #fff; animation: floatup 1s ease-out forwards; }
+    @keyframes floatup { to { transform: translateY(-90px); opacity: 0; } }
+    .spark { position: fixed; z-index: 45; width: 8px; height: 8px; pointer-events: none; animation: spark .6s ease-out forwards; }
+    @keyframes spark { to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+    .confetti { position: fixed; z-index: 60; top: -14px; width: 10px; height: 14px; pointer-events: none; animation: fall var(--t) linear var(--d) forwards; }
+    @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+    @keyframes bob { 50% { transform: translateY(-3px); } }
+    @media (prefers-reduced-motion: reduce) {
+      .avatar svg, .moment, .item.claimed { animation: none; }
+      .qcard.leaving { animation-duration: .01s; }
+      .spark, .confetti { display: none; }
+      .xpbar div { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="player" id="player">
+    <div class="avatar" id="avatar"></div>
+    <div class="player-main">
+      <div class="player-top">
+        <div class="level" id="levelLine"></div>
+        <div class="counters"><span id="coinLine"></span><span id="streakLine"></span></div>
+      </div>
+      <div class="xpbar"><div id="barFill" style="width:0"></div></div>
+      <div class="xptext" id="barLine"></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="quick" id="quickAdd">
+      <form class="addbar" id="captureForm">
+        <input id="captureInput" autofocus autocomplete="off" spellcheck="false" maxlength="160"
+               placeholder="Type a quest and press Enter" aria-label="Type a quest and press Enter" />
+        <button class="addbtn" aria-label="Add quest">+</button>
+      </form>
+      <div class="preview" id="preview" hidden></div>
+      <div class="confirm" id="confirmLine" hidden></div>
+      <form class="tpl" id="templateForm" hidden></form>
+      <div class="chips" id="chips"></div>
+    </section>
+    <div id="view"></div>
+  </main>
+
+  <div class="tabs">
+    <nav>
+      <button data-tab="today"><span>📜</span>Today</button>
+      <button data-tab="week"><span>🗓️</span>Week</button>
+      <button data-tab="shop"><span>🪙</span>Shop</button>
+      <button data-tab="profile"><span>🛡️</span>Profile</button>
+    </nav>
+  </div>
+
+  <div class="overlay" id="sheetOverlay" hidden></div>
+  <div class="overlay" id="momentOverlay" hidden></div>
+  <div id="toast" role="status" hidden></div>
+  <input type="file" id="icsFile" accept=".ics,text/calendar" hidden />
+
+  <script>
+    // ---------- Game numbers (change them here) ----------
+    const XP_BY_DIFFICULTY = { Easy: 10, Medium: 25, Hard: 50 };
+    const RECRUITING_BONUS = 10;   // Placeholder: the PRD says "more", with no amount.
+    const STREAK_BONUS = 5;        // Placeholder: paid on the day's first quest, from day 2 of a streak.
+    const WEEKLY_GOAL_BONUS = 25;  // Placeholder: paid when a weekly goal is finished.
+    const XP_PER_LEVEL = 100;      // Placeholder: the PRD doesn't set a level curve.
+    const CATEGORY = {
+      Class: { emoji: "📚", slug: "class" },
+      Recruiting: { emoji: "💼", slug: "recruiting" },
+      Events: { emoji: "🎉", slug: "events" },
+      Personal: { emoji: "🏠", slug: "personal" },
+    };
+    const STARS = { Easy: 1, Medium: 2, Hard: 3 };
+    function starsHtml(difficulty) {
+      const filled = STARS[difficulty];
+      return "★".repeat(filled) + `<span class="off">${"★".repeat(3 - filled)}</span>`;
+    }
+    const BADGES = [
+      { level: 2, emoji: "🌱", name: "Getting Started" },
+      { level: 3, emoji: "🛼", name: "On a Roll" },
+      { level: 4, emoji: "🗡️", name: "Quest Hunter" },
+      { level: 5, emoji: "🐉", name: "Task Tamer" },
+      { level: 6, emoji: "🏅", name: "Reliable Hero" },
+      { level: 8, emoji: "👑", name: "Quest Master" },
+      { level: 10, emoji: "🌟", name: "Legend of Stern" },
+    ];
+    const THEMES = [
+      { id: "classic", name: "Parchment", level: 1 },
+      { id: "ocean", name: "Ocean", level: 2 },
+      { id: "sunset", name: "Sunset", level: 3 },
+      { id: "forest", name: "Forest", level: 5 },
+    ];
+    const BUILT_IN_TEMPLATES = [
+      { text: "Follow up on email with ___", category: "Recruiting", difficulty: "Easy" },
+      { text: "Send thank-you note to ___", category: "Recruiting", difficulty: "Easy" },
+      { text: "Coffee chat with ___", category: "Recruiting", difficulty: "Medium" },
+      { text: "Apply to ___", category: "Recruiting", difficulty: "Hard" },
+      { text: "Finish assignment for ___", category: "Class", difficulty: "Hard" },
+      { text: "Prep for ___ case/class", category: "Class", difficulty: "Medium" },
+      { text: "RSVP to ___", category: "Events", difficulty: "Easy" },
+      { text: "Pay ___ bill", category: "Personal", difficulty: "Easy" },
+      { text: "Gym / workout", category: "Personal", difficulty: "Medium" },
+    ];
+    const STORAGE_KEY = "dailyquest.v2";
+
+    // ---------- Avatar: each letter is one pixel, "." is transparent ----------
+    const PALETTE = { K: "#3a2a4d", Y: "#ffd24a", R: "#e8505b", P: "#ff8fb1", G: "#6fdc8c" };
+    const MASCOT = ["...Y..Y..Y...", "...YYYYYYY...", "...YRYYYRY...", "...KKKKKKK...", "..KGGGGGGGK..", ".KGGGGGGGGGK.", ".KGKGGGGGKGK.", ".KGKGGGGGKGK.", ".KPGGKKKGGPK.", ".KGGGGGGGGGK.", "KGGGGGGGGGGGK", ".KKKKKKKKKKK."];
+    function mascotSvg() {
+      let rects = "";
+      MASCOT.forEach((row, y) => [...row].forEach((c, x) => {
+        if (PALETTE[c]) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${PALETTE[c]}"/>`;
+      }));
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 13 12" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
+    }
+
+    // ---------- Dates, always as local "YYYY-MM-DD" strings ----------
+    function dateStr(d) {
+      const pad = (n) => String(n).padStart(2, "0");
+      return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    }
+    function parseDate(s) {
+      const [y, m, d] = s.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+    function addDays(s, n) {
+      const d = parseDate(s);
+      d.setDate(d.getDate() + n);
+      return dateStr(d);
+    }
+    function weekDays(today) {
+      const mondayOffset = (parseDate(today).getDay() + 6) % 7;
+      return Array.from({ length: 7 }, (_, i) => addDays(today, i - mondayOffset));
+    }
+    function fmtTime(t) {
+      const [h, m] = t.split(":").map(Number);
+      return ((h + 11) % 12 + 1) + ":" + String(m).padStart(2, "0") + (h < 12 ? " AM" : " PM");
+    }
+
+    // ---------- Understanding what the user typed (plain rules, no AI) ----------
+    const DAY_PAT = "mon(?:day)?|tue(?:s|sday)?|wed(?:s|nesday)?|thu(?:r|rs|rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?";
+    const FULL_DAY_PAT = "monday|tuesday|wednesday|thursday|friday|saturday|sunday";
+    const MONTH_PAT = "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
+    const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+    const DAY_INDEX = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+    const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const WORD_NUMS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, once: 1, twice: 2, thrice: 3 };
+
+    function datePat(dayPat, allowSlash) {
+      return "today|tonight|tomorrow|tmrw|tmr|next\\s+week|(?:(?:next|this)\\s+)?(?:" + dayPat + ")|(?:" + MONTH_PAT + ")\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?" + (allowSlash ? "|\\d{1,2}\\/\\d{1,2}" : "");
+    }
+    const NUM_PAT = "\\d+|one|two|three|four|five|six|seven";
+    const PER_WEEK_PAT = "(?:(?:a|per|each|every)\\s+(?:week|wk)|\\/\\s*(?:week|wk)|weekly)";
+    const COUNT_RE = new RegExp("\\b(?:(" + NUM_PAT + ")\\s*(?:x|×|times?|days?)|(once|twice|thrice))\\s*" + PER_WEEK_PAT + "(?!\\w)", "i");
+    const WEEKLY_RE = /\b(?:weekly|every week|each week)\b/i;
+    const EVERY_DAY_RE = /\b(?:every\s*day|each day|daily)\b/i;
+    const WEEKDAYS_RE = /\b(?:every|each)\s+weekdays?\b/i;
+    const EVERY_NAMED_RE = new RegExp("\\b(?:every|each)\\s+((?:" + DAY_PAT + ")(?:\\s*(?:,|and|&)\\s*(?:" + DAY_PAT + "))*)\\b", "i");
+    const DUE_RE = new RegExp("\\b(?:by|due(?:\\s+(?:on|by))?|before)\\s+(" + datePat(DAY_PAT, true) + ")(?!\\w)", "i");
+    const ON_RE = new RegExp("\\bon\\s+(" + datePat(DAY_PAT, true) + ")(?!\\w)", "i");
+    const START_RE = new RegExp("^(" + datePat(FULL_DAY_PAT, false) + ")\\s+", "i");
+    const END_RE = new RegExp("\\s(" + datePat(FULL_DAY_PAT, false) + ")$", "i");
+    const TIME_RE = /(?:\b(?:at|@)\s*|@\s*)(\d{1,2})(?::(\d{2}))?\s*(am|pm)?(?!\w)|\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b|\b(\d{1,2}):(\d{2})\b/i;
+    const CATEGORY_RULES = [
+      ["Recruiting", /\b(recruit\w*|coffee chat|thank[- ]?you|interview\w*|network\w*|resume|cv|cover letter|linkedin|job|application|apply|superday|informational|alum\w*)\b/i],
+      ["Class", /\b(class|homework|hw|p-?set|problem set|exam|midterm|final|quiz|assignment|lecture|reading|study|studying|paper|essay|brightspace|group project|case)\b/i],
+      ["Events", /\b(event|mixer|party|rsvp|gala|trek|concert|dinner|brunch|happy hour|club|conference|meetup|museum)\b/i],
+    ];
+
+    function take(text, re) {
+      const match = text.match(re);
+      if (!match) return null;
+      const rest = (text.slice(0, match.index) + " " + text.slice(match.index + match[0].length)).replace(/\s+/g, " ").trim();
+      return { match, rest };
+    }
+    function resolveTime(m) {
+      const hourText = m[1] || m[4] || m[7];
+      const minute = Number(m[2] || m[5] || m[8] || 0);
+      const meridiem = (m[3] || m[6] || "").toLowerCase();
+      let hour = Number(hourText);
+      if (minute > 59 || hour > 23) return null;
+      if (meridiem) {
+        if (hour < 1 || hour > 12) return null;
+        hour = (hour % 12) + (meridiem === "pm" ? 12 : 0);
+      } else if (!m[7] && hour >= 1 && hour <= 7) {
+        hour += 12;   // "at 3" almost always means the afternoon
+      }
+      return String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
+    }
+    function monthDay(month, day, today) {
+      const year = parseDate(today).getFullYear();
+      const d = new Date(year, month, day);
+      if (d.getMonth() !== month || d.getDate() !== day) return null;
+      const s = dateStr(d);
+      return s < today ? dateStr(new Date(year + 1, month, day)) : s;
+    }
+    function resolveDate(raw, today) {
+      const t = raw.toLowerCase().replace(/\s+/g, " ").replace(/\./g, "");
+      if (t === "today" || t === "tonight") return today;
+      if (t === "tomorrow" || t === "tmrw" || t === "tmr") return addDays(today, 1);
+      if (t === "next week") return addDays(weekDays(today)[0], 7);
+      let m = t.match(/^(next |this )?([a-z]{3})[a-z]*$/);
+      if (m && m[2] in DAY_INDEX) {
+        const idx = DAY_INDEX[m[2]];
+        if (m[1] === "next ") return addDays(weekDays(today)[0], 7 + (idx + 6) % 7);
+        return addDays(today, (idx - parseDate(today).getDay() + 7) % 7);
+      }
+      m = t.match(/^([a-z]{3})[a-z]* (\d{1,2})/);
+      if (m && MONTHS.includes(m[1])) return monthDay(MONTHS.indexOf(m[1]), Number(m[2]), today);
+      m = t.match(/^(\d{1,2})\/(\d{1,2})$/);
+      if (m) return monthDay(Number(m[1]) - 1, Number(m[2]), today);
+      return null;
+    }
+    function cleanName(s) {
+      const trimmed = s.replace(/^[\s,;:-]+|[\s,;:-]+$/g, "").replace(/\s+(?:on|by|at|due|every)$/i, "").trim();
+      return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+    }
+    function guessCategory(name) {
+      for (const [category, re] of CATEGORY_RULES) if (re.test(name)) return category;
+      return "Personal";
+    }
+    function parseEntry(raw, today) {
+      const text = raw.trim().replace(/\s+/g, " ");
+      let name = text, difficulty = "Medium", target = null, days = null, date = today, dateType = "day", time = null, found;
+
+      if ((found = take(name, /(?:^|\s)[(#!]?(easy|medium|hard)\)?$/i))) {
+        difficulty = found.match[1].charAt(0).toUpperCase() + found.match[1].slice(1).toLowerCase();
+        name = found.rest;
+      }
+      if ((found = take(name, TIME_RE))) {
+        const resolved = resolveTime(found.match);
+        if (resolved) { time = resolved; name = found.rest; }
+      }
+      if ((found = take(name, COUNT_RE))) {
+        const word = (found.match[1] || found.match[2]).toLowerCase();
+        const n = WORD_NUMS[word] || Number(word);
+        if (n >= 1 && n <= 21) { target = n; name = found.rest; }
+      } else if ((found = take(name, WEEKLY_RE))) {
+        target = 1; name = found.rest;
+      }
+      if (target === null) {
+        if ((found = take(name, EVERY_DAY_RE))) { days = [0, 1, 2, 3, 4, 5, 6]; name = found.rest; }
+        else if ((found = take(name, WEEKDAYS_RE))) { days = [1, 2, 3, 4, 5]; name = found.rest; }
+        else if ((found = take(name, EVERY_NAMED_RE))) {
+          days = [...new Set(found.match[1].toLowerCase().match(/[a-z]+/g).filter((w) => w !== "and").map((w) => DAY_INDEX[w.slice(0, 3)]))].sort((a, b) => a - b);
+          name = found.rest;
+        }
+      }
+      if (target === null && days === null) {
+        for (const [re, type] of [[DUE_RE, "due"], [ON_RE, "day"], [START_RE, "day"], [END_RE, "day"]]) {
+          found = take(name, re);
+          const resolved = found && resolveDate(found.match[1], today);
+          if (resolved) { date = resolved; dateType = type; name = found.rest; break; }
+        }
+      }
+      name = cleanName(name);
+      if (!name) return { kind: "quest", name: cleanName(text), category: "Personal", difficulty: "Medium", date: today, dateType: "day", target: null, days: null, time: null };
+      return { kind: target !== null || days !== null ? "goal" : "quest", name, category: guessCategory(name), difficulty, date, dateType, target, days, time };
+    }
+    function fromTemplate(template, blank, today) {
+      const parsed = parseEntry(blank, today);
+      return Object.assign(parsed, {
+        name: template.text.replace("___", parsed.name), category: template.category, difficulty: template.difficulty,
+      });
+    }
+
+    // ---------- Calendar import: reads a .ics file, all inside the browser ----------
+    function unfoldIcs(text) { return text.replace(/\r\n?/g, "\n").replace(/\n[ \t]/g, "").split("\n"); }
+    function icsText(v) { return v.replace(/\\n/gi, " ").replace(/\\([,;\\])/g, "$1").trim(); }
+    function parseIcsLine(line) {
+      const i = line.indexOf(":");
+      if (i < 0) return null;
+      const [name, ...paramParts] = line.slice(0, i).split(";");
+      const params = {};
+      paramParts.forEach((p) => { const [k, v] = p.split("="); params[k.toUpperCase()] = (v || "").replace(/"/g, ""); });
+      return { name: name.toUpperCase(), params, value: line.slice(i + 1).trim() };
+    }
+    function zoneToLocal(y, mo, d, h, mi, zone) {
+      try {
+        const guess = Date.UTC(y, mo - 1, d, h, mi);
+        const parts = {};
+        new Intl.DateTimeFormat("en-US", { timeZone: zone, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" })
+          .formatToParts(new Date(guess)).forEach((p) => { parts[p.type] = Number(p.value); });
+        const shown = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute);
+        return new Date(guess - (shown - guess));
+      } catch (e) {
+        return new Date(y, mo - 1, d, h, mi);   // unknown zone: use the clock time as written
+      }
+    }
+    function icsDate(value, params) {
+      let m = value.match(/^(\d{4})(\d{2})(\d{2})$/);
+      if (m) return { date: m[1] + "-" + m[2] + "-" + m[3], time: null };
+      m = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z?)$/);
+      if (!m) return null;
+      const [y, mo, d, h, mi] = m.slice(1, 6).map(Number);
+      let local;
+      if (m[7]) local = new Date(Date.UTC(y, mo - 1, d, h, mi));
+      else if (params.TZID) local = zoneToLocal(y, mo, d, h, mi, params.TZID);
+      else local = new Date(y, mo - 1, d, h, mi);
+      const pad = (n) => String(n).padStart(2, "0");
+      return { date: dateStr(local), time: pad(local.getHours()) + ":" + pad(local.getMinutes()) };
+    }
+    function parseRule(value) {
+      const parts = Object.fromEntries(value.split(";").map((p) => p.split("=")));
+      if (!["DAILY", "WEEKLY", "MONTHLY", "YEARLY"].includes(parts.FREQ)) return null;
+      if (parts.FREQ !== "WEEKLY" && parts.BYDAY) return null;   // e.g. "2nd Tuesday": not supported
+      const rule = { freq: parts.FREQ, interval: Number(parts.INTERVAL) || 1, until: null, byday: null, count: Number(parts.COUNT) || 0 };
+      if (parts.UNTIL) { const u = icsDate(parts.UNTIL, {}); if (u) rule.until = u.date; }
+      if (parts.BYDAY) rule.byday = parts.BYDAY.split(",").map((d) => DAY_INDEX[d.slice(-2).toLowerCase() === "su" ? "sun" : { mo: "mon", tu: "tue", we: "wed", th: "thu", fr: "fri", sa: "sat" }[d.slice(-2).toLowerCase()]]);
+      return rule;
+    }
+    function matchesRule(ev, day) {
+      if (day < ev.date) return false;
+      const r = ev.rule;
+      if (!r) return day === ev.date;
+      if (r.until && day > r.until) return false;
+      const a = parseDate(ev.date), b = parseDate(day);
+      if (r.freq === "DAILY") return Math.round((b - a) / 864e5) % r.interval === 0;
+      if (r.freq === "WEEKLY") {
+        const weeks = Math.round((parseDate(weekDays(day)[0]) - parseDate(weekDays(ev.date)[0])) / (7 * 864e5));
+        return (r.byday || [a.getDay()]).includes(b.getDay()) && weeks % r.interval === 0;
+      }
+      const months = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth();
+      if (r.freq === "MONTHLY") return b.getDate() === a.getDate() && months % r.interval === 0;
+      return b.getDate() === a.getDate() && months % (12 * r.interval) === 0;
+    }
+    function occursOn(ev, day) { return matchesRule(ev, day) && !(ev.exdates || []).includes(day); }
+    function parseIcs(text, today) {
+      const events = [], overrides = [];
+      let cur = null;
+      for (const line of unfoldIcs(text)) {
+        if (line === "BEGIN:VEVENT") { cur = { exdates: [] }; continue; }
+        if (!cur) continue;
+        if (line === "END:VEVENT") {
+          if (cur.start && !cur.cancelled) events.push(cur);
+          if (cur.recurrenceOf) overrides.push(cur);
+          cur = null;
+          continue;
+        }
+        const p = parseIcsLine(line);
+        if (!p) continue;
+        if (p.name === "SUMMARY") cur.title = icsText(p.value);
+        else if (p.name === "LOCATION") cur.location = icsText(p.value);
+        else if (p.name === "UID") cur.uid = p.value;
+        else if (p.name === "STATUS") cur.cancelled = p.value.toUpperCase() === "CANCELLED";
+        else if (p.name === "DTSTART") cur.start = icsDate(p.value, p.params);
+        else if (p.name === "DTEND") cur.end = icsDate(p.value, p.params);
+        else if (p.name === "RRULE") cur.rule = parseRule(p.value);
+        else if (p.name === "EXDATE") p.value.split(",").forEach((v) => { const d = icsDate(v, p.params); if (d) cur.exdates.push(d.date); });
+        else if (p.name === "RECURRENCE-ID") { const d = icsDate(p.value, p.params); if (d) cur.recurrenceOf = d.date; }
+      }
+      for (const o of overrides) {
+        const parent = events.find((e) => e.uid === o.uid && !e.recurrenceOf);
+        if (parent) parent.exdates.push(o.recurrenceOf);
+      }
+      const out = events.map((e) => {
+        const ev = {
+          key: (e.uid || e.title || "") + "|" + (e.recurrenceOf || e.start.date), title: e.title || "(No title)", location: e.location || "",
+          date: e.start.date, start: e.start.time, end: e.end ? e.end.time : null, rule: e.rule || null, exdates: e.exdates, source: "import",
+        };
+        if (ev.rule && ev.rule.count) {
+          let seen = 0, day = ev.date, last = ev.date;
+          for (let i = 0; i < 4000 && seen < ev.rule.count; i++, day = addDays(day, 1)) {
+            if (matchesRule(ev, day)) { seen++; last = day; }
+          }
+          ev.rule.until = last;
+        }
+        return ev;
+      });
+      return out.filter((ev) => (ev.rule ? !ev.rule.until || ev.rule.until >= today : ev.date >= today));
+    }
+    function mergeEvents(state, incoming) {
+      const keys = new Set(incoming.map((e) => e.key));
+      state.events = state.events.filter((e) => !keys.has(e.key)).concat(incoming);
+    }
+
+    // ---------- Game logic: no page access, so it can be tested alone ----------
+    function newState() {
+      return {
+        quests: [], goals: [], rewards: [], claims: [], events: [], templates: [], nextId: 1,
+        lifetimeXp: 0, spendableXp: 0,
+        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0,
+        theme: "classic", dayOffset: 0,
+      };
+    }
+    function sampleState(today) {
+      const s = newState();
+      Object.assign(s, { lifetimeXp: 285, spendableXp: 285, streak: 4, bestStreak: 4, lastCompletedOn: addDays(today, -1) });
+      const quest = (name, category, difficulty, extra) => addQuest(s, Object.assign({ name, category, difficulty, date: today, dateType: "day" }, extra), today);
+      quest("Send thank-you note to Priya", "Recruiting", "Easy").dueDate = addDays(today, -1);
+      quest("Finish assignment for Corporate Finance", "Class", "Hard", { time: "11:00" });
+      quest("Coffee chat with Stern alum", "Recruiting", "Medium", { time: "15:30" });
+      quest("RSVP to Consulting Club mixer", "Events", "Easy");
+      quest("Pay electric bill", "Personal", "Easy");
+      quest("Apply to summer internship", "Recruiting", "Hard", { date: addDays(today, 3), dateType: "due" });
+      addGoal(s, { name: "Exercise", category: "Personal", difficulty: "Medium", target: 3, days: null, time: null });
+      addGoal(s, { name: "Call home", category: "Personal", difficulty: "Easy", target: 1, days: null, time: null });
+      [["Boba run", 200], ["Sleep in Saturday", 300], ["Guilt-free Netflix night", 500], ["Fancy NYC brunch", 1000]].forEach(([n, c]) => addReward(s, n, c));
+      for (let i = 0; i < 7; i++) {
+        const date = addDays(today, i);
+        s.events.push(i % 2 === 0
+          ? { key: "sample-fin-" + i, title: "Corporate Finance", location: "KMC 2-60", date, start: "09:00", end: "10:20", rule: null, exdates: [], source: "sample" }
+          : { key: "sample-mkt-" + i, title: "Marketing Strategy", location: "Tisch UC 21", date, start: "13:00", end: "14:20", rule: null, exdates: [], source: "sample" });
+        if (i % 3 === 0) s.events.push({ key: "sample-rec-" + i, title: "Consulting recruiting info session", location: "Paulson Auditorium", date, start: "18:00", end: "19:00", rule: null, exdates: [], source: "sample" });
+      }
+      return s;
+    }
+    function levelOf(lifetimeXp) { return Math.floor(lifetimeXp / XP_PER_LEVEL) + 1; }
+    function questXp(q) {
+      return XP_BY_DIFFICULTY[q.difficulty] + (q.category === "Recruiting" ? RECRUITING_BONUS : 0);
+    }
+    function isOverdue(q, today) { return !q.done && !!q.dueDate && q.dueDate < today; }
+    function currentStreak(state, today) {
+      const alive = state.lastCompletedOn === today || state.lastCompletedOn === addDays(today, -1);
+      return alive ? state.streak : 0;
+    }
+    function addQuest(state, input, today) {
+      const quest = {
+        id: state.nextId++, name: input.name, category: input.category, difficulty: input.difficulty,
+        day: input.date < today ? today : input.date,
+        dueDate: input.dateType === "due" ? input.date : null,
+        time: input.time || null,
+        done: false, completedOn: null, xpEarned: 0,
+      };
+      state.quests.push(quest);
+      return quest;
+    }
+    function addGoal(state, input) {
+      const goal = {
+        id: state.nextId++, name: input.name, category: input.category, difficulty: input.difficulty,
+        target: input.target, days: input.days, time: input.time || null, log: [],
+      };
+      state.goals.push(goal);
+      return goal;
+    }
+    function rollOver(state, today) {
+      let changed = false;
+      for (const q of state.quests) {
+        if (!q.done && q.day < today) { q.day = today; changed = true; }
+      }
+      return changed;
+    }
+    function award(state, baseXp, today) {
+      const levelBefore = levelOf(state.lifetimeXp);
+      const firstToday = state.lastCompletedOn !== today;
+      if (firstToday) {
+        state.streak = state.lastCompletedOn === addDays(today, -1) ? state.streak + 1 : 1;
+        state.lastCompletedOn = today;
+        state.bestStreak = Math.max(state.bestStreak, state.streak);
+      }
+      const bonus = firstToday && state.streak >= 2 ? STREAK_BONUS : 0;
+      const xp = baseXp + bonus;
+      state.lifetimeXp += xp;
+      state.spendableXp += xp;
+      return { xp, bonus, levelBefore, levelAfter: levelOf(state.lifetimeXp) };
+    }
+    function completeQuest(state, id, today) {
+      const q = state.quests.find((x) => x.id === id);
+      if (!q || q.done) return null;
+      const result = award(state, questXp(q), today);
+      q.done = true;
+      q.completedOn = today;
+      q.xpEarned = result.xp;
+      return result;
+    }
+    function goalWeekCount(goal, today) {
+      const week = weekDays(today);
+      return goal.log.filter((l) => l.date >= week[0] && l.date <= week[6]).length;
+    }
+    function routineDue(goal, day) {
+      return !!goal.days && goal.days.includes(parseDate(day).getDay()) && !goal.log.some((l) => l.date === day);
+    }
+    function checkInGoal(state, id, today) {
+      const g = state.goals.find((x) => x.id === id);
+      if (!g) return null;
+      if (g.days ? !routineDue(g, today) : goalWeekCount(g, today) >= g.target) return null;
+      const finishesWeek = !g.days && goalWeekCount(g, today) + 1 === g.target;
+      const result = award(state, questXp(g) + (finishesWeek ? WEEKLY_GOAL_BONUS : 0), today);
+      g.log.push({ date: today, xp: result.xp });
+      return Object.assign(result, { finishesWeek });
+    }
+    function openToday(state, today) {
+      return state.quests.filter((q) => !q.done && q.day === today).length + state.goals.filter((g) => routineDue(g, today)).length;
+    }
+    function checkDayCleared(state, today) {
+      if (state.clearedOn === today || openToday(state, today) > 0) return false;
+      state.clearedOn = today;
+      state.daysCleared += 1;
+      return true;
+    }
+    function applyEdit(state, kind, id, f, today) {
+      const list = kind === "goal" ? state.goals : state.quests;
+      const item = list.find((x) => x.id === id);
+      if (!item) return;
+      Object.assign(item, { name: f.name, category: f.category, difficulty: f.difficulty, time: f.time || null });
+      const days = f.repeat === "daily" ? [0, 1, 2, 3, 4, 5, 6] : f.repeat === "days" ? f.days : [];
+      if (kind === "quest") {
+        if (days.length) {
+          state.quests = state.quests.filter((q) => q.id !== id);
+          addGoal(state, Object.assign({}, item, { target: null, days }));
+          return;
+        }
+        if (f.day) item.day = f.day < today ? today : f.day;
+        item.dueDate = f.dueDate || null;
+      } else if (item.days) {
+        if (days.length) { item.days = days; return; }
+        state.goals = state.goals.filter((g) => g.id !== id);
+        addQuest(state, Object.assign({}, item, { date: today, dateType: "day" }), today);
+      } else if (f.target >= 1 && f.target <= 21) {
+        item.target = f.target;
+      }
+    }
+    function rewardEmoji(name) {
+      const rules = [[/boba|tea|coffee/i, "🧋"], [/netflix|movie|tv|show/i, "🍿"], [/sleep|nap|rest/i, "😴"], [/brunch|dinner|food|pizza|eat/i, "🥞"], [/spa|massage/i, "💆"], [/trip|travel/i, "✈️"], [/shop|buy/i, "🛍️"]];
+      for (const [re, emoji] of rules) if (re.test(name)) return emoji;
+      return "🎁";
+    }
+    function addReward(state, name, cost) {
+      const reward = { id: state.nextId++, name, cost, emoji: rewardEmoji(name) };
+      state.rewards.push(reward);
+      return reward;
+    }
+    function claimReward(state, id, today) {
+      const r = state.rewards.find((x) => x.id === id);
+      if (!r || state.spendableXp < r.cost) return false;
+      state.spendableXp -= r.cost;   // lifetimeXp is left alone, so level never drops.
+      state.claims.push({ name: r.name, cost: r.cost, date: today });
+      return true;
+    }
+    function daySummary(state, day) {
+      const done = state.quests.filter((q) => q.completedOn === day);
+      const checkIns = state.goals.flatMap((g) => g.log.filter((l) => l.date === day));
+      return {
+        completed: done.length + checkIns.length,
+        xp: done.reduce((sum, q) => sum + q.xpEarned, 0) + checkIns.reduce((sum, l) => sum + l.xp, 0),
+        claimed: state.claims.filter((c) => c.date === day).length,
+        planned: state.quests.filter((q) => !q.done && q.day === day).concat(state.goals.filter((g) => routineDue(g, day))),
+      };
+    }
+    function repeatLabel(g) {
+      if (!g.days) return g.target === 1 ? "Once a week" : g.target + " times a week";
+      if (g.days.length === 7) return "Every day";
+      if (g.days.join() === "1,2,3,4,5") return "Every weekday";
+      return "Every " + g.days.map((d) => DAY_NAMES[d]).join(", ");
+    }
+
+    // ---------- Page code ----------
+    function load() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (saved) return Object.assign(newState(), saved);
+      } catch (e) { /* storage unavailable: run for this visit only */ }
+      return sampleState(dateStr(new Date()));
+    }
+    function save() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); return true; } catch (e) { return false; }
+    }
+    const $ = (id) => document.getElementById(id);
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+    function nice(s, opts) { return parseDate(s).toLocaleDateString(undefined, opts); }
+    function short(s) { return nice(s, { weekday: "short", month: "short", day: "numeric" }); }
+    function relative(s, today) { return s === today ? "Today" : s === addDays(today, 1) ? "Tomorrow" : short(s); }
+    function getToday() { return addDays(dateStr(new Date()), state.dayOffset); }
+    function catClass(c) { return "cat-" + CATEGORY[c].slug; }
+
+    function metaHtml(item) {
+      return `<span class="pill ${catClass(item.category)}">${CATEGORY[item.category].emoji} ${esc(item.category)}</span>` +
+        `<span class="pill" style="background:#fff3cf"><span class="stars">${starsHtml(item.difficulty)}</span> ${esc(item.difficulty)}</span>`;
+    }
+    function questCard(q, today) {
+      const overdue = isOverdue(q, today);
+      const extras = (overdue ? '<span class="pill red">Overdue</span>' : "") +
+        (q.time ? `<span class="pill">🕒 ${fmtTime(q.time)}</span>` : "") +
+        (q.dueDate && !overdue ? `<span class="pill">Due ${nice(q.dueDate, { month: "short", day: "numeric" })}</span>` : "");
+      return `<article class="qcard ${catClass(q.category)} ${overdue ? "overdue" : ""} ${q.done ? "done" : ""}">
+        <button class="circle" data-action="complete" data-id="${q.id}" ${q.done ? "disabled" : ""} aria-label="Complete ${esc(q.name)}">${q.done ? "✓" : ""}</button>
+        <button class="qbody ${q.done ? "static" : ""}" ${q.done ? "disabled" : `data-action="edit" data-kind="quest" data-id="${q.id}"`}>
+          <span class="qname">${esc(q.name)}</span>
+          <span class="qmeta">${extras}${metaHtml(q)}</span>
+        </button>
+        <div class="reward">+${q.done ? q.xpEarned : questXp(q)} XP</div>
+      </article>`;
+    }
+    function goalCard(g, today) {
+      const count = goalWeekCount(g, today);
+      const finished = g.days ? g.log.some((l) => l.date === today) : count >= g.target;
+      const canCheck = g.days ? routineDue(g, today) : !finished;
+      const pips = !g.days && g.target <= 10
+        ? `<span class="pips">${Array.from({ length: g.target }, (_, i) => `<i class="${i < count ? "on" : ""}"></i>`).join("")}</span>` : "";
+      const progress = g.days ? "" : `<span class="pill">${count} / ${g.target}</span>`;
+      const time = g.time ? `<span class="pill">🕒 ${fmtTime(g.time)}</span>` : "";
+      return `<article class="qcard ${catClass(g.category)}">
+        <button class="circle" data-action="check-in" data-id="${g.id}" ${canCheck ? "" : "disabled"} aria-label="Check in ${esc(g.name)}">${finished ? "✓" : ""}</button>
+        <button class="qbody" data-action="edit" data-kind="goal" data-id="${g.id}">
+          <span class="qname">${esc(g.name)}</span>
+          <span class="qmeta">${pips}${progress}<span class="pill">🔁 ${esc(repeatLabel(g))}</span>${time}${metaHtml(g)}</span>
+        </button>
+        <div class="reward">+${questXp(g)} XP</div>
+      </article>`;
+    }
+    function sortKey(entry, today) {
+      const item = entry.item;
+      return (entry.kind === "quest" && isOverdue(item, today) ? "0" : "1") + (item.time || "99:99");
+    }
+    function renderTodayList(today) {
+      const entries = state.quests.filter((q) => !q.done && q.day === today).map((item) => ({ kind: "quest", item }))
+        .concat(state.goals.filter((g) => routineDue(g, today)).map((item) => ({ kind: "goal", item })))
+        .sort((a, b) => sortKey(a, today).localeCompare(sortKey(b, today)));
+      const done = state.quests.filter((q) => q.completedOn === today);
+      const doneRoutines = state.goals.filter((g) => g.days && g.log.some((l) => l.date === today));
+      const weekly = state.goals.filter((g) => !g.days);
+      const list = entries.length
+        ? entries.map((e) => e.kind === "quest" ? questCard(e.item, today) : goalCard(e.item, today)).join("")
+        : `<div class="empty"><div style="font-size:34px">🏕️</div>All clear. Start typing to add a quest.</div>`;
+      const completed = done.length + doneRoutines.length
+        ? `<details><summary>Completed today (${done.length + doneRoutines.length})</summary>${done.map((q) => questCard(q, today)).join("")}${doneRoutines.map((g) => goalCard(g, today)).join("")}</details>` : "";
+      const weeklyLink = weekly.length ? `<div style="text-align:center;margin-top:6px"><button class="linkbtn" data-tab="week">🔁 ${weekly.length} weekly ${weekly.length === 1 ? "goal" : "goals"} on the Week tab</button></div>` : "";
+      return list + completed + weeklyLink;
+    }
+    function renderSchedule(today) {
+      const dow = parseDate(today).getDay();
+      const nowTime = state.dayOffset === 0 ? new Date().toTimeString().slice(0, 5) : null;
+      const rows = [];
+      state.quests.filter((q) => q.time && q.day === today).forEach((q) => rows.push({ time: q.time, c: catClass(q.category), html: questCard(q, today) }));
+      state.goals.filter((g) => g.time && g.days && g.days.includes(dow)).forEach((g) => rows.push({ time: g.time, c: catClass(g.category), html: goalCard(g, today) }));
+      const todaysEvents = state.events.filter((e) => occursOn(e, today));
+      todaysEvents.filter((e) => e.start).forEach((e) => rows.push({
+        time: e.start, c: "",
+        html: `<div class="event"><span class="qname">📅 ${esc(e.title)}</span><span class="muted" style="color:inherit">${fmtTime(e.start)}${e.end ? " – " + fmtTime(e.end) : ""}${e.location ? " · " + esc(e.location) : ""} · Calendar, no XP</span></div>`,
+      }));
+      rows.sort((a, b) => a.time.localeCompare(b.time));
+      let nowShown = false;
+      const timeline = rows.map((r) => {
+        let now = "";
+        if (nowTime && !nowShown && r.time > nowTime) { nowShown = true; now = '<div class="now">Now</div>'; }
+        return `${now}<div class="tl-row ${r.c}"><div class="tl-time">${fmtTime(r.time)}</div><div class="tl-rail"></div><div>${r.html}</div></div>`;
+      }).join("");
+      const allDay = todaysEvents.filter((e) => !e.start).map((e) => `<div class="event"><span class="qname">📅 ${esc(e.title)}</span><span class="muted" style="color:inherit">All day · Calendar, no XP</span></div>`).join("");
+      const anytime = state.quests.filter((q) => !q.done && !q.time && q.day === today).map((q) => questCard(q, today))
+        .concat(state.goals.filter((g) => !g.time && routineDue(g, today)).map((g) => goalCard(g, today))).join("");
+      return `<div class="toolbar">
+          <button class="btn" data-action="import-ics">Import calendar (.ics)</button>
+          ${state.events.length ? '<button class="linkbtn" data-action="clear-events">Clear calendar events</button>' : ""}
+        </div>
+        ${allDay}
+        ${timeline || '<div class="empty">Nothing timed today. Add one like <b>coffee chat at 3pm</b>.</div>'}
+        <h3 style="margin-top:16px">Anytime quests</h3>
+        ${anytime || '<div class="muted">No untimed quests left today.</div>'}`;
+    }
+    function renderToday(today) {
+      const total = openToday(state, today);
+      return `<div class="board-head">
+          <h2>Today's Quests${todayMode === "quests" ? ` (${total})` : ""}</h2>
+          <div class="segment">
+            <button class="${todayMode === "quests" ? "on" : ""}" data-action="mode" data-mode="quests">Quests</button>
+            <button class="${todayMode === "schedule" ? "on" : ""}" data-action="mode" data-mode="schedule">Schedule</button>
+          </div>
+        </div>
+        ${todayMode === "quests" ? renderTodayList(today) : renderSchedule(today)}`;
+    }
+    function renderWeek(today) {
+      const weekly = state.goals.filter((g) => !g.days);
+      const routines = state.goals.filter((g) => g.days);
+      const upcoming = state.quests.filter((q) => !q.done && q.day > today).sort((a, b) => a.day.localeCompare(b.day));
+      const totals = { completed: 0, xp: 0, claimed: 0 };
+      const rows = weekDays(today).map((d) => {
+        const s = daySummary(state, d);
+        totals.completed += s.completed; totals.xp += s.xp; totals.claimed += s.claimed;
+        const planned = s.planned.map((q) => esc(q.name)).join("<br>") || '<span class="muted">—</span>';
+        return `<tr class="${d === today ? "today" : ""}"><td>${short(d)}</td><td>${planned}</td><td>${s.completed}</td><td>${s.xp}</td><td>${s.claimed}</td></tr>`;
+      }).join("");
+      return `<div class="board-head"><h2>This Week</h2></div>
+        ${weekly.length ? `<h3>Weekly goals</h3>${weekly.map((g) => goalCard(g, today)).join("")}` : '<div class="empty">Type <b>exercise 3 times a week</b> to add a weekly goal.</div>'}
+        ${routines.length ? `<h3 style="margin-top:14px">Repeating quests</h3>${routines.map((g) => goalCard(g, today)).join("")}` : ""}
+        ${upcoming.length ? `<h3 style="margin-top:14px">Coming up</h3>${upcoming.map((q) => `<div class="muted">${relative(q.day, today)}</div>${questCard(q, today)}`).join("")}` : ""}
+        <div class="panel"><h3>${totals.completed} done · ${totals.xp} XP · ${totals.claimed} rewards</h3>
+          <div class="scroll"><table><tr><th>Day</th><th>Open</th><th>Done</th><th>XP</th><th>Rewards</th></tr>${rows}</table></div>
+        </div>`;
+    }
+    function renderShop() {
+      const items = state.rewards.map((r) => {
+        const short2 = r.cost - state.spendableXp;
+        return `<div class="item ${short2 > 0 ? "locked" : ""}" data-reward="${r.id}">
+          <button class="iconbtn del" data-action="delete-reward" data-id="${r.id}" aria-label="Delete ${esc(r.name)}">×</button>
+          <div class="art">${r.emoji}</div>
+          <div class="title">${esc(r.name)}</div>
+          <div class="price">🪙 ${r.cost}</div>
+          <button class="btn" data-action="claim" data-id="${r.id}" ${short2 > 0 ? "disabled" : ""}>${short2 > 0 ? "🔒 " + short2 + " more" : "Claim"}</button>
+        </div>`;
+      }).join("");
+      const claims = state.claims.slice().reverse().map((c) => `<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0"><span>${esc(c.name)}</span><span class="muted">🪙 ${c.cost} · ${nice(c.date, { month: "short", day: "numeric" })}</span></div>`).join("");
+      return `<div class="board-head"><h2>Reward Shop</h2><div style="font-weight:800">🪙 ${state.spendableXp} coins</div></div>
+        <div class="shop">${items}</div>
+        <div class="panel"><h3>Stock the shop</h3>
+          <form id="rewardForm" style="display:flex;flex-wrap:wrap;gap:8px">
+            <input style="flex:2 1 170px;width:auto" id="rName" placeholder="Your reward, e.g. Boba run" required maxlength="80" aria-label="Reward name" />
+            <input style="flex:1 1 90px;width:auto" id="rCost" type="number" min="1" step="1" placeholder="Coins" required aria-label="Coin price" />
+            <button class="btn">Add</button>
+          </form>
+        </div>
+        ${claims ? `<div class="panel"><h3>Claimed</h3>${claims}</div>` : ""}`;
+    }
+    function renderProfile(today) {
+      const level = levelOf(state.lifetimeXp);
+      const questsDone = state.quests.filter((q) => q.done).length + state.goals.reduce((n, g) => n + g.log.length, 0);
+      const stats = [["Lifetime XP", state.lifetimeXp], ["Quests done", questsDone], ["Current streak", currentStreak(state, today)], ["Best streak", state.bestStreak], ["Days cleared", state.daysCleared], ["Rewards claimed", state.claims.length]];
+      const themes = THEMES.map((t) => `<option value="${t.id}" ${t.id === state.theme ? "selected" : ""} ${level < t.level ? "disabled" : ""}>${esc(t.name)}${level < t.level ? " (level " + t.level + ")" : ""}</option>`).join("");
+      return `<div class="board-head"><h2>Hero Profile</h2></div>
+        <div class="panel" style="margin-top:0"><h3>Stats</h3><div class="stats">${stats.map(([k, v]) => `<div class="stat"><b>${v}</b>${k}</div>`).join("")}</div></div>
+        <div class="panel"><h3>Badges</h3><div class="badges">${BADGES.map((b) => `<div class="badge ${level >= b.level ? "" : "locked"}"><span>${b.emoji}</span>${level >= b.level ? esc(b.name) : "Level " + b.level}</div>`).join("")}</div></div>
+        <div class="panel"><label class="field" style="margin-top:0">Theme<select id="themeSelect">${themes}</select></label></div>
+        <div class="panel"><h3>Demo tools</h3>
+          <div class="toolbar" style="margin:0">
+            <button class="btn soft" data-action="next-day">Simulate next day</button>
+            <button class="btn soft" data-action="reset-sample">Reload sample data</button>
+            <button class="btn soft" data-action="reset-empty">Start empty</button>
+          </div>
+        </div>`;
+    }
+    function allTemplates() { return BUILT_IN_TEMPLATES.concat(state.templates); }
+    function renderChips() {
+      $("chips").innerHTML = allTemplates().map((t, i) =>
+        `<button class="chip ${catClass(t.category)}" data-action="use-template" data-index="${i}">${CATEGORY[t.category].emoji} ${esc(t.text)}</button>`
+      ).join("") + '<button class="chip new" data-action="manage-templates">+ My template</button>';
+    }
+    function previewHtml(p, today) {
+      const when = p.kind === "goal"
+        ? `<span class="pill">🔁 ${esc(repeatLabel(p))}</span>`
+        : `<span class="pill">${p.dateType === "due" ? "Due " : ""}${relative(p.date, today)}</span>`;
+      return `<strong>${esc(p.name)}</strong>${when}${p.time ? `<span class="pill">🕒 ${fmtTime(p.time)}</span>` : ""}${metaHtml(p)}<span class="pill">+${questXp(p)} XP</span>`;
+    }
+    function updatePreview() {
+      const value = input().value;
+      $("preview").hidden = !value.trim();
+      $("preview").innerHTML = value.trim() ? previewHtml(parseEntry(value, getToday()), getToday()) : "";
+    }
+    function input() { return $("captureInput"); }
+    function renderPlayer(forceWidth) {
+      const today = getToday();
+      const level = levelOf(state.lifetimeXp);
+      const into = state.lifetimeXp % XP_PER_LEVEL;
+      $("levelLine").textContent = "Level " + level;
+      $("coinLine").textContent = "🪙 " + state.spendableXp;
+      $("streakLine").textContent = "🔥 " + currentStreak(state, today);
+      $("barFill").style.width = forceWidth || (into / XP_PER_LEVEL) * 100 + "%";
+      $("barLine").textContent = into + " / " + XP_PER_LEVEL + " XP to level " + (level + 1);
+    }
+    function modalOpen() { return !$("sheetOverlay").hidden || !$("momentOverlay").hidden; }
+    function focusCapture() {
+      const desktop = !window.matchMedia || window.matchMedia("(hover: hover)").matches;
+      if (tab === "today" && desktop && !modalOpen() && $("templateForm").hidden) input().focus({ preventScroll: true });
+    }
+    function render() {
+      const today = getToday();
+      if (rollOver(state, today)) save();
+      if (state.theme === "classic") document.documentElement.removeAttribute("data-theme");
+      else document.documentElement.setAttribute("data-theme", state.theme);
+      renderPlayer();
+      document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+      $("quickAdd").hidden = tab !== "today";
+      renderChips();
+      $("view").innerHTML = tab === "today" ? renderToday(today) : tab === "week" ? renderWeek(today) : tab === "shop" ? renderShop() : renderProfile(today);
+      focusCapture();
+    }
+    function toast(message) {
+      const el = $("toast");
+      el.textContent = message;
+      el.hidden = false;
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => { el.hidden = true; }, 3000);
+    }
+    const FX_COLORS = ["#ffd24a", "#ff9a3c", "#6fdc8c", "#ff8fb1", "#4aa8ff"];
+    function burst(el) {
+      const r = el.getBoundingClientRect();
+      for (let i = 0; i < 12; i++) {
+        const s = document.createElement("div");
+        s.className = "spark";
+        s.style.cssText = `left:${r.left + r.width / 2}px;top:${r.top + r.height / 2}px;background:${FX_COLORS[i % 5]};--dx:${Math.cos(i / 12 * 6.28) * 70}px;--dy:${Math.sin(i / 12 * 6.28) * 70}px`;
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 650);
+      }
+    }
+    function floatText(el, text) {
+      const r = el.getBoundingClientRect();
+      const f = document.createElement("div");
+      f.className = "floater";
+      f.textContent = text;
+      f.style.left = r.left + "px";
+      f.style.top = r.top - 10 + "px";
+      document.body.appendChild(f);
+      setTimeout(() => f.remove(), 1000);
+    }
+    function confetti() {
+      for (let i = 0; i < 70; i++) {
+        const c = document.createElement("div");
+        c.className = "confetti";
+        c.style.cssText = `left:${Math.random() * 100}vw;background:${FX_COLORS[i % 5]};--t:${1.6 + Math.random() * 1.4}s;--d:${Math.random() * .5}s`;
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 3600);
+      }
+    }
+    const moments = [];
+    function nextMoment() {
+      const m = moments.shift();
+      if (!m) { $("momentOverlay").hidden = true; focusCapture(); return; }
+      $("momentOverlay").hidden = false;
+      $("momentOverlay").innerHTML = `<div class="moment" role="dialog" aria-modal="true">${m.art}<h2>${m.title}</h2><p>${m.body}</p><button class="btn" data-action="moment-next">${m.button}</button></div>`;
+      confetti();
+      $("momentOverlay").querySelector("button").focus();
+    }
+    function queueMoments(result, today) {
+      if (result.levelAfter > result.levelBefore) {
+        const unlocked = BADGES.filter((b) => b.level > result.levelBefore && b.level <= result.levelAfter);
+        const themes = THEMES.filter((t) => t.level > result.levelBefore && t.level <= result.levelAfter);
+        moments.push({
+          art: mascotSvg(), title: "Level " + result.levelAfter + "!", button: "Awesome",
+          body: (unlocked.length ? "Badge unlocked: " + unlocked.map((b) => b.emoji + " <b>" + esc(b.name) + "</b>").join(", ") : "You're getting stronger.") +
+            (themes.length ? "<br>New theme: <b>" + themes.map((t) => esc(t.name)).join(", ") + "</b>" : ""),
+        });
+      }
+      if (checkDayCleared(state, today)) {
+        moments.push({ art: '<div class="big">🏆</div>', title: "Day cleared!", body: "Every quest for today is done. Go enjoy your evening.", button: "Victory" });
+      }
+      save();
+      if (moments.length && $("momentOverlay").hidden) nextMoment();
+    }
+    function finishQuest(btn, result, leaves, today, note) {
+      const card = btn.closest(".qcard");
+      floatText(btn, "+" + result.xp + " XP");
+      burst(btn);
+      if (leaves && card) card.classList.add("leaving");
+      const leveled = result.levelAfter > result.levelBefore;
+      renderPlayer(leveled ? "100%" : undefined);
+      if (result.bonus) toast("Streak bonus included! 🔥");
+      if (note) toast(note);
+      save();
+      setTimeout(() => { render(); queueMoments(result, today); }, 400);
+    }
+    function addParsed(parsed, today) {
+      const item = parsed.kind === "goal" ? addGoal(state, parsed) : addQuest(state, parsed, today);
+      lastAdded = { kind: parsed.kind, id: item.id };
+      const where = parsed.kind === "goal" ? (parsed.days ? repeatLabel(parsed) : "the Week tab") : relative(item.day, today);
+      $("confirmLine").hidden = false;
+      $("confirmLine").innerHTML = `✅ Added <strong>${esc(item.name)}</strong> to ${esc(where)} <button class="linkbtn" data-action="undo-add">Undo</button>`;
+    }
+    function closeTemplate() { $("templateForm").hidden = true; $("templateForm").innerHTML = ""; activeTemplate = null; focusCapture(); }
+    function openTemplate(t) {
+      activeTemplate = t;
+      const [before, after] = t.text.split("___");
+      const form = $("templateForm");
+      form.className = "tpl " + catClass(t.category);
+      form.innerHTML = `<span>${esc(before)}</span><input id="templateBlank" autocomplete="off" maxlength="100" placeholder="type here" aria-label="Fill in the blank" /><span>${esc(after)}</span>
+        <button class="btn">Add</button><button type="button" class="iconbtn" data-action="close-template" aria-label="Cancel">×</button>`;
+      form.hidden = false;
+      $("templateBlank").focus();
+    }
+    function openSheet(html) { $("sheetOverlay").innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`; $("sheetOverlay").hidden = false; }
+    function closeSheet() { $("sheetOverlay").hidden = true; $("sheetOverlay").innerHTML = ""; editing = null; focusCapture(); }
+    function optionsHtml(list, current) { return list.map((o) => `<option ${o === current ? "selected" : ""}>${o}</option>`).join(""); }
+    function dayPickHtml(days) {
+      return [1, 2, 3, 4, 5, 6, 0].map((d) => `<label><input type="checkbox" name="day" value="${d}" ${days.includes(d) ? "checked" : ""}/><span>${DAY_NAMES[d]}</span></label>`).join("");
+    }
+    function openEdit(kind, id) {
+      const item = (kind === "goal" ? state.goals : state.quests).find((x) => x.id === id);
+      if (!item) return;
+      editing = { kind, id };
+      const weeklyGoal = kind === "goal" && !item.days;
+      const days = item.days || [];
+      const repeat = !days.length ? "none" : days.length === 7 ? "daily" : "days";
+      openSheet(`<h2>Edit quest</h2>
+        <form id="editForm">
+          <label class="field">Name<input id="eName" required maxlength="160" value="${esc(item.name)}" /></label>
+          <div class="twocol">
+            <label class="field">Type<select id="eCategory">${optionsHtml(Object.keys(CATEGORY), item.category)}</select></label>
+            <label class="field">Difficulty<select id="eDifficulty">${optionsHtml(Object.keys(XP_BY_DIFFICULTY), item.difficulty)}</select></label>
+          </div>
+          ${kind === "quest" ? `<div class="twocol">
+            <label class="field">Day<input id="eDay" type="date" value="${item.day}" /></label>
+            <label class="field">Due date (optional)<input id="eDue" type="date" value="${item.dueDate || ""}" /></label>
+          </div>` : ""}
+          ${weeklyGoal ? `<label class="field">Times per week<input id="eTarget" type="number" min="1" max="21" value="${item.target}" /></label>` : `
+          <label class="field">Start time (optional)<input id="eTime" type="time" value="${item.time || ""}" /></label>
+          <label class="field">Repeat<select id="eRepeat">
+            <option value="none" ${repeat === "none" ? "selected" : ""}>Does not repeat</option>
+            <option value="daily" ${repeat === "daily" ? "selected" : ""}>Every day</option>
+            <option value="days" ${repeat === "days" ? "selected" : ""}>Weekly on chosen days</option>
+          </select></label>
+          <div class="daypick" id="eDays" ${repeat === "days" ? "" : "hidden"}>${dayPickHtml(days)}</div>`}
+          <div class="sheet-actions">
+            <button class="btn">Save</button>
+            <button type="button" class="btn soft" data-action="save-as-template">Save as template</button>
+            <button type="button" class="btn danger" data-action="delete-item">Delete</button>
+            <button type="button" class="btn soft" data-action="close-sheet">Cancel</button>
+          </div>
+        </form>`);
+      $("eName").focus();
+    }
+    function openTemplateManager() {
+      const mine = state.templates.map((t, i) => `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0"><span>${CATEGORY[t.category].emoji} ${esc(t.text)}</span><button class="iconbtn" data-action="delete-template" data-index="${i}" aria-label="Delete template">×</button></div>`).join("");
+      openSheet(`<h2>My templates</h2>
+        <form id="newTemplateForm">
+          <label class="field">Template text (use ___ for the blank)<input id="tText" required maxlength="100" placeholder="Prep notes for ___" /></label>
+          <div class="twocol">
+            <label class="field">Type<select id="tCategory">${optionsHtml(Object.keys(CATEGORY), "Personal")}</select></label>
+            <label class="field">Difficulty<select id="tDifficulty">${optionsHtml(Object.keys(XP_BY_DIFFICULTY), "Medium")}</select></label>
+          </div>
+          <div class="sheet-actions"><button class="btn">Save template</button><button type="button" class="btn soft" data-action="close-sheet">Done</button></div>
+        </form>
+        ${mine ? `<h3 style="margin-top:14px">Saved</h3>${mine}` : ""}`);
+      $("tText").focus();
+    }
+    function readEditForm() {
+      const days = [...document.querySelectorAll('#eDays input:checked')].map((c) => Number(c.value)).sort((a, b) => a - b);
+      const val = (id) => ($(id) ? $(id).value : "");
+      return {
+        name: val("eName").trim(), category: val("eCategory"), difficulty: val("eDifficulty"), day: val("eDay"), dueDate: val("eDue"),
+        time: val("eTime"), repeat: val("eRepeat") || "none", days, target: Number(val("eTarget")),
+      };
+    }
+    function resetTo(next) {
+      state = next;
+      lastAdded = null;
+      todayMode = "quests";
+      tab = "today";
+      $("confirmLine").hidden = true;
+    }
+
+    let state, tab = "today", todayMode = "quests", lastAdded = null, activeTemplate = null, editing = null;
+    if (typeof document !== "undefined") {
+      state = load();
+      save();
+      $("avatar").innerHTML = mascotSvg();
+      const favicon = document.createElement("link");
+      favicon.rel = "icon";
+      favicon.href = "data:image/svg+xml," + encodeURIComponent(mascotSvg());
+      document.head.appendChild(favicon);
+
+      document.addEventListener("click", (e) => {
+        if (e.target === $("sheetOverlay")) { closeSheet(); return; }
+        const tabBtn = e.target.closest("[data-tab]");
+        if (tabBtn) { tab = tabBtn.dataset.tab; render(); return; }
+        const btn = e.target.closest("[data-action]");
+        if (!btn) return;
+        const today = getToday();
+        const id = Number(btn.dataset.id);
+        const action = btn.dataset.action;
+        switch (action) {
+          case "complete": {
+            const result = completeQuest(state, id, today);
+            if (result) finishQuest(btn, result, true, today);
+            return;
+          }
+          case "check-in": {
+            const goal = state.goals.find((g) => g.id === id);
+            const result = checkInGoal(state, id, today);
+            if (result) finishQuest(btn, result, !!(goal && goal.days), today, result.finishesWeek ? "Weekly goal complete! 🎯" : "");
+            return;
+          }
+          case "claim": {
+            const card = btn.closest(".item");
+            if (!claimReward(state, id, today)) return;
+            const r = state.rewards.find((x) => x.id === id);
+            card.classList.add("claimed");
+            floatText(btn, "-" + r.cost + " 🪙");
+            burst(btn);
+            renderPlayer();
+            toast(r.emoji + " Enjoy your " + r.name + "!");
+            save();
+            setTimeout(render, 480);
+            return;
+          }
+          case "moment-next": nextMoment(); return;
+          case "use-template": {
+            const t = allTemplates()[Number(btn.dataset.index)];
+            if (t.text.includes("___")) { openTemplate(t); return; }
+            addParsed(Object.assign(parseEntry("x", today), { name: t.text, category: t.category, difficulty: t.difficulty }), today);
+            break;
+          }
+          case "close-template": closeTemplate(); return;
+          case "manage-templates": openTemplateManager(); return;
+          case "delete-template":
+            state.templates.splice(Number(btn.dataset.index), 1);
+            save(); render(); openTemplateManager();
+            return;
+          case "close-sheet": closeSheet(); return;
+          case "edit": openEdit(btn.dataset.kind, id); return;
+          case "save-as-template": {
+            const f = readEditForm();
+            if (f.name) { state.templates.push({ text: f.name, category: f.category, difficulty: f.difficulty }); save(); render(); toast("Template saved"); }
+            return;
+          }
+          case "delete-item":
+            if (editing.kind === "goal") state.goals = state.goals.filter((g) => g.id !== editing.id);
+            else state.quests = state.quests.filter((q) => q.id !== editing.id);
+            closeSheet();
+            break;
+          case "mode": todayMode = btn.dataset.mode; break;
+          case "undo-add":
+            if (lastAdded) {
+              if (lastAdded.kind === "goal") state.goals = state.goals.filter((g) => g.id !== lastAdded.id);
+              else state.quests = state.quests.filter((q) => q.id !== lastAdded.id);
+              lastAdded = null;
+              $("confirmLine").hidden = true;
+            }
+            break;
+          case "delete-reward": state.rewards = state.rewards.filter((r) => r.id !== id); break;
+          case "import-ics": $("icsFile").click(); return;
+          case "clear-events":
+            if (!confirm("Remove all calendar events from the schedule?")) return;
+            state.events = [];
+            break;
+          case "next-day": state.dayOffset += 1; toast("It's now " + short(getToday())); break;
+          case "reset-sample":
+            if (!confirm("Replace everything with the sample data?")) return;
+            resetTo(sampleState(dateStr(new Date())));
+            break;
+          case "reset-empty":
+            if (!confirm("Delete all quests, XP, rewards, and calendar events?")) return;
+            resetTo(newState());
+            break;
+        }
+        save();
+        render();
+      });
+
+      document.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const today = getToday();
+        if (e.target.id === "captureForm") {
+          const value = input().value;
+          if (!value.trim()) return;
+          addParsed(parseEntry(value, today), today);
+          input().value = "";
+          updatePreview();
+        } else if (e.target.id === "templateForm") {
+          const blank = $("templateBlank").value;
+          if (!blank.trim()) return;
+          addParsed(fromTemplate(activeTemplate, blank, today), today);
+          closeTemplate();
+        } else if (e.target.id === "editForm") {
+          const f = readEditForm();
+          if (!f.name) return;
+          applyEdit(state, editing.kind, editing.id, f, today);
+          closeSheet();
+        } else if (e.target.id === "newTemplateForm") {
+          state.templates.push({ text: $("tText").value.trim(), category: $("tCategory").value, difficulty: $("tDifficulty").value });
+          save(); render(); openTemplateManager();
+          return;
+        } else if (e.target.id === "rewardForm") {
+          addReward(state, $("rName").value.trim(), Number($("rCost").value));
+        }
+        save();
+        render();
+      });
+
+      document.addEventListener("input", (e) => { if (e.target.id === "captureInput") updatePreview(); });
+      document.addEventListener("change", (e) => {
+        if (e.target.id === "themeSelect") { state.theme = e.target.value; save(); render(); }
+        if (e.target.id === "eRepeat") $("eDays").hidden = e.target.value !== "days";
+        if (e.target.id === "icsFile" && e.target.files[0]) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const today = getToday();
+            const events = parseIcs(String(reader.result), today);
+            mergeEvents(state, events);
+            const saved = save();
+            render();
+            const todayCount = events.filter((ev) => occursOn(ev, today)).length;
+            toast(!events.length ? "No upcoming events found in that file" : saved
+              ? "Imported " + events.length + " events (" + todayCount + " today)"
+              : "Imported, but the calendar was too big to save for next time");
+          };
+          reader.onerror = () => toast("Couldn't read that file");
+          reader.readAsText(e.target.files[0]);
+          e.target.value = "";
+        }
+      });
+
+      // Typing anywhere goes straight to the quick-add bar, on any tab.
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          if (!$("sheetOverlay").hidden) closeSheet();
+          else if (!$("templateForm").hidden) closeTemplate();
+          return;
+        }
+        if (modalOpen() || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1 || e.key === " ") return;
+        if (e.target.matches("input, select, textarea")) return;
+        if (tab !== "today") { tab = "today"; render(); }
+        input().focus();
+      });
+      window.addEventListener("focus", focusCapture);
+      // A mouse wheel scrolls the template row sideways.
+      $("chips").addEventListener("wheel", (e) => {
+        if (e.deltaY) { $("chips").scrollLeft += e.deltaY; e.preventDefault(); }
+      }, { passive: false });
+
+      render();
+    }
+  </script>
+</body>
+</html>

@@ -42,4 +42,10 @@ git clone https://github.com/building-with-ai-f26/<your-repo-name>.git
 cd <your-repo-name>
 ```
 
+### Run the DailyQuest prototype
+
+No install, server, or API keys are needed. Double-click [`app/index.html`](./app/index.html) to open it in your browser, or run `start app/index.html` (Windows) or `open app/index.html` (Mac) from the repo folder.
+
+Your data saves in that browser's local storage on this computer. To demo rollover and streaks, use **Simulate next day** on the Profile tab, where **Reload sample data** and **Start empty** also reset the demo.
+
 If your app needs API keys, use a local environment file such as `.env`. Keep private keys out of source code, browser code, screenshots, and commits. The template ignores `.env`; `.env.example` contains placeholders only.
