@@ -158,11 +158,12 @@
     <section id="live-demo">
       <h2>Product Showcase (Prototype / Live App / 2-Min Video)</h2>
       <p>
-        <strong>Current Status:</strong> [Build 1: local prototype / Builds 2–4: local app / Build 5: cloud app]<br />
-        <strong>Demo:</strong> [Add a screenshot or GIF now; add the live cloud app URL in Build 5.]
+        <strong>Current Status:</strong> Build 1: local prototype<br />
+        <strong>Demo:</strong> Screenshot below; the live cloud app URL comes in Build 5.
       </p>
+      <img src="prototype.png" alt="DailyQuest prototype Week tab: a player header with level, XP bar, coins, and streak above weekly goals for Exercise (0 of 3) and Call home (0 of 1)." style="display:block; max-width:100%; height:auto; border:1px solid var(--border); border-radius:8px; margin-bottom:8px;" />
       <p class="meta">
-        Ask your coding agent to embed a screenshot or GIF of your local prototype for Build 1. Keep this evidence current, then add your cloud app link and two-minute video in Build 5.
+        The Week tab of the local prototype, shown with sample data.
       </p>
     </section>
 
@@ -235,10 +236,10 @@
       <div class="log-entry">
         <h3>Build 1 · Intent.md & Throwaway Prototype (Due Nov 9)</h3>
         <ul>
-          <li><strong>What shipped:</strong> [What you actually built; link your local prototype screenshot or GIF above.]</li>
-          <li><strong>Things learned with AI:</strong> [What you learned from AI practice and Terminus Episodes 1 and 2.]</li>
-          <li><strong>What broke / changed in PRD:</strong> [Fill in]</li>
-          <li><strong>Cost & time this week:</strong> $[0.00] · [0] hours</li>
+          <li><strong>What shipped:</strong> A local prototype that opens by double-clicking, with no install (screenshot above). You can type a quest in plain English, or use a template, and it sets the date, time, category and difficulty. Quests earn XP, levels, streaks and coins to spend in a reward shop. It also has weekly goals, a daily schedule view, and .ics calendar import.</li>
+          <li><strong>Things learned with AI:</strong> How to use Claude Code, how to better communicate with Claude about what I want to build, and how to give better instructions.</li>
+          <li><strong>What broke / changed in PRD:</strong> The first version felt like just another to-do list, so I replaced the form with type-to-add and then rebuilt it as an RPG quest board. Weekly goals like "exercise 3 times a week" became their own section instead of daily tasks. PRD non-goal #1 changed from no calendar sync to .ics import only. I wanted to add Google Calendar integration, but realized it belongs in a later build. XP was split into lifetime XP for levels and spendable coins, so claiming a reward never lowers your level.</li>
+          <li><strong>Cost & time this week:</strong> $0 (Claude subscription) · 6 hours</li>
         </ul>
       </div>
 
