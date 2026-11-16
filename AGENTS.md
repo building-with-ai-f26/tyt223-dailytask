@@ -3,15 +3,37 @@
 > Give this file to your coding agent and check that it is using these instructions. Keep the stack, commands, and ground rules current.
 
 ## 1. Project Overview
-- **What this repo builds:** [1–2 sentence summary]
-- **Primary user & core workflow:** [See the living PRD in `docs/index.html`]
-- **Tech stack:** [e.g., Python 3.12 / FastAPI / Next.js / SQLite / OpenRouter API]
+- **What this repo builds:** DailyQuest, a gamified task planner for busy MBA students. Users type tasks in plain English, see only today's quests, and earn XP, levels, streaks and real-life rewards for finishing them.
+- **Primary user & core workflow:** First-year NYU Stern MBA students checking in on their phones. Full PRD in `docs/index.html`; durable product facts in `PRODUCT.md`.
+- **Tech stack:** One static HTML file with plain CSS and JavaScript (no framework, no build step, no packages). Data in the browser's `localStorage`. Hosted free on GitHub Pages from the `docs/` folder. External calls from the browser: Nager.Date public holidays API (free, no key), PostHog analytics, Google Fonts. No AI model and no server.
+- **Live URLs:** Product Page https://building-with-ai-f26.github.io/tyt223-dailytask/ · App https://building-with-ai-f26.github.io/tyt223-dailytask/app/
+- **Firm constraint:** must stay free to run ($0). See `PRODUCT.md`.
+
+### Project structure
+| Path | What it is |
+| --- | --- |
+| `docs/app/index.html` | The whole app: styles, the sample data, the typed-task parser, game logic, `.ics` import, holiday import, rendering and PostHog events, in that order inside one `<script>` |
+| `docs/index.html` | Public Product Page: pitch, living PRD and weekly build log. Has its own PostHog snippet |
+| `docs/prototype.png` | Screenshot used on the Product Page and README |
+| `PRODUCT.md` | Product context for design work (users, positioning, constraints); read by the Impeccable plugin |
+| `.impeccable/config.json` | Impeccable design-hook settings (`config.local.json` is per-developer and ignored) |
+| `README.md` | Public project overview and how to try it |
+| `Intent.md`, `Plan.md`, `journal/`, `tests/README.md`, `SPONSOR_MEMO.md` | Course templates; mostly unfilled |
+
+### How the app code is organized (`docs/app/index.html`)
+- **Game numbers** (`XP_BY_DIFFICULTY`, bonuses, `XP_PER_LEVEL`) sit at the top of the script; several are placeholders.
+- **Pure logic** (`parseEntry`, `parseIcs`, `holidaysToEvents`, `completeQuest`, `checkInGoal`, `claimReward`, `applyEdit` and others) never touches the page, so it can be tested in Node.
+- **Page code** starts at `// ---------- Page code ----------`: `render*` functions build each tab, and one `click`, `submit` and `change` listener each route actions by `data-action`.
+- **Storage key** is `dailyquest.v2`. Changing the saved data shape needs a migration, or users lose their data.
+- **Analytics:** `track(event, props)` sends PostHog events. Never send task or reward names. Session replay masks all text in the app.
 
 ## 2. Commands
 - **Install dependencies:** None. The prototype is one static page with no packages.
-- **Run locally:** Double-click `docs/app/index.html`, or run `start docs/app/index.html` (Windows) / `open docs/app/index.html` (Mac). GitHub Pages publishes it at `/app/` on the Product Page site. Data is stored in the browser's `localStorage`.
-- **Run deterministic tests:** `[e.g., pytest / npm test]`
-- **Run model evals:** `[e.g., python tests/eval.py]`
+- **Run locally:** Double-click `docs/app/index.html`, or run `start docs/app/index.html` (Windows) / `open docs/app/index.html` (Mac). It opens with sample data. Holiday import, PostHog and fonts need internet; everything else works offline.
+- **Deploy:** Push to `main`. GitHub Pages republishes `docs/` in about a minute; browsers may cache the old page for up to 10 minutes.
+- **Reset the demo:** Profile tab → **Reload sample data** or **Start empty**. **Simulate next day** tests rollover and streaks.
+- **Run deterministic tests:** No automated test suite is committed yet. Before pushing, manually check: add a typed quest (e.g. `exercise 3 times a week`, `coffee chat at 3pm`), use a template chip, complete a quest, claim a reward, import a `.ics` file, tap **Add US holidays** in Schedule, and check a phone-width window (about 390px).
+- **Run model evals:** Not applicable. The app has no AI model.
 
 ## 3. Non-Negotiable Engineering Rules
 1. **Plan before coding:** Before touching multiple files, propose a brief plan and wait for approval.

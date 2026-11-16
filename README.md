@@ -23,6 +23,7 @@ People juggling busy lives end up managing them across too many apps. MBA studen
 - **Week view:** weekly goals, repeating quests, what's coming up, and a summary of the week.
 - **Schedule view:** a timeline of today's timed quests and calendar events, with untimed quests below.
 - **Calendar import:** load a `.ics` file exported from Google Calendar. Events show as read-only and earn no XP.
+- **Public holidays:** one tap adds upcoming US (and New York) holidays to your schedule and week.
 
 ### Things you can type
 
@@ -52,7 +53,7 @@ The app opens with sample quests, rewards, and calendar events. On the **Profile
 
 ## How it's built
 
-One HTML file with plain CSS and JavaScript and no packages. Your data stays in your browser's local storage, and `.ics` files are read in the browser without being uploaded. The only network request is for Google Fonts, and the app uses system fonts if those can't load. Typed quests are understood by fixed rules, not AI.
+One HTML file with plain CSS and JavaScript and no packages. Your data stays in your browser's local storage, and `.ics` files are read in the browser without being uploaded. The app calls the free [Nager.Date](https://date.nager.at) public holidays API (no key) when you tap **Add US holidays**, loads Google Fonts (falling back to system fonts), and sends anonymous usage events and session replays to PostHog with all typed text hidden. Typed quests are understood by fixed rules, not AI.
 
 ## Current limits
 

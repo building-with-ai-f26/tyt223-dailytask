@@ -17,124 +17,155 @@
     })
 </script>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet" />
   <style>
+    /* DailyQuest brand: the same parchment, purple and game fonts as the app. */
     :root {
-      --bg: #fafafa;
-      --card: #ffffff;
-      --text: #111827;
-      --muted: #4b5563;
-      --border: #e5e7eb;
-      --accent: #1d63dc;
-      --tag-bg: #eff6ff;
-      --tag-text: #1e40af;
+      --bg: #f8eedb;
+      --card: #fffdf8;
+      --text: #2d2118;
+      --body: #3d2f24;
+      --muted: #6b5843;
+      --border: #ead9b8;
+      --accent: #6d3bd8;
+      --accent-dark: #5a2fc2;
+      --accent-soft: #eee3ff;
+      --display: "Baloo 2", "Trebuchet MS", "Segoe UI", sans-serif;
+      --sans: "Nunito", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
     }
     * { box-sizing: border-box; }
+    html { scrollbar-color: var(--border) transparent; }
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "DM Sans", "Segoe UI", Roboto, sans-serif;
+      font-family: var(--sans);
+      font-weight: 500;
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
     }
+    ::selection { background: var(--accent-soft); color: var(--text); }
+    a { color: var(--accent-dark); text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
+    a:hover { color: var(--accent); }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+    img { max-width: 100%; }
     .container {
       max-width: 820px;
       margin: 0 auto;
-      padding: 48px 24px 80px;
+      padding: 56px 20px 88px;
     }
     header {
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 28px;
-      margin-bottom: 32px;
+      padding-bottom: 36px;
+      margin-bottom: 36px;
+      border-bottom: 2px solid var(--border);
     }
-    .eyebrow {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      background: var(--tag-bg);
-      color: var(--tag-text);
-      padding: 4px 10px;
-      border-radius: 999px;
-      margin-bottom: 12px;
+    .title-row { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .mascot {
+      flex: none; width: 64px; height: 64px; padding: 8px; border-radius: 18px;
+      background: linear-gradient(135deg, var(--accent), #8b45d9);
+      box-shadow: 0 6px 14px rgba(77, 40, 160, .25);
     }
+    h1, h2, h3 { font-family: var(--display); color: var(--text); text-wrap: balance; }
     h1 {
-      font-size: 36px;
-      line-height: 1.15;
-      margin: 0 0 12px;
+      font-size: clamp(40px, 7vw, 56px);
+      line-height: 1;
+      margin: 0;
       letter-spacing: -0.02em;
     }
     .tagline {
-      font-size: 19px;
-      color: var(--muted);
-      margin: 0 0 20px;
+      font-size: clamp(18px, 2.4vw, 21px);
+      line-height: 1.5;
+      color: var(--body);
+      max-width: 40ch;
+      margin: 0 0 14px;
     }
     .cta-row {
       display: flex;
-      gap: 12px;
       flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 22px;
+      margin-top: 24px;
     }
     .btn {
       display: inline-block;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 15px;
+      padding: 13px 24px;
+      border-radius: 14px;
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 18px;
+      line-height: 1.2;
       text-decoration: none;
       background: var(--accent);
       color: #fff;
+      box-shadow: 0 4px 0 #4a2596, 0 8px 18px rgba(77, 40, 160, .22);
+      transition: transform .15s ease-out, box-shadow .15s ease-out;
     }
+    .btn:hover { color: #fff; transform: translateY(-1px); box-shadow: 0 5px 0 #4a2596, 0 10px 20px rgba(77, 40, 160, .26); }
+    .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #4a2596, 0 4px 10px rgba(77, 40, 160, .2); }
     .btn-secondary {
-      background: var(--card);
-      color: var(--text);
-      border: 1px solid var(--border);
+      padding: 4px 0;
+      font-family: var(--sans);
+      font-size: 16px;
+      font-weight: 800;
+      background: none;
+      color: var(--accent-dark);
+      box-shadow: none;
+      text-decoration: underline;
+      text-underline-offset: 4px;
     }
+    .btn-secondary:hover { color: var(--accent); transform: none; box-shadow: none; }
+    .privacy { margin: 22px 0 0; max-width: 62ch; }
     section {
       background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px 28px;
-      margin-bottom: 24px;
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 32px;
+      margin-bottom: 28px;
+      box-shadow: 0 6px 18px rgba(92, 64, 30, .06);
     }
+    @media (max-width: 560px) { section { padding: 24px 20px; } }
     h2 {
-      font-size: 20px;
+      font-size: clamp(22px, 3.4vw, 27px);
+      line-height: 1.2;
       margin: 0 0 14px;
-      letter-spacing: -0.01em;
     }
     h3 {
-      font-size: 16px;
-      margin: 18px 0 6px;
+      font-size: 19px;
+      line-height: 1.3;
+      margin: 30px 0 8px;
     }
     p, ul {
       margin: 0 0 12px;
-      color: #1f2937;
+      color: var(--body);
+      max-width: 68ch;
     }
+    li { margin-bottom: 6px; }
+    li > ul { margin-top: 6px; }
+    strong { color: var(--text); font-weight: 800; }
+    code { font-size: .9em; background: var(--accent-soft); padding: 1px 6px; border-radius: 6px; }
+    .shot { display: block; height: auto; border: 2px solid var(--border); border-radius: 14px; margin: 16px 0 8px; }
+    /* Unit economics: a plain two-column list instead of boxes inside the box. */
     .grid-2 {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
+      column-gap: 32px;
+      border-top: 2px solid var(--border);
     }
-    .stat-box {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 16px;
-      background: var(--bg);
-    }
-    .stat-label {
-      font-size: 12px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
+    .stat-box { padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .stat-label { font-size: 14px; font-weight: 700; color: var(--muted); }
     .stat-value {
-      font-size: 20px;
-      font-weight: 700;
-      margin-top: 4px;
+      font-family: var(--display);
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
     }
     .log-entry {
       border-top: 1px solid var(--border);
-      padding-top: 16px;
-      margin-top: 16px;
+      padding-top: 6px;
+      margin-top: 22px;
     }
     .log-entry:first-of-type {
       border-top: none;
@@ -142,38 +173,47 @@
       margin-top: 0;
     }
     .meta {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--muted);
     }
+    @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
   </style>
 </head>
 <body>
   <div class="container">
     <!-- HERO / PRODUCT PITCH -->
     <header>
-      <span class="eyebrow">NYU Stern · Building with AI · Fall 2026</span>
-      <h1>DailyQuest</h1>
+      <div class="title-row">
+        <svg class="mascot" viewBox="0 0 13 12" shape-rendering="crispEdges" aria-hidden="true"><rect x="3" y="0" width="1" height="1" fill="#ffd24a"/><rect x="6" y="0" width="1" height="1" fill="#ffd24a"/><rect x="9" y="0" width="1" height="1" fill="#ffd24a"/><rect x="3" y="1" width="1" height="1" fill="#ffd24a"/><rect x="4" y="1" width="1" height="1" fill="#ffd24a"/><rect x="5" y="1" width="1" height="1" fill="#ffd24a"/><rect x="6" y="1" width="1" height="1" fill="#ffd24a"/><rect x="7" y="1" width="1" height="1" fill="#ffd24a"/><rect x="8" y="1" width="1" height="1" fill="#ffd24a"/><rect x="9" y="1" width="1" height="1" fill="#ffd24a"/><rect x="3" y="2" width="1" height="1" fill="#ffd24a"/><rect x="4" y="2" width="1" height="1" fill="#e8505b"/><rect x="5" y="2" width="1" height="1" fill="#ffd24a"/><rect x="6" y="2" width="1" height="1" fill="#ffd24a"/><rect x="7" y="2" width="1" height="1" fill="#ffd24a"/><rect x="8" y="2" width="1" height="1" fill="#e8505b"/><rect x="9" y="2" width="1" height="1" fill="#ffd24a"/><rect x="3" y="3" width="1" height="1" fill="#3a2a4d"/><rect x="4" y="3" width="1" height="1" fill="#3a2a4d"/><rect x="5" y="3" width="1" height="1" fill="#3a2a4d"/><rect x="6" y="3" width="1" height="1" fill="#3a2a4d"/><rect x="7" y="3" width="1" height="1" fill="#3a2a4d"/><rect x="8" y="3" width="1" height="1" fill="#3a2a4d"/><rect x="9" y="3" width="1" height="1" fill="#3a2a4d"/><rect x="2" y="4" width="1" height="1" fill="#3a2a4d"/><rect x="3" y="4" width="1" height="1" fill="#6fdc8c"/><rect x="4" y="4" width="1" height="1" fill="#6fdc8c"/><rect x="5" y="4" width="1" height="1" fill="#6fdc8c"/><rect x="6" y="4" width="1" height="1" fill="#6fdc8c"/><rect x="7" y="4" width="1" height="1" fill="#6fdc8c"/><rect x="8" y="4" width="1" height="1" fill="#6fdc8c"/><rect x="9" y="4" width="1" height="1" fill="#6fdc8c"/><rect x="10" y="4" width="1" height="1" fill="#3a2a4d"/><rect x="1" y="5" width="1" height="1" fill="#3a2a4d"/><rect x="2" y="5" width="1" height="1" fill="#6fdc8c"/><rect x="3" y="5" width="1" height="1" fill="#6fdc8c"/><rect x="4" y="5" width="1" height="1" fill="#6fdc8c"/><rect x="5" y="5" width="1" height="1" fill="#6fdc8c"/><rect x="6" y="5" width="1" height="1" fill="#6fdc8c"/><rect x="7" y="5" width="1" height="1" fill="#6fdc8c"/><rect x="8" y="5" width="1" height="1" fill="#6fdc8c"/><rect x="9" y="5" width="1" height="1" fill="#6fdc8c"/><rect x="10" y="5" width="1" height="1" fill="#6fdc8c"/><rect x="11" y="5" width="1" height="1" fill="#3a2a4d"/><rect x="1" y="6" width="1" height="1" fill="#3a2a4d"/><rect x="2" y="6" width="1" height="1" fill="#6fdc8c"/><rect x="3" y="6" width="1" height="1" fill="#3a2a4d"/><rect x="4" y="6" width="1" height="1" fill="#6fdc8c"/><rect x="5" y="6" width="1" height="1" fill="#6fdc8c"/><rect x="6" y="6" width="1" height="1" fill="#6fdc8c"/><rect x="7" y="6" width="1" height="1" fill="#6fdc8c"/><rect x="8" y="6" width="1" height="1" fill="#6fdc8c"/><rect x="9" y="6" width="1" height="1" fill="#3a2a4d"/><rect x="10" y="6" width="1" height="1" fill="#6fdc8c"/><rect x="11" y="6" width="1" height="1" fill="#3a2a4d"/><rect x="1" y="7" width="1" height="1" fill="#3a2a4d"/><rect x="2" y="7" width="1" height="1" fill="#6fdc8c"/><rect x="3" y="7" width="1" height="1" fill="#3a2a4d"/><rect x="4" y="7" width="1" height="1" fill="#6fdc8c"/><rect x="5" y="7" width="1" height="1" fill="#6fdc8c"/><rect x="6" y="7" width="1" height="1" fill="#6fdc8c"/><rect x="7" y="7" width="1" height="1" fill="#6fdc8c"/><rect x="8" y="7" width="1" height="1" fill="#6fdc8c"/><rect x="9" y="7" width="1" height="1" fill="#3a2a4d"/><rect x="10" y="7" width="1" height="1" fill="#6fdc8c"/><rect x="11" y="7" width="1" height="1" fill="#3a2a4d"/><rect x="1" y="8" width="1" height="1" fill="#3a2a4d"/><rect x="2" y="8" width="1" height="1" fill="#ff8fb1"/><rect x="3" y="8" width="1" height="1" fill="#6fdc8c"/><rect x="4" y="8" width="1" height="1" fill="#6fdc8c"/><rect x="5" y="8" width="1" height="1" fill="#3a2a4d"/><rect x="6" y="8" width="1" height="1" fill="#3a2a4d"/><rect x="7" y="8" width="1" height="1" fill="#3a2a4d"/><rect x="8" y="8" width="1" height="1" fill="#6fdc8c"/><rect x="9" y="8" width="1" height="1" fill="#6fdc8c"/><rect x="10" y="8" width="1" height="1" fill="#ff8fb1"/><rect x="11" y="8" width="1" height="1" fill="#3a2a4d"/><rect x="1" y="9" width="1" height="1" fill="#3a2a4d"/><rect x="2" y="9" width="1" height="1" fill="#6fdc8c"/><rect x="3" y="9" width="1" height="1" fill="#6fdc8c"/><rect x="4" y="9" width="1" height="1" fill="#6fdc8c"/><rect x="5" y="9" width="1" height="1" fill="#6fdc8c"/><rect x="6" y="9" width="1" height="1" fill="#6fdc8c"/><rect x="7" y="9" width="1" height="1" fill="#6fdc8c"/><rect x="8" y="9" width="1" height="1" fill="#6fdc8c"/><rect x="9" y="9" width="1" height="1" fill="#6fdc8c"/><rect x="10" y="9" width="1" height="1" fill="#6fdc8c"/><rect x="11" y="9" width="1" height="1" fill="#3a2a4d"/><rect x="0" y="10" width="1" height="1" fill="#3a2a4d"/><rect x="1" y="10" width="1" height="1" fill="#6fdc8c"/><rect x="2" y="10" width="1" height="1" fill="#6fdc8c"/><rect x="3" y="10" width="1" height="1" fill="#6fdc8c"/><rect x="4" y="10" width="1" height="1" fill="#6fdc8c"/><rect x="5" y="10" width="1" height="1" fill="#6fdc8c"/><rect x="6" y="10" width="1" height="1" fill="#6fdc8c"/><rect x="7" y="10" width="1" height="1" fill="#6fdc8c"/><rect x="8" y="10" width="1" height="1" fill="#6fdc8c"/><rect x="9" y="10" width="1" height="1" fill="#6fdc8c"/><rect x="10" y="10" width="1" height="1" fill="#6fdc8c"/><rect x="11" y="10" width="1" height="1" fill="#6fdc8c"/><rect x="12" y="10" width="1" height="1" fill="#3a2a4d"/><rect x="1" y="11" width="1" height="1" fill="#3a2a4d"/><rect x="2" y="11" width="1" height="1" fill="#3a2a4d"/><rect x="3" y="11" width="1" height="1" fill="#3a2a4d"/><rect x="4" y="11" width="1" height="1" fill="#3a2a4d"/><rect x="5" y="11" width="1" height="1" fill="#3a2a4d"/><rect x="6" y="11" width="1" height="1" fill="#3a2a4d"/><rect x="7" y="11" width="1" height="1" fill="#3a2a4d"/><rect x="8" y="11" width="1" height="1" fill="#3a2a4d"/><rect x="9" y="11" width="1" height="1" fill="#3a2a4d"/><rect x="10" y="11" width="1" height="1" fill="#3a2a4d"/><rect x="11" y="11" width="1" height="1" fill="#3a2a4d"/></svg>
+        <h1>DailyQuest</h1>
+      </div>
       <p class="tagline">A gamified task planner that helps busy MBA students plan their week once, then open the app each day to see exactly what to do and earn rewards for finishing it.</p>
-      <p class="meta">Builder: Sabrina Tang (<a href="https://github.com/sabtyt">@sabtyt</a>) · Pod 13 · <a href="https://building-with-ai-f26.github.io/tyt223-dailytask/">Product Page</a></p>
+      <p class="meta">Built by Sabrina Tang (<a href="https://github.com/sabtyt">@sabtyt</a>) · Pod 13 · Building with AI, NYU Stern, Fall 2026</p>
       <div class="cta-row">
         <a class="btn" href="app/" onclick="window.posthog && posthog.capture('clicked_try_product', { location: 'hero' }, { send_instantly: true, transport: 'sendBeacon' })">See the Product →</a>
         <a class="btn btn-secondary" href="#prd">Read the Living PRD</a>
         <a class="btn btn-secondary" href="#build-log">Weekly Build Log</a>
       </div>
-      <p class="meta">This page and the app use PostHog to record visits, clicks and session replays so I can improve DailyQuest. Text typed in the app is hidden from recordings.</p>
+      <p class="meta privacy">This page and the app use PostHog to record visits, clicks and session replays so I can improve DailyQuest. Text typed in the app is hidden from recordings.</p>
     </header>
 
     <!-- DEMO / SCREENSHOT / VIDEO SHOWCASE -->
     <section id="live-demo">
       <h2>Product Showcase (Prototype / Live App / 2-Min Video)</h2>
       <p>
-        <strong>Current Status:</strong> Build 1: prototype, hosted on GitHub Pages<br />
+        <strong>Current Status:</strong> Build 2: working app with live holiday import and PostHog analytics, hosted on GitHub Pages<br />
         <strong>Demo:</strong> <a href="app/" onclick="window.posthog && posthog.capture('clicked_try_product', { location: 'showcase' }, { send_instantly: true, transport: 'sendBeacon' })">Try DailyQuest</a> on your phone or laptop, with no sign-up. It opens with sample data.
       </p>
-      <img src="prototype.png" alt="DailyQuest prototype Week tab: a player header with level, XP bar, coins, and streak above weekly goals for Exercise (0 of 3) and Call home (0 of 1)." style="display:block; max-width:100%; height:auto; border:1px solid var(--border); border-radius:8px; margin-bottom:8px;" />
+      <img src="prototype.png" alt="DailyQuest prototype Week tab: a player header with level, XP bar, coins, and streak above weekly goals for Exercise (0 of 3) and Call home (0 of 1)." class="shot" />
       <p class="meta">
         The Week tab of the prototype, shown with sample data.
       </p>
+
+      <h3>Build 2 in action: importing public holidays</h3>
+      <p>One tap on <strong>Add US holidays</strong> in the Schedule calls the free Nager.Date public holidays API straight from the browser and adds the results to the schedule and week. Captured on my laptop.</p>
+      <img src="holiday.png" alt="DailyQuest Schedule view after tapping Update US holidays: the day's timeline of classes and quests, with a confirmation message reading Added 14 US holidays. Next: Thanksgiving Day, Thu, Nov 26." class="shot" />
+      <img src="holiday2.png" alt="DailyQuest Week tab listing upcoming holidays: Thanksgiving Day on Thu, Nov 26, Christmas Day on Fri, Dec 25, and New Year's Day on Fri, Jan 1." class="shot" />
+      <p class="meta">Top: the import confirmation on the Schedule. Bottom: the holidays waiting on the Week tab.</p>
     </section>
 
     <!-- LIVING PRD (Updated every week!) -->
@@ -190,7 +230,8 @@
       <ul>
         <li><strong>In Scope (Core Workflow):</strong>
           <ul>
-            <li><strong>Add tasks anytime, or plan the week at once:</strong> quick-add a task with a name, category (Class / Recruiting / Events / Personal), day or due date, and an optional Easy / Medium / Hard difficulty (default Medium).</li>
+            <li><strong>Add tasks anytime, or plan the week at once:</strong> type a task in plain English, such as "coffee chat at 3pm", "thank-you note by friday" or "pset tomorrow hard", and DailyQuest sets the date, time, category (Class / Recruiting / Events / Personal) and Easy / Medium / Hard difficulty (default Medium). No form to fill in.</li>
+            <li><strong>Weekly goals and repeating quests:</strong> "exercise 3 times a week" becomes a weekly goal with a progress tracker on the Week tab instead of a daily task; "meditate every day" or "yoga every mon and wed" repeats on those days.</li>
             <li><strong>Open the app daily:</strong> the home screen shows only today's quests, with overdue items flagged at the top.</li>
             <li><strong>Complete quests and earn rewards:</strong>
               <ul>
@@ -205,6 +246,7 @@
             <li><strong>Quick quest templates:</strong> tap a chip for a common MBA task (for example, "Send thank-you note to ___"), fill in the blank, and press Enter. Category and difficulty are pre-set. Users can save their own templates and mark any task as repeating (daily, or weekly on chosen days).</li>
             <li><strong>Schedule view:</strong> tasks can have an optional start time. A vertical timeline for today shows timed quests and calendar events in order, with untimed quests listed below as "Anytime quests."</li>
             <li><strong>Calendar import (.ics):</strong> read a .ics file exported from Google Calendar, entirely in the browser, and show those events on the timeline as read-only events that earn no XP.</li>
+            <li><strong>Public holidays (Build 2):</strong> one tap on <em>Add US holidays</em> calls a free public holidays API and adds upcoming US and New York holidays to the schedule and week, so students can plan around days off.</li>
           </ul>
         </li>
         <li><strong>Out of Scope #1: No live Google Calendar sync in v1.</strong> .ics import only; live sync is planned for a later build.</li>
@@ -213,8 +255,10 @@
       </ul>
 
       <h3>3. How It Works Under the Hood & Riskiest Assumption (Week 2+)</h3>
-      <p><strong>Riskiest Assumption:</strong> [What is the #1 technical or user risk that could sink this product?]</p>
-      <p><strong>Simple Architecture:</strong> [User Input] → [Your App / Server] → [AI Model / Tool] → [Output]</p>
+      <p><strong>Riskiest Assumption:</strong> DailyQuest only becomes students' one place if it can pull in what already lives elsewhere (calendars, holidays, and later Google Calendar) reliably and at $0, with no server. If it can't, it's just one more app to check.</p>
+      <p><strong>How Build 2 tests it:</strong> the holiday import is the app's first live call to an outside service, made straight from the browser with no server or key. PostHog records each <code>holidays_imported</code> and <code>holidays_failed</code> event, so I can see how often it works for real users and whether people who import come back.</p>
+      <p><strong>Simple Architecture:</strong> [You type or tap] → [DailyQuest app in your browser: plain-English rules + game logic] → [Saved in your browser's local storage] → [Today's Quests, Week, Shop]. Optional inputs: a Google Calendar <code>.ics</code> file read in the browser, and the free Nager.Date holidays API. PostHog receives anonymous usage events with typed text hidden. GitHub Pages hosts it for free. No AI model and no server.</p>
+      <p><strong>Cost per run:</strong> $0. Hosting, the holidays API and the PostHog free tier cost nothing, and there are no AI calls.</p>
 
       <h3>4. Unit Economics & Analytics Snapshot (Updated Weekly)</h3>
       <div class="grid-2">
@@ -228,7 +272,7 @@
         </div>
         <div class="stat-box">
           <div class="stat-label">User Evidence (Analytics from Build 2)</div>
-          <div class="stat-value">[Not yet measured]</div>
+          <div class="stat-value">Tracking live in PostHog; first numbers in Build 3</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">Sponsor Call (Week 6)</div>
@@ -255,9 +299,10 @@
       <div class="log-entry">
         <h3>Build 2 · Smallest Local Version & PostHog (Due Nov 16)</h3>
         <ul>
-          <li><strong>What shipped:</strong> [Local working slice, PostHog verified on this page and the local app, PRD v2, and local setup in AGENTS.md]</li>
-          <li><strong>What broke / changed in PRD:</strong> [Fill in]</li>
-          <li><strong>Cost & time this week:</strong> $[0.00] · [0] hours</li>
+          <li><strong>What shipped:</strong> A live API call: <em>Add US holidays</em> pulls upcoming US and New York holidays from the free Nager.Date API straight from the browser and adds them to the schedule and week (screenshots above). PostHog now runs on this page and in the app, with custom events (quest added, quest completed, reward claimed, holidays imported or failed) and session replay that hides typed text. PRD v2 adds the biggest risk, how this build tests it, the architecture and cost per run. AGENTS.md now documents the project structure, setup and checks. I also polished the app and this page for readability on phones.</li>
+          <li><strong>Lessons:</strong> Fast clicks can lose events: my "See the Product" click was sometimes lost because the page changed before PostHog sent it, so key events now send immediately. And check what a feature really requires before building it: I wanted a login so tasks wouldn't get mixed up, but they were already separate per browser. A login would only add cross-device sync at the cost of a backend, so I postponed it until users ask for it.</li>
+          <li><strong>What broke / changed in PRD:</strong> PostHog showed no activity at first, because my browser blocked it and served a cached page. The fix was testing in an incognito window, and confirming events reached PostHog. Build 2 required an API call while DailyQuest must stay free, so I chose a free public holidays API instead of a paid AI key. The PRD's core workflow now describes typing tasks in plain English, weekly goals and the holiday import, and the riskiest assumption is that DailyQuest can bring in outside data reliably at $0 with no server.</li>
+          <li><strong>Cost & time this week:</strong> $0 · 4 hours</li>
         </ul>
       </div>
 
