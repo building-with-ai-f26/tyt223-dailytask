@@ -21,17 +21,17 @@
   <style>
     :root {
       --bg: #f4e3c1; --bg-dot: #ead4a6; --card: #fffaf0; --ink: #3b2a1e; --muted: #75604a; --border: #e6cfa3;
-      --accent: #6d3bd8; --accent-2: #a85be8; --accent-soft: #eee3ff; --danger: #d0342c; --danger-soft: #ffe5e1; --gold: #f5b82e;
+      --accent: #6d3bd8; --accent-2: #8b45d9; --accent-soft: #eee3ff; --danger: #d0342c; --danger-soft: #ffe5e1; --gold: #f5b82e;
       --display: "Baloo 2", "Trebuchet MS", "Segoe UI", sans-serif;
       --body: "Nunito", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    [data-theme="ocean"]  { --bg: #cfe9f1; --bg-dot: #b6dbe6; --accent: #0b6f94; --accent-2: #21a6b8; --accent-soft: #d9f1f6; --border: #b9dde6; }
-    [data-theme="sunset"] { --bg: #fbdcc4; --bg-dot: #f5c8a6; --accent: #bd4a17; --accent-2: #ee8a34; --accent-soft: #ffe8d6; --border: #f0c8a6; }
-    [data-theme="forest"] { --bg: #d6e8c8; --bg-dot: #c2dbb1; --accent: #2b7236; --accent-2: #5da53f; --accent-soft: #e0f2dc; --border: #c3dcb4; }
-    .cat-class      { --c: #2373d9; --c-soft: #dcebff; }
+    [data-theme="ocean"]  { --bg: #cfe9f1; --bg-dot: #b6dbe6; --accent: #0b6f94; --accent-2: #137f93; --accent-soft: #d9f1f6; --border: #b9dde6; }
+    [data-theme="sunset"] { --bg: #fbdcc4; --bg-dot: #f5c8a6; --accent: #bd4a17; --accent-2: #b5501a; --accent-soft: #ffe8d6; --border: #f0c8a6; }
+    [data-theme="forest"] { --bg: #d6e8c8; --bg-dot: #c2dbb1; --accent: #2b7236; --accent-2: #3c7f2c; --accent-soft: #e0f2dc; --border: #c3dcb4; }
+    .cat-class      { --c: #1f66c2; --c-soft: #dcebff; }
     .cat-recruiting { --c: #7a45d6; --c-soft: #ece1ff; }
-    .cat-events     { --c: #d93a72; --c-soft: #ffe0ea; }
-    .cat-personal   { --c: #23874a; --c-soft: #dcf5e3; }
+    .cat-events     { --c: #b8255c; --c-soft: #ffe0ea; }
+    .cat-personal   { --c: #1c7a41; --c-soft: #dcf5e3; }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
     body {
@@ -46,7 +46,12 @@
     .muted { color: var(--muted); font-size: 13px; }
     button, input, select { font: inherit; color: inherit; }
     button { cursor: pointer; }
-    input, select { background: #fff; border: 2px solid var(--border); border-radius: 12px; padding: 9px 11px; min-width: 0; width: 100%; font-size: 15px; }
+    input, select { background: #fff; border: 2px solid var(--border); border-radius: 12px; padding: 9px 11px; min-width: 0; width: 100%; font-size: 15px; caret-color: var(--accent); }
+    html { scrollbar-color: var(--border) transparent; }
+    ::selection { background: var(--accent-soft); color: var(--ink); }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    input:focus-visible, select:focus-visible { outline: none; }
+    .counters, .reward, .price, .stat b, td, .pill { font-variant-numeric: tabular-nums; }
     input:focus, select:focus { outline: none; border-color: var(--accent); }
 
     /* Player header */
@@ -72,7 +77,10 @@
     #captureInput:focus { box-shadow: 0 0 0 4px var(--accent-soft); }
     .addbtn { flex: none; width: 54px; border: 0; border-radius: 16px; background: var(--accent); color: #fff; font-size: 26px; font-weight: 800; box-shadow: 0 3px 0 rgba(59,42,30,.25); }
     .preview, .confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 8px; font-size: 13px; overflow-wrap: anywhere; }
-    .chips { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+    .chips {
+      display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; padding: 0 36px 2px 0; scrollbar-width: none;
+      -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+    }
     .chips::-webkit-scrollbar { display: none; }
     .chip { flex: none; border: 0; border-radius: 99px; padding: 6px 12px; font-size: 13px; font-weight: 800; background: var(--c-soft, var(--card)); color: var(--c, var(--ink)); }
     .chip.new { background: var(--card); color: var(--accent); border: 2px dashed var(--accent); }
@@ -81,7 +89,7 @@
     .tpl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; background: var(--card); border: 2px solid var(--c); border-radius: 14px; padding: 10px 12px; margin-top: 10px; font-weight: 800; }
     .tpl input { flex: 1 1 110px; width: auto; background: #fff3b0; border-color: var(--gold); padding: 5px 9px; font-weight: 800; }
     .iconbtn { background: none; border: 0; font-size: 16px; padding: 2px 6px; color: var(--muted); }
-    .linkbtn { background: none; border: 0; padding: 2px 4px; color: var(--accent); font-weight: 800; font-size: 13px; text-decoration: underline; }
+    .linkbtn { background: none; border: 0; padding: 2px 4px; color: var(--accent); font-weight: 800; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
 
     /* Board */
     .board-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin: 16px 0 8px; }
@@ -99,7 +107,7 @@
     .qcard.done .qname { text-decoration: line-through; }
     .qcard.leaving { animation: leave .38s ease-in forwards; pointer-events: none; }
     @keyframes leave { 30% { transform: scale(1.03); } 100% { transform: translateX(70px) scale(.8); opacity: 0; } }
-    .circle { flex: none; width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--c); background: #fff; color: var(--c); font-weight: 800; font-size: 18px; line-height: 1; padding: 0; }
+    .circle { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--c); background: #fff; color: var(--c); font-weight: 800; font-size: 18px; line-height: 1; padding: 0; }
     .circle:hover:not(:disabled) { background: var(--c-soft); }
     .circle:disabled { background: var(--c); color: #fff; cursor: default; }
     .qbody { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 0; overflow-wrap: anywhere; }
@@ -118,6 +126,12 @@
     /* Schedule */
     .tl-row { display: grid; grid-template-columns: 66px 16px 1fr; gap: 6px; }
     .tl-time { font-family: var(--display); font-weight: 800; font-size: 13px; text-align: right; padding-top: 13px; }
+    @media (max-width: 480px) {
+      .tl-row { grid-template-columns: 50px 14px minmax(0, 1fr); gap: 4px; }
+      .tl-time { font-size: 12px; }
+      .tl-row .qcard { padding: 9px 10px; gap: 8px; }
+      .tl-row .reward { display: none; } /* XP stays visible on the Quests list; the timeline favors readable names */
+    }
     .tl-rail { position: relative; }
     .tl-rail::before { content: ""; position: absolute; left: 6px; top: 0; bottom: 0; width: 4px; background: var(--border); }
     .tl-rail::after { content: ""; position: absolute; left: 1px; top: 17px; width: 14px; height: 14px; border-radius: 50%; background: var(--c, var(--muted)); border: 2px solid var(--card); }
@@ -138,7 +152,9 @@
     .item .title { font-weight: 800; min-height: 40px; margin: 4px 0; }
     .item .price { font-family: var(--display); font-weight: 800; font-size: 17px; margin-bottom: 8px; }
     .item .del { position: absolute; top: 4px; right: 4px; }
-    .item.locked { filter: grayscale(1); opacity: .62; border-color: var(--border); box-shadow: 0 4px 0 var(--border); }
+    .item.locked { border-color: var(--border); box-shadow: 0 4px 0 var(--border); }
+    .item.locked .art, .item.locked .price { filter: grayscale(1); opacity: .55; }
+    .item.locked .btn:disabled { opacity: 1; background: transparent; color: var(--muted); border: 2px dashed var(--border); padding: 7px 12px; }
     .item.claimed { animation: pop .45s ease; }
     @keyframes pop { 40% { transform: scale(1.12) rotate(-3deg); } 70% { transform: scale(.96) rotate(2deg); } }
 
@@ -149,7 +165,8 @@
     .badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
     .badge { text-align: center; font-size: 12px; font-weight: 800; }
     .badge span { display: block; font-size: 34px; }
-    .badge.locked { filter: grayscale(1); opacity: .45; }
+    .badge.locked { color: var(--muted); }
+    .badge.locked span { filter: grayscale(1); opacity: .4; }
 
     table { border-collapse: collapse; width: 100%; font-size: 14px; }
     th, td { text-align: left; padding: 7px 8px; border-top: 1px solid var(--border); vertical-align: top; }
@@ -161,14 +178,17 @@
     .tabs nav { display: flex; max-width: 720px; margin: 0 auto; }
     .tabs button { flex: 1; border: 0; background: none; padding: 8px 2px 9px; font-size: 12px; font-weight: 800; color: var(--muted); }
     .tabs button span { display: block; font-size: 22px; line-height: 1.2; }
+    .tabs button { position: relative; }
     .tabs button.active { color: var(--accent); }
+    .tabs button.active::before { content: ""; position: absolute; top: 0; left: 32%; right: 32%; height: 4px; border-radius: 0 0 4px 4px; background: var(--accent); }
 
     /* Sheet, popup, effects */
     .overlay { position: fixed; inset: 0; z-index: 40; background: rgba(40, 25, 15, .55); display: flex; align-items: center; justify-content: center; padding: 16px; }
     .sheet { width: 100%; max-width: 440px; max-height: 88vh; overflow-y: auto; background: var(--card); border-radius: 20px; padding: 18px; }
     .field { display: block; font-size: 12px; font-weight: 800; color: var(--muted); margin-top: 10px; }
     .field input, .field select { margin-top: 3px; color: var(--ink); }
-    .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .twocol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    @media (max-width: 440px) { .twocol.dates { grid-template-columns: minmax(0, 1fr); } }
     .daypick { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
     .daypick label { cursor: pointer; }
     .daypick input { position: absolute; opacity: 0; width: 0; }
@@ -555,6 +575,36 @@
       state.events = state.events.filter((e) => !keys.has(e.key)).concat(incoming);
     }
 
+    // ---------- Public holidays: free Nager.Date API, no key, called from the browser ----------
+    const HOLIDAY_API = "https://date.nager.at/api/v3/PublicHolidays";
+    // Keeps national holidays plus New York's, as read-only all-day calendar events.
+    function holidaysToEvents(list) {
+      const seen = new Set(), out = [];
+      for (const h of list) {
+        if (!h || !h.date || !h.name || !(h.global || (h.counties || []).includes("US-NY"))) continue;
+        const key = "holiday|" + h.date + "|" + h.name;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ key, title: h.name, location: "", date: h.date, start: null, end: null, rule: null, exdates: [], source: "holiday" });
+      }
+      return out;
+    }
+    async function fetchHolidays(today) {
+      const year = parseDate(today).getFullYear();
+      const lists = await Promise.all([year, year + 1].map(async (y) => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 10000);
+        try {
+          const res = await fetch(`${HOLIDAY_API}/${y}/US`, { signal: controller.signal });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return await res.json();
+        } finally {
+          clearTimeout(timer);
+        }
+      }));
+      return holidaysToEvents(lists.flat()).filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
     // ---------- Game logic: no page access, so it can be tested alone ----------
     function newState() {
       return {
@@ -822,11 +872,13 @@
         if (nowTime && !nowShown && r.time > nowTime) { nowShown = true; now = '<div class="now">Now</div>'; }
         return `${now}<div class="tl-row ${r.c}"><div class="tl-time">${fmtTime(r.time)}</div><div class="tl-rail"></div><div>${r.html}</div></div>`;
       }).join("");
-      const allDay = todaysEvents.filter((e) => !e.start).map((e) => `<div class="event"><span class="qname">📅 ${esc(e.title)}</span><span class="muted" style="color:inherit">All day · Calendar, no XP</span></div>`).join("");
+      const allDay = todaysEvents.filter((e) => !e.start).map((e) => `<div class="event"><span class="qname">📅 ${esc(e.title)}</span><span class="muted" style="color:inherit">${e.source === "holiday" ? "Public holiday · no XP" : "All day · Calendar, no XP"}</span></div>`).join("");
+      const hasHolidays = state.events.some((e) => e.source === "holiday");
       const anytime = state.quests.filter((q) => !q.done && !q.time && q.day === today).map((q) => questCard(q, today))
         .concat(state.goals.filter((g) => !g.time && routineDue(g, today)).map((g) => goalCard(g, today))).join("");
       return `<div class="toolbar">
           <button class="btn" data-action="import-ics">Import calendar (.ics)</button>
+          <button class="btn soft" data-action="import-holidays">${hasHolidays ? "Update US holidays" : "Add US holidays"}</button>
           ${state.events.length ? '<button class="linkbtn" data-action="clear-events">Clear calendar events</button>' : ""}
         </div>
         ${allDay}
@@ -850,17 +902,20 @@
       const weekly = state.goals.filter((g) => !g.days);
       const routines = state.goals.filter((g) => g.days);
       const upcoming = state.quests.filter((q) => !q.done && q.day > today).sort((a, b) => a.day.localeCompare(b.day));
+      const holidays = state.events.filter((e) => e.source === "holiday" && e.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
       const totals = { completed: 0, xp: 0, claimed: 0 };
       const rows = weekDays(today).map((d) => {
         const s = daySummary(state, d);
         totals.completed += s.completed; totals.xp += s.xp; totals.claimed += s.claimed;
-        const planned = s.planned.map((q) => esc(q.name)).join("<br>") || '<span class="muted">—</span>';
+        const holidayNames = state.events.filter((e) => e.source === "holiday" && e.date === d).map((e) => "📅 " + esc(e.title));
+        const planned = holidayNames.concat(s.planned.map((q) => esc(q.name))).join("<br>") || '<span class="muted">—</span>';
         return `<tr class="${d === today ? "today" : ""}"><td>${short(d)}</td><td>${planned}</td><td>${s.completed}</td><td>${s.xp}</td><td>${s.claimed}</td></tr>`;
       }).join("");
       return `<div class="board-head"><h2>This Week</h2></div>
         ${weekly.length ? `<h3>Weekly goals</h3>${weekly.map((g) => goalCard(g, today)).join("")}` : '<div class="empty">Type <b>exercise 3 times a week</b> to add a weekly goal.</div>'}
         ${routines.length ? `<h3 style="margin-top:14px">Repeating quests</h3>${routines.map((g) => goalCard(g, today)).join("")}` : ""}
         ${upcoming.length ? `<h3 style="margin-top:14px">Coming up</h3>${upcoming.map((q) => `<div class="muted">${relative(q.day, today)}</div>${questCard(q, today)}`).join("")}` : ""}
+        ${holidays.length ? `<h3 style="margin-top:14px">Upcoming holidays</h3>${holidays.map((e) => `<div class="event"><span class="qname">📅 ${esc(e.title)}</span><span class="muted" style="color:inherit">${relative(e.date, today)} · Public holiday</span></div>`).join("")}` : ""}
         <div class="panel"><h3>${totals.completed} done · ${totals.xp} XP · ${totals.claimed} rewards</h3>
           <div class="scroll"><table><tr><th>Day</th><th>Open</th><th>Done</th><th>XP</th><th>Rewards</th></tr>${rows}</table></div>
         </div>`;
@@ -881,7 +936,7 @@
         <div class="shop">${items}</div>
         <div class="panel"><h3>Stock the shop</h3>
           <form id="rewardForm" style="display:flex;flex-wrap:wrap;gap:8px">
-            <input style="flex:2 1 170px;width:auto" id="rName" placeholder="Your reward, e.g. Boba run" required maxlength="80" aria-label="Reward name" />
+            <input style="flex:2 1 170px;width:auto" id="rName" placeholder="e.g. Boba run" required maxlength="80" aria-label="Reward name" />
             <input style="flex:1 1 90px;width:auto" id="rCost" type="number" min="1" step="1" placeholder="Coins" required aria-label="Coin price" />
             <button class="btn">Add</button>
           </form>
@@ -987,6 +1042,25 @@
         setTimeout(() => c.remove(), 3600);
       }
     }
+    async function importHolidays(btn) {
+      btn.disabled = true;
+      btn.textContent = "Adding holidays…";
+      const today = getToday();
+      try {
+        const events = await fetchHolidays(today);
+        mergeEvents(state, events);
+        save();
+        track("holidays_imported", { count: events.length });
+        toast(events.length
+          ? `Added ${events.length} US holidays. Next: ${events[0].title}, ${relative(events[0].date, today)}`
+          : "No upcoming US holidays found");
+      } catch (e) {
+        const reason = navigator.onLine === false ? "offline" : e.name === "AbortError" ? "timeout" : String(e.message || e).slice(0, 40);
+        track("holidays_failed", { reason });
+        toast(reason === "offline" ? "You're offline. Connect to the internet and try again." : "Couldn't reach the holiday service. Try again in a minute.");
+      }
+      render();
+    }
     const moments = [];
     function nextMoment() {
       const m = moments.shift();
@@ -1068,7 +1142,7 @@
             <label class="field">Type<select id="eCategory">${optionsHtml(Object.keys(CATEGORY), item.category)}</select></label>
             <label class="field">Difficulty<select id="eDifficulty">${optionsHtml(Object.keys(XP_BY_DIFFICULTY), item.difficulty)}</select></label>
           </div>
-          ${kind === "quest" ? `<div class="twocol">
+          ${kind === "quest" ? `<div class="twocol dates">
             <label class="field">Day<input id="eDay" type="date" value="${item.day}" /></label>
             <label class="field">Due date (optional)<input id="eDue" type="date" value="${item.dueDate || ""}" /></label>
           </div>` : ""}
@@ -1205,6 +1279,7 @@
             break;
           case "delete-reward": state.rewards = state.rewards.filter((r) => r.id !== id); break;
           case "import-ics": $("icsFile").click(); return;
+          case "import-holidays": importHolidays(btn); return;
           case "clear-events":
             if (!confirm("Remove all calendar events from the schedule?")) return;
             state.events = [];
