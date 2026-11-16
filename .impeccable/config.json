@@ -27,6 +27,15 @@
         ],
         "createdAt": "2026-11-16T04:42:51.183Z",
         "reason": "user confirmed: chose the #F5EBDD parchment background in the fantasy quest journal brief"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "docs/app/index.html"
+        ],
+        "createdAt": "2026-11-16T05:40:43.298Z",
+        "reason": "user confirmed: asked for aged-paper edging; the remaining match is an inset warm-brown vignette on parchment panels, not a glow accent"
       }
     ]
   }
