@@ -1,0 +1,24 @@
+{
+  "hook": {
+    "enabled": true,
+    "limits": {
+      "maxFindings": 5,
+      "maxChars": 8000
+    }
+  },
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "docs/index.html"
+        ],
+        "createdAt": "2026-11-16T03:57:40.987Z",
+        "reason": "Agent: parchment quest-board palette shared with the app (docs/app/index.html); PRODUCT.md marks the cozy RPG look as binding"
+      }
+    ]
+  }
+}
