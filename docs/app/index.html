@@ -17,12 +17,12 @@
 </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@600;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Nunito:wght@600;800&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #f4e3c1; --bg-dot: #ead4a6; --card: #fffaf0; --ink: #3b2a1e; --muted: #75604a; --border: #e6cfa3;
       --accent: #6d3bd8; --accent-2: #8b45d9; --accent-soft: #eee3ff; --danger: #d0342c; --danger-soft: #ffe5e1; --gold: #f5b82e;
-      --display: "Baloo 2", "Trebuchet MS", "Segoe UI", sans-serif;
+      --display: "Jersey 10", "Nunito", "Segoe UI", sans-serif;
       --body: "Nunito", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
     }
     [data-theme="ocean"]  { --bg: #cfe9f1; --bg-dot: #b6dbe6; --accent: #0b6f94; --accent-2: #137f93; --accent-soft: #d9f1f6; --border: #b9dde6; }
@@ -148,7 +148,7 @@
     /* Shop */
     .shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
     .item { position: relative; background: var(--card); border: 2px solid var(--gold); border-radius: 18px; padding: 14px 10px 12px; text-align: center; box-shadow: 0 4px 0 #e0ab3a; overflow-wrap: anywhere; }
-    .item .art { font-size: 40px; line-height: 1.1; }
+    .item .art { height: 50px; display: flex; align-items: center; justify-content: center; }
     .item .title { font-weight: 800; min-height: 40px; margin: 4px 0; }
     .item .price { font-family: var(--display); font-weight: 800; font-size: 17px; margin-bottom: 8px; }
     .item .del { position: absolute; top: 4px; right: 4px; }
@@ -164,7 +164,7 @@
     .stat b { display: block; font-family: var(--display); font-size: 24px; line-height: 1.1; }
     .badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
     .badge { text-align: center; font-size: 12px; font-weight: 800; }
-    .badge span { display: block; font-size: 34px; }
+    .badge span { display: flex; align-items: center; justify-content: center; height: 48px; }
     .badge.locked { color: var(--muted); }
     .badge.locked span { filter: grayscale(1); opacity: .4; }
 
@@ -177,7 +177,7 @@
     .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--card); border-top: 3px solid var(--border); padding-bottom: env(safe-area-inset-bottom, 0px); }
     .tabs nav { display: flex; max-width: 720px; margin: 0 auto; }
     .tabs button { flex: 1; border: 0; background: none; padding: 8px 2px 9px; font-size: 12px; font-weight: 800; color: var(--muted); }
-    .tabs button span { display: block; font-size: 22px; line-height: 1.2; }
+    .tabs button span { display: flex; align-items: center; justify-content: center; height: 28px; }
     .tabs button { position: relative; }
     .tabs button.active { color: var(--accent); }
     .tabs button.active::before { content: ""; position: absolute; top: 0; left: 32%; right: 32%; height: 4px; border-radius: 0 0 4px 4px; background: var(--accent); }
@@ -199,7 +199,7 @@
     .moment { width: 100%; max-width: 360px; text-align: center; background: var(--card); border: 4px solid var(--gold); border-radius: 26px; padding: 24px 20px; animation: pop .5s ease; }
     .moment .big { font-size: 66px; line-height: 1.1; }
     .moment h2 { font-size: 32px; color: var(--accent); }
-    .moment svg { width: 96px; height: 96px; display: block; margin: 0 auto; }
+    .moment > svg { width: 96px; height: 96px; display: block; margin: 0 auto; }
     #toast { position: fixed; z-index: 50; left: 50%; transform: translateX(-50%); bottom: calc(82px + env(safe-area-inset-bottom, 0px)); max-width: calc(100% - 32px); background: var(--ink); color: #fff; border-radius: 12px; padding: 9px 14px; font-weight: 800; }
     .floater { position: fixed; z-index: 45; pointer-events: none; font-family: var(--display); font-weight: 800; font-size: 24px; color: var(--accent); text-shadow: 0 2px 0 #fff; animation: floatup 1s ease-out forwards; }
     @keyframes floatup { to { transform: translateY(-90px); opacity: 0; } }
@@ -208,6 +208,69 @@
     .confetti { position: fixed; z-index: 60; top: -14px; width: 10px; height: 14px; pointer-events: none; animation: fall var(--t) linear var(--d) forwards; }
     @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
     @keyframes bob { 50% { transform: translateY(-3px); } }
+    /* Pixel icons and the pixel display face */
+    .px { display: inline-block; vertical-align: -0.18em; margin-right: 4px; flex: none; }
+    .tabs .px, .badge .px, .item .art .px, .empty .px { margin: 0; }
+    /* Jersey 10 has one weight and a compact body, so it runs larger than the old display face. */
+    h2, h3, .level, .counters, .reward, .tl-time, .stat b, .item .price, .floater, .moment h2 { font-family: var(--display); font-weight: 400; letter-spacing: .02em; }
+    h2 { font-size: 30px; line-height: 1.05; }
+    h3 { font-size: 22px; line-height: 1.1; }
+    .level { font-size: 28px; line-height: 1; }
+    .counters { font-size: 22px; line-height: 1; }
+    .reward { font-size: 21px; }
+    .item .price { font-size: 23px; }
+    .stat b { font-size: 32px; line-height: 1; }
+    .tl-time { font-size: 18px; padding-top: 11px; }
+    .floater { font-size: 32px; }
+    .moment h2 { font-size: 44px; line-height: 1; }
+    @media (max-width: 480px) { .tl-time { font-size: 16px; } }
+    .empty .px { display: block; margin: 0 auto 6px; }
+    /* Profile: avatars, hero stats, tappable badges and achievements */
+    .avatars { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+    .avatar-pick { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 14px; border: 2px solid var(--border); background: #fff; font-size: 12px; font-weight: 800; }
+    .avatar-pick > svg { width: 48px; height: 48px; display: block; }
+    .avatar-pick span { display: inline-flex; align-items: center; }
+    .avatar-pick.on { border-color: var(--accent); background: var(--accent-soft); }
+    .avatar-pick:disabled { cursor: not-allowed; color: var(--muted); }
+    .avatar-pick:disabled > svg { filter: grayscale(1); opacity: .4; }
+    .hero-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .hero-stat { background: var(--c-soft); border-radius: 14px; padding: 10px 12px; }
+    .hs-top { display: flex; align-items: center; gap: 2px; }
+    .hs-top b { flex: 1; min-width: 0; color: var(--c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hs-lv { font-family: var(--display); font-size: 20px; line-height: 1; color: var(--c); white-space: nowrap; }
+    .hs-foot { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+    .hs-bar { height: 10px; border-radius: 99px; background: rgba(255, 255, 255, .8); overflow: hidden; margin: 6px 0 4px; }
+    .hs-bar div { height: 100%; background: var(--c); border-radius: 99px; }
+    button.badge { background: none; border: 0; border-radius: 12px; padding: 6px 2px; font-size: 12px; font-weight: 800; color: var(--ink); }
+    button.badge.locked { color: var(--muted); }
+    button.badge:hover { background: var(--accent-soft); }
+    .info { text-align: center; }
+    .info > svg { width: 72px; height: 72px; display: block; margin: 0 auto 8px; }
+    .info.locked > svg { filter: grayscale(1); opacity: .5; }
+    .info p { margin: 8px 0; }
+    .pill.earned { background: #dcf5e3; color: #1c7a41; }
+    .reward-row { display: inline-flex; align-items: center; gap: 10px; background: var(--accent-soft); border-radius: 14px; padding: 8px 14px; margin-top: 4px; }
+    .reward-row svg { width: 36px; height: 36px; flex: none; margin: 0; }
+    .shield-count { display: inline-flex; align-items: center; margin-left: 8px; }
+    .item-note { font-size: 12px; margin: -2px 0 6px; }
+    /* Smart input preview: editable fields */
+    .preview { display: block; background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 10px 12px; }
+    .pv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px 8px; }
+    .pv { display: flex; flex-direction: column; gap: 2px; font-size: 11px; font-weight: 800; color: var(--muted); min-width: 0; }
+    .pv input, .pv select { padding: 6px 8px; font-size: 14px; border-radius: 10px; color: var(--ink); }
+    .pv-name { grid-column: 1 / -1; }
+    .pv-foot { margin-top: 8px; font-size: 12px; }
+    /* One-click reschedule */
+    .qcard { flex-wrap: wrap; }
+    .resched-btn { flex: none; background: none; border: 0; padding: 6px; border-radius: 10px; line-height: 0; }
+    .resched-btn:hover, .resched-btn.on { background: var(--c-soft); }
+    .resched-btn .px { margin: 0; }
+    .resched-row { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 0 2px 50px; }
+    .resched-row button { border: 2px solid var(--border); background: #fff; border-radius: 10px; padding: 5px 10px; font-size: 13px; font-weight: 800; }
+    .resched-row button:hover { border-color: var(--c); }
+    .resched-row input { width: auto; padding: 4px 8px; font-size: 13px; }
+    /* Undo in the message bar */
+    .toast-btn { margin-left: 10px; background: #fff; color: var(--ink); border: 0; border-radius: 8px; padding: 3px 10px; font-weight: 800; }
     @media (prefers-reduced-motion: reduce) {
       .avatar svg, .moment, .item.claimed { animation: none; }
       .qcard.leaving { animation-duration: .01s; }
@@ -246,10 +309,10 @@
 
   <div class="tabs">
     <nav>
-      <button data-tab="today"><span>📜</span>Today</button>
-      <button data-tab="week"><span>🗓️</span>Week</button>
-      <button data-tab="shop"><span>🪙</span>Shop</button>
-      <button data-tab="profile"><span>🛡️</span>Profile</button>
+      <button data-tab="today"><span data-px="sun"></span>Today</button>
+      <button data-tab="week"><span data-px="calendar"></span>Week</button>
+      <button data-tab="shop"><span data-px="coin"></span>Shop</button>
+      <button data-tab="profile"><span data-px="shield"></span>Profile</button>
     </nav>
   </div>
 
@@ -265,25 +328,103 @@
     const STREAK_BONUS = 5;        // Placeholder: paid on the day's first quest, from day 2 of a streak.
     const WEEKLY_GOAL_BONUS = 25;  // Placeholder: paid when a weekly goal is finished.
     const XP_PER_LEVEL = 100;      // Placeholder: the PRD doesn't set a level curve.
+    // ---------- Pixel icons: each letter is one pixel, "." is transparent ----------
+    const ICON_PALETTE = {
+      K: "#3a2a4d", W: "#ffffff", S: "#b9bdc9", Y: "#ffd24a", O: "#ff9a3c", R: "#e8505b", P: "#ff8fb1",
+      B: "#4aa8ff", D: "#2f6fc9", G: "#6fdc8c", T: "#2f9e55", N: "#a86b3c", n: "#6e4424", C: "#fff3cf", L: "#9b87f5",
+    };
+    const SPRITES = {
+      star: [".....K.....", "....KYK....", "....KYK....", "KKKKYYYKKKK", "KYYYYYYYYYK", ".KYYYYYYYK.", "..KYYYYYK..", ".KYYYKYYYK.", ".KYYK.KYYK.", "KYKK...KKYK", "KK.......KK"],
+      coin: ["..KKKKKK..", ".KYYYYYYK.", "KYYWYYOYYK", "KYWYYYOYYK", "KYYYYYOYYK", "KYYYYYOYYK", "KYYYYYOYYK", "KYYYYOOYYK", ".KYYYYYYK.", "..KKKKKK.."],
+      flame: ["....KK....", "...KOK....", "...KOOK...", "..KOOOK.K.", ".KOOROOKOK", ".KORROOOOK", "KOORRROOOK", "KORRYRRROK", "KORYYYRROK", "KORYYYYROK", ".KOYYYYOK.", "..KKKKKK.."],
+      book: [".KKKK.KKKK.", "KBBBBKWWWWK", "KBBBBKWSSWK", "KBBBBKWWWWK", "KBBBBKWSSWK", "KBBBBKWWWWK", "KBBBBKWSSWK", "KBBBBKWWWWK", ".KKKKKKKKK."],
+      briefcase: ["....KKKK....", "...KNKKNK...", "KKKKKKKKKKKK", "KNNNNNNNNNNK", "KNNNNNNNNNNK", "KKKKKYYKKKKK", "KNNNNYYNNNNK", "KNNNNNNNNNNK", "KNNNNNNNNNNK", "KKKKKKKKKKKK"],
+      ticket: ["KKKKKKKKKKKK", "KPPPPWPPPPPK", ".KPPPWPRRPPK", ".KPPPWPRRPPK", ".KPPPWPRRPPK", "KPPPPWPPPPPK", "KKKKKKKKKKKK"],
+      house: [".....KK.....", "....KRRK....", "...KRRRRK...", "..KRRRRRRK..", ".KRRRRRRRRK.", "KKKKKKKKKKKK", ".KCCCCCCCCK.", ".KCBBCCNNCK.", ".KCBBCCNNCK.", ".KCCCCCNNCK.", ".KKKKKKKKKK."],
+      gift: ["..KK...KK..", ".KRRK.KRRK.", "..KKRKRKK..", "KKKKKKKKKKK", "KBBBBYBBBBK", "KKKKKYKKKKK", ".KDDDYDDDK.", ".KDDDYDDDK.", ".KDDDYDDDK.", ".KDDDYDDDK.", ".KKKKKKKKK."],
+      trophy: [".KKKKKKKKK.", "KKYYYYYYYKK", "K.KYWYYYK.K", "K.KYWYYYK.K", ".KKYYYYYKK.", "...KYYYK...", "....KYK....", "....KYK....", "...KKKKK...", "..KOOOOOK..", "..KKKKKKK.."],
+      lock: ["..KKKKK..", ".KSSSSSK.", ".KSK.KSK.", ".KSK.KSK.", "KKKKKKKKK", "KYYYYYYYK", "KYYYKYYYK", "KYYYKYYYK", "KYYYYYYYK", "KKKKKKKKK"],
+      check: ["........KK", ".......KGK", "......KGGK", "K....KGGK.", "KK..KGGK..", "KGK.KGGK..", "KGGKGGK...", ".KGGGK....", "..KGK.....", "...K......"],
+      calendar: ["KKKKKKKKKKK", "KRRRRRRRRRK", "KKKKKKKKKKK", "KWWWWWWWWWK", "KWBWWBWWBWK", "KWWWWWWWWWK", "KWBWWBWWBWK", "KWWWWWWWWWK", "KKKKKKKKKKK"],
+      sun: [".....O.....", ".O.......O.", "...KKKKK...", "..KYYYYYK..", "..KYYYYYK..", "O.KYYYYYK.O", "..KYYYYYK..", "..KYYYYYK..", "...KKKKK...", ".O.......O.", ".....O....."],
+      shield: [".KKKKKKKKK.", "KBBBBBBBBBK", "KBWBBBBBBBK", "KBWBBBBBBBK", "KBBBBBBBBBK", "KDBBBBBBBDK", ".KDBBBBBDK.", ".KDDBBBDDK.", "..KDDBDDK..", "...KDDDK...", "....KDK....", ".....K....."],
+      clock: ["..KKKKKK..", ".KWWWWWWK.", "KWWWKWWWWK", "KWWWKWWWWK", "KWWWKKKWWK", "KWWWWWWWWK", "KWWWWWWWWK", ".KWWWWWWK.", "..KKKKKK.."],
+      repeat: ["..TTTTT.T.", ".T.....TT.", "T.....TTT.", "T.........", "T........T", ".........T", ".TTT.....T", ".TT.....T.", ".T.TTTTT.."],
+      boba: ["......K..", ".....K...", "KKKKKKKKK", "KWWWWWWWK", ".KNNNNNK.", ".KNNNNNK.", ".KNNNNNK.", ".KNnNnNK.", ".KnNnNnK.", "..KKKKK.."],
+      popcorn: ["..W.WW...", ".WWWWWWW.", "WWWYWWWWW", "KKKKKKKKK", "KRWRWRWRK", ".KWRWRWK.", ".KRWRWRK.", ".KWRWRWK.", "..KKKKK.."],
+      moon: ["...KKKK...", "..KYYYK...", ".KYYK.....", "KYYK....L.", "KYYK...L.L", "KYYK......", "KYYYK.....", ".KYYYKKK..", "..KYYYYYK.", "...KKKKK.."],
+      pancake: ["....YY.....", "..KKKKKKK..", ".KOOOOOOOK.", ".KNNNNNNNK.", ".KOOOOOOOK.", ".KNNNNNNNK.", "KSSSSSSSSSK", ".KKKKKKKKK."],
+      sprout: ["..G....G..", ".GGG..GGG.", ".GGGTTGGG.", "..GGTTGG..", "....TT....", "....TT....", ".nnnnnnnn.", "nNNNNNNNNn", ".nNNNNNNn.", "..nnnnnn.."],
+      sword: ["........KK", ".......KSK", "......KSK.", ".....KSK..", "....KSK...", "..YKSK....", "...YK.....", "..KNY.....", ".KNK......", "KNK......."],
+      medal: ["KR.....RK", ".KR...RK.", "..KR.RK..", "...KYK...", "..KYYYK..", ".KYYWYYK.", ".KYYYYYK.", ".KYYYYYK.", "..KYYYK..", "...KKK..."],
+      crown: ["K....K....K", "KK..KYK..KK", "KYK.KYK.KYK", "KYYKYYYKYYK", "KYYYYRYYYYK", "KYYYYYYYYYK", "KKKKKKKKKKK"],
+      chest: ["..KKKKKKKK..", ".KNNNNNNNNK.", "KNNNNNNNNNNK", "KKKKKYYKKKKK", "KNNNNYYNNNNK", "KNNNNKKNNNNK", "KNNNNNNNNNNK", "KnnnnnnnnnnK", "KKKKKKKKKKKK"],
+    };
+    // Draws a sprite as a crisp inline SVG. Decorative: always paired with visible text.
+    function px(name, size = 16) {
+      const rows = SPRITES[name] || SPRITES.star;
+      const width = Math.max(...rows.map((r) => r.length));
+      let rects = "";
+      rows.forEach((row, y) => [...row].forEach((c, x) => {
+        if (ICON_PALETTE[c]) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${ICON_PALETTE[c]}"/>`;
+      }));
+      return `<svg class="px" viewBox="0 0 ${width} ${rows.length}" width="${size}" height="${size}" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
+    }
     const CATEGORY = {
-      Class: { emoji: "📚", slug: "class" },
-      Recruiting: { emoji: "💼", slug: "recruiting" },
-      Events: { emoji: "🎉", slug: "events" },
-      Personal: { emoji: "🏠", slug: "personal" },
+      Class: { icon: "book", slug: "class" },
+      Recruiting: { icon: "briefcase", slug: "recruiting" },
+      Events: { icon: "ticket", slug: "events" },
+      Personal: { icon: "house", slug: "personal" },
     };
     const STARS = { Easy: 1, Medium: 2, Hard: 3 };
     function starsHtml(difficulty) {
       const filled = STARS[difficulty];
       return "★".repeat(filled) + `<span class="off">${"★".repeat(3 - filled)}</span>`;
     }
+    // Each level badge unlocks a new avatar.
     const BADGES = [
-      { level: 2, emoji: "🌱", name: "Getting Started" },
-      { level: 3, emoji: "🛼", name: "On a Roll" },
-      { level: 4, emoji: "🗡️", name: "Quest Hunter" },
-      { level: 5, emoji: "🐉", name: "Task Tamer" },
-      { level: 6, emoji: "🏅", name: "Reliable Hero" },
-      { level: 8, emoji: "👑", name: "Quest Master" },
-      { level: 10, emoji: "🌟", name: "Legend of Stern" },
+      { level: 2, icon: "sprout", name: "Getting Started", avatar: "berry", desc: "Reach level 2 by finishing your first few quests." },
+      { level: 3, icon: "flame", name: "On a Roll", avatar: "ember", desc: "Reach level 3. You're building a habit." },
+      { level: 4, icon: "sword", name: "Quest Hunter", avatar: "frost", desc: "Reach level 4. Quests don't scare you anymore." },
+      { level: 5, icon: "shield", name: "Task Tamer", avatar: "grape", desc: "Reach level 5. Your to-do list answers to you." },
+      { level: 6, icon: "medal", name: "Reliable Hero", avatar: "night", desc: "Reach level 6. People can count on you." },
+      { level: 8, icon: "crown", name: "Quest Master", avatar: "royal", desc: "Reach level 8. You run your week like a pro." },
+      { level: 10, icon: "star", name: "Legend of Stern", avatar: "golden", desc: "Reach level 10. A true Stern legend." },
+    ];
+    // Avatars are the crowned mascot in different colors.
+    const AVATARS = [
+      { id: "mint", name: "Mint", body: "#6fdc8c" },
+      { id: "berry", name: "Berry", body: "#ff8fb1", cheek: "#e8505b" },
+      { id: "ember", name: "Ember", body: "#ff9a3c", cheek: "#e8505b" },
+      { id: "frost", name: "Frost", body: "#8fd3ff" },
+      { id: "grape", name: "Grape", body: "#b48cff" },
+      { id: "night", name: "Night", body: "#5b6178", cheek: "#b48cff", crown: "#d9dde8" },
+      { id: "royal", name: "Royal", body: "#e8505b", cheek: "#ffd24a", gem: "#4aa8ff" },
+      { id: "golden", name: "Golden", body: "#ffd24a", cheek: "#ff9a3c", crown: "#ffffff", gem: "#e8505b" },
+    ];
+    function avatarUnlockLevel(id) { const b = BADGES.find((x) => x.avatar === id); return b ? b.level : 1; }
+
+    // ---------- Extra game elements (placeholders: tune these numbers) ----------
+    const ACHIEVEMENT_COINS = 20;   // coins paid for each achievement
+    const SHIELD_PRICE = 150;       // coins for one streak shield
+    const SHIELD_MAX = 2;           // most shields you can hold
+    const CHEST_MIN = 5, CHEST_MAX = 20;   // daily loot chest coin range
+    const STAT_XP_PER_LEVEL = 50;   // hero stat level size
+    const HERO_STATS = [
+      { category: "Class", name: "Scholar" },
+      { category: "Recruiting", name: "Networker" },
+      { category: "Events", name: "Social" },
+      { category: "Personal", name: "Vitality" },
+    ];
+    const ACHIEVEMENTS = [
+      { id: "first-quest", icon: "check", name: "First Quest", desc: "Complete your first quest.", test: (s) => totalDone(s) >= 1 },
+      { id: "bookworm", icon: "book", name: "Bookworm", desc: "Complete 5 Class quests.", test: (s) => s.catCount.Class >= 5 },
+      { id: "networker", icon: "briefcase", name: "Networker", desc: "Complete 5 Recruiting quests.", test: (s) => s.catCount.Recruiting >= 5 },
+      { id: "well-rounded", icon: "star", name: "Well-Rounded", desc: "Complete a quest in all four categories.", test: (s) => HERO_STATS.every((h) => s.catCount[h.category] >= 1) },
+      { id: "goal-getter", icon: "medal", name: "Goal Getter", desc: "Finish a weekly goal.", test: (s) => s.weeklyGoalsDone >= 1 },
+      { id: "unstoppable", icon: "trophy", name: "Unstoppable", desc: "Clear every quest on 3 different days.", test: (s) => s.daysCleared >= 3 },
+      { id: "on-fire", icon: "flame", name: "On Fire", desc: "Keep a 7-day streak.", test: (s) => s.bestStreak >= 7 },
+      { id: "treat-yourself", icon: "gift", name: "Treat Yourself", desc: "Claim your first reward from the shop.", test: (s) => s.claims.some((c) => !c.powerup) },
     ];
     const THEMES = [
       { id: "classic", name: "Parchment", level: 1 },
@@ -307,10 +448,12 @@
     // ---------- Avatar: each letter is one pixel, "." is transparent ----------
     const PALETTE = { K: "#3a2a4d", Y: "#ffd24a", R: "#e8505b", P: "#ff8fb1", G: "#6fdc8c" };
     const MASCOT = ["...Y..Y..Y...", "...YYYYYYY...", "...YRYYYRY...", "...KKKKKKK...", "..KGGGGGGGK..", ".KGGGGGGGGGK.", ".KGKGGGGGKGK.", ".KGKGGGGGKGK.", ".KPGGKKKGGPK.", ".KGGGGGGGGGK.", "KGGGGGGGGGGGK", ".KKKKKKKKKKK."];
-    function mascotSvg() {
+    function mascotSvg(variant) {
+      const a = AVATARS.find((x) => x.id === variant) || AVATARS[0];
+      const colors = Object.assign({}, PALETTE, { G: a.body, P: a.cheek || PALETTE.P, Y: a.crown || PALETTE.Y, R: a.gem || PALETTE.R });
       let rects = "";
       MASCOT.forEach((row, y) => [...row].forEach((c, x) => {
-        if (PALETTE[c]) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${PALETTE[c]}"/>`;
+        if (colors[c]) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${colors[c]}"/>`;
       }));
       return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 13 12" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
     }
@@ -612,11 +755,15 @@
         lifetimeXp: 0, spendableXp: 0,
         streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0,
         theme: "classic", dayOffset: 0,
+        avatar: "mint", shields: 0, chestOn: null, achievements: {}, weeklyGoalsDone: 0,
+        catXp: { Class: 0, Recruiting: 0, Events: 0, Personal: 0 },
+        catCount: { Class: 0, Recruiting: 0, Events: 0, Personal: 0 },
       };
     }
     function sampleState(today) {
       const s = newState();
       Object.assign(s, { lifetimeXp: 285, spendableXp: 285, streak: 4, bestStreak: 4, lastCompletedOn: addDays(today, -1) });
+      Object.assign(s, { catXp: { Class: 110, Recruiting: 95, Events: 30, Personal: 50 }, catCount: { Class: 3, Recruiting: 3, Events: 1, Personal: 2 } });
       const quest = (name, category, difficulty, extra) => addQuest(s, Object.assign({ name, category, difficulty, date: today, dateType: "day" }, extra), today);
       quest("Send thank-you note to Priya", "Recruiting", "Easy").dueDate = addDays(today, -1);
       quest("Finish assignment for Corporate Finance", "Class", "Hard", { time: "11:00" });
@@ -634,6 +781,8 @@
           : { key: "sample-mkt-" + i, title: "Marketing Strategy", location: "Tisch UC 21", date, start: "13:00", end: "14:20", rule: null, exdates: [], source: "sample" });
         if (i % 3 === 0) s.events.push({ key: "sample-rec-" + i, title: "Consulting recruiting info session", location: "Paulson Auditorium", date, start: "18:00", end: "19:00", rule: null, exdates: [], source: "sample" });
       }
+      // The sample history already earned these, so they don't all pop up on the first tap.
+      for (const a of ACHIEVEMENTS) if (a.test(s)) s.achievements[a.id] = addDays(today, -1);
       return s;
     }
     function levelOf(lifetimeXp) { return Math.floor(lifetimeXp / XP_PER_LEVEL) + 1; }
@@ -642,7 +791,8 @@
     }
     function isOverdue(q, today) { return !q.done && !!q.dueDate && q.dueDate < today; }
     function currentStreak(state, today) {
-      const alive = state.lastCompletedOn === today || state.lastCompletedOn === addDays(today, -1);
+      const shielded = state.shields > 0 && state.lastCompletedOn === addDays(today, -2);
+      const alive = state.lastCompletedOn === today || state.lastCompletedOn === addDays(today, -1) || shielded;
       return alive ? state.streak : 0;
     }
     function addQuest(state, input, today) {
@@ -671,24 +821,34 @@
       }
       return changed;
     }
-    function award(state, baseXp, today) {
+    let random = Math.random;   // tests swap this for a fixed value
+    function award(state, baseXp, today, category) {
       const levelBefore = levelOf(state.lifetimeXp);
       const firstToday = state.lastCompletedOn !== today;
+      let chest = 0, shieldUsed = false;
       if (firstToday) {
-        state.streak = state.lastCompletedOn === addDays(today, -1) ? state.streak + 1 : 1;
+        if (state.lastCompletedOn === addDays(today, -1)) state.streak += 1;
+        else if (state.lastCompletedOn === addDays(today, -2) && state.shields > 0) { state.shields -= 1; state.streak += 1; shieldUsed = true; }
+        else state.streak = 1;
         state.lastCompletedOn = today;
         state.bestStreak = Math.max(state.bestStreak, state.streak);
+        if (state.chestOn !== today) {   // daily loot chest: coins only, so it never changes your level
+          chest = CHEST_MIN + Math.floor(random() * (CHEST_MAX - CHEST_MIN + 1));
+          state.chestOn = today;
+          state.spendableXp += chest;
+        }
       }
       const bonus = firstToday && state.streak >= 2 ? STREAK_BONUS : 0;
       const xp = baseXp + bonus;
       state.lifetimeXp += xp;
       state.spendableXp += xp;
-      return { xp, bonus, levelBefore, levelAfter: levelOf(state.lifetimeXp) };
+      if (category && category in state.catXp) { state.catXp[category] += xp; state.catCount[category] += 1; }
+      return { xp, bonus, chest, shieldUsed, levelBefore, levelAfter: levelOf(state.lifetimeXp) };
     }
     function completeQuest(state, id, today) {
       const q = state.quests.find((x) => x.id === id);
       if (!q || q.done) return null;
-      const result = award(state, questXp(q), today);
+      const result = award(state, questXp(q), today, q.category);
       q.done = true;
       q.completedOn = today;
       q.xpEarned = result.xp;
@@ -706,7 +866,8 @@
       if (!g) return null;
       if (g.days ? !routineDue(g, today) : goalWeekCount(g, today) >= g.target) return null;
       const finishesWeek = !g.days && goalWeekCount(g, today) + 1 === g.target;
-      const result = award(state, questXp(g) + (finishesWeek ? WEEKLY_GOAL_BONUS : 0), today);
+      const result = award(state, questXp(g) + (finishesWeek ? WEEKLY_GOAL_BONUS : 0), today, g.category);
+      if (finishesWeek) state.weeklyGoalsDone += 1;
       g.log.push({ date: today, xp: result.xp });
       return Object.assign(result, { finishesWeek });
     }
@@ -741,13 +902,49 @@
         item.target = f.target;
       }
     }
-    function rewardEmoji(name) {
-      const rules = [[/boba|tea|coffee/i, "🧋"], [/netflix|movie|tv|show/i, "🍿"], [/sleep|nap|rest/i, "😴"], [/brunch|dinner|food|pizza|eat/i, "🥞"], [/spa|massage/i, "💆"], [/trip|travel/i, "✈️"], [/shop|buy/i, "🛍️"]];
-      for (const [re, emoji] of rules) if (re.test(name)) return emoji;
-      return "🎁";
+    // One-click reschedule: moves a quest to a new day; a due date earlier than that day moves with it.
+    function rescheduleTarget(choice, today) {
+      return choice === "today" ? today : choice === "tomorrow" ? addDays(today, 1) : choice === "next-week" ? addDays(weekDays(today)[0], 7) : null;
     }
+    function rescheduleQuest(state, id, day, today) {
+      const q = state.quests.find((x) => x.id === id);
+      if (!q || q.done || !day) return false;
+      q.day = day < today ? today : day;
+      if (q.dueDate && q.dueDate < q.day) q.dueDate = q.day;
+      return true;
+    }
+    // Smart preview: applies the fields the user changed before saving.
+    function repeatValue(p) {
+      if (p.kind !== "goal") return "none";
+      if (!p.days) return "x" + p.target;
+      if (p.days.length === 7) return "daily";
+      if (p.days.join() === "1,2,3,4,5") return "weekdays";
+      return "custom";
+    }
+    function applyOverrides(parsed, ov) {
+      const p = Object.assign({}, parsed);
+      if (ov.name && ov.name.trim()) p.name = ov.name.trim();
+      if (ov.category) p.category = ov.category;
+      if (ov.difficulty) p.difficulty = ov.difficulty;
+      if ("time" in ov) p.time = ov.time || null;
+      if (ov.date) p.date = ov.date;
+      if (ov.dateType) p.dateType = ov.dateType;
+      if (ov.repeat === "none") Object.assign(p, { kind: "quest", target: null, days: null });
+      else if (ov.repeat === "daily") Object.assign(p, { kind: "goal", target: null, days: [0, 1, 2, 3, 4, 5, 6] });
+      else if (ov.repeat === "weekdays") Object.assign(p, { kind: "goal", target: null, days: [1, 2, 3, 4, 5] });
+      else if (/^x\d+$/.test(ov.repeat || "")) Object.assign(p, { kind: "goal", target: Number(ov.repeat.slice(1)), days: null });
+      return p;
+    }
+    function rewardEmoji(name) {
+      const rules = [[/boba|tea|coffee/i, "boba"], [/netflix|movie|tv|show/i, "popcorn"], [/sleep|nap|rest/i, "moon"], [/brunch|dinner|food|pizza|eat|pancake/i, "pancake"]];
+      for (const [re, art] of rules) if (re.test(name)) return art;
+      return "gift";
+    }
+    // Older saves stored an emoji; map those to the matching pixel art.
+    const LEGACY_REWARD_ART = { "🧋": "boba", "🍿": "popcorn", "😴": "moon", "🥞": "pancake" };
+    function rewardArt(r) { return SPRITES[r.art] ? r.art : LEGACY_REWARD_ART[r.emoji] || "gift"; }
     function addReward(state, name, cost) {
-      const reward = { id: state.nextId++, name, cost, emoji: rewardEmoji(name) };
+      const reward = { id: state.nextId++, name, cost, art: rewardEmoji(name) };
       state.rewards.push(reward);
       return reward;
     }
@@ -757,6 +954,29 @@
       state.spendableXp -= r.cost;   // lifetimeXp is left alone, so level never drops.
       state.claims.push({ name: r.name, cost: r.cost, date: today });
       return true;
+    }
+    function buyShield(state, today) {
+      if (state.shields >= SHIELD_MAX || state.spendableXp < SHIELD_PRICE) return false;
+      state.spendableXp -= SHIELD_PRICE;
+      state.shields += 1;
+      state.claims.push({ name: "Streak shield", cost: SHIELD_PRICE, date: today, powerup: true });
+      return true;
+    }
+    function totalDone(state) { return Object.values(state.catCount).reduce((a, b) => a + b, 0); }
+    // Marks newly earned achievements, pays their coins, and returns them.
+    function checkAchievements(state, today) {
+      const earned = [];
+      for (const a of ACHIEVEMENTS) {
+        if (state.achievements[a.id] || !a.test(state)) continue;
+        state.achievements[a.id] = today;
+        state.spendableXp += ACHIEVEMENT_COINS;
+        earned.push(a);
+      }
+      return earned;
+    }
+    function heroStat(state, category) {
+      const xp = state.catXp[category] || 0;
+      return { xp, level: Math.floor(xp / STAT_XP_PER_LEVEL) + 1, into: xp % STAT_XP_PER_LEVEL };
     }
     function daySummary(state, day) {
       const done = state.quests.filter((q) => q.completedOn === day);
@@ -781,6 +1001,7 @@
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
         if (saved) return Object.assign(newState(), saved);
       } catch (e) { /* storage unavailable: run for this visit only */ }
+      firstVisit = true;
       return sampleState(dateStr(new Date()));
     }
     function save() {
@@ -801,21 +1022,27 @@
     }
 
     function metaHtml(item) {
-      return `<span class="pill ${catClass(item.category)}">${CATEGORY[item.category].emoji} ${esc(item.category)}</span>` +
+      return `<span class="pill ${catClass(item.category)}">${px(CATEGORY[item.category].icon, 14)}${esc(item.category)}</span>` +
         `<span class="pill" style="background:#fff3cf"><span class="stars">${starsHtml(item.difficulty)}</span> ${esc(item.difficulty)}</span>`;
     }
     function questCard(q, today) {
       const overdue = isOverdue(q, today);
       const extras = (overdue ? '<span class="pill red">Overdue</span>' : "") +
-        (q.time ? `<span class="pill">🕒 ${fmtTime(q.time)}</span>` : "") +
+        (q.time ? `<span class="pill">${px("clock", 13)}${fmtTime(q.time)}</span>` : "") +
         (q.dueDate && !overdue ? `<span class="pill">Due ${nice(q.dueDate, { month: "short", day: "numeric" })}</span>` : "");
       return `<article class="qcard ${catClass(q.category)} ${overdue ? "overdue" : ""} ${q.done ? "done" : ""}">
         <button class="circle" data-action="complete" data-id="${q.id}" ${q.done ? "disabled" : ""} aria-label="Complete ${esc(q.name)}">${q.done ? "✓" : ""}</button>
-        <button class="qbody ${q.done ? "static" : ""}" ${q.done ? "disabled" : `data-action="edit" data-kind="quest" data-id="${q.id}"`}>
+        <button class="qbody ${q.done ? "static" : ""}" ${q.done ? "disabled" : `data-action="edit" data-kind="quest" data-id="${q.id}" title="Edit"`}>
           <span class="qname">${esc(q.name)}</span>
           <span class="qmeta">${extras}${metaHtml(q)}</span>
         </button>
         <div class="reward">+${q.done ? q.xpEarned : questXp(q)} XP</div>
+        ${q.done ? "" : `<button class="resched-btn ${reschedFor === q.id ? "on" : ""}" data-action="resched-menu" data-id="${q.id}" aria-expanded="${reschedFor === q.id}" aria-label="Reschedule ${esc(q.name)}" title="Reschedule">${px("calendar", 18)}</button>`}
+        ${!q.done && reschedFor === q.id ? `<div class="resched-row">
+          <span class="muted">Move to</span>
+          ${[["today", "Today"], ["tomorrow", "Tomorrow"], ["next-week", "Next week"]].map(([w, l]) => `<button data-action="resched" data-when="${w}" data-id="${q.id}">${l}</button>`).join("")}
+          <input type="date" data-resched-date="${q.id}" min="${today}" aria-label="Pick a date for ${esc(q.name)}" />
+        </div>` : ""}
       </article>`;
     }
     function goalCard(g, today) {
@@ -825,12 +1052,12 @@
       const pips = !g.days && g.target <= 10
         ? `<span class="pips">${Array.from({ length: g.target }, (_, i) => `<i class="${i < count ? "on" : ""}"></i>`).join("")}</span>` : "";
       const progress = g.days ? "" : `<span class="pill">${count} / ${g.target}</span>`;
-      const time = g.time ? `<span class="pill">🕒 ${fmtTime(g.time)}</span>` : "";
+      const time = g.time ? `<span class="pill">${px("clock", 13)}${fmtTime(g.time)}</span>` : "";
       return `<article class="qcard ${catClass(g.category)}">
         <button class="circle" data-action="check-in" data-id="${g.id}" ${canCheck ? "" : "disabled"} aria-label="Check in ${esc(g.name)}">${finished ? "✓" : ""}</button>
         <button class="qbody" data-action="edit" data-kind="goal" data-id="${g.id}">
           <span class="qname">${esc(g.name)}</span>
-          <span class="qmeta">${pips}${progress}<span class="pill">🔁 ${esc(repeatLabel(g))}</span>${time}${metaHtml(g)}</span>
+          <span class="qmeta">${pips}${progress}<span class="pill">${px("repeat", 13)}${esc(repeatLabel(g))}</span>${time}${metaHtml(g)}</span>
         </button>
         <div class="reward">+${questXp(g)} XP</div>
       </article>`;
@@ -848,10 +1075,10 @@
       const weekly = state.goals.filter((g) => !g.days);
       const list = entries.length
         ? entries.map((e) => e.kind === "quest" ? questCard(e.item, today) : goalCard(e.item, today)).join("")
-        : `<div class="empty"><div style="font-size:34px">🏕️</div>All clear. Start typing to add a quest.</div>`;
+        : `<div class="empty">${px("check", 40)}All clear. Start typing to add a quest.</div>`;
       const completed = done.length + doneRoutines.length
         ? `<details><summary>Completed today (${done.length + doneRoutines.length})</summary>${done.map((q) => questCard(q, today)).join("")}${doneRoutines.map((g) => goalCard(g, today)).join("")}</details>` : "";
-      const weeklyLink = weekly.length ? `<div style="text-align:center;margin-top:6px"><button class="linkbtn" data-tab="week">🔁 ${weekly.length} weekly ${weekly.length === 1 ? "goal" : "goals"} on the Week tab</button></div>` : "";
+      const weeklyLink = weekly.length ? `<div style="text-align:center;margin-top:6px"><button class="linkbtn" data-tab="week">${px("repeat", 14)}${weekly.length} weekly ${weekly.length === 1 ? "goal" : "goals"} on the Week tab</button></div>` : "";
       return list + completed + weeklyLink;
     }
     function renderSchedule(today) {
@@ -863,7 +1090,7 @@
       const todaysEvents = state.events.filter((e) => occursOn(e, today));
       todaysEvents.filter((e) => e.start).forEach((e) => rows.push({
         time: e.start, c: "",
-        html: `<div class="event"><span class="qname">📅 ${esc(e.title)}</span><span class="muted" style="color:inherit">${fmtTime(e.start)}${e.end ? " – " + fmtTime(e.end) : ""}${e.location ? " · " + esc(e.location) : ""} · Calendar, no XP</span></div>`,
+        html: `<div class="event"><span class="qname">${px("calendar", 15)}${esc(e.title)}</span><span class="muted" style="color:inherit">${fmtTime(e.start)}${e.end ? " – " + fmtTime(e.end) : ""}${e.location ? " · " + esc(e.location) : ""} · Calendar, no XP</span></div>`,
       }));
       rows.sort((a, b) => a.time.localeCompare(b.time));
       let nowShown = false;
@@ -872,7 +1099,7 @@
         if (nowTime && !nowShown && r.time > nowTime) { nowShown = true; now = '<div class="now">Now</div>'; }
         return `${now}<div class="tl-row ${r.c}"><div class="tl-time">${fmtTime(r.time)}</div><div class="tl-rail"></div><div>${r.html}</div></div>`;
       }).join("");
-      const allDay = todaysEvents.filter((e) => !e.start).map((e) => `<div class="event"><span class="qname">📅 ${esc(e.title)}</span><span class="muted" style="color:inherit">${e.source === "holiday" ? "Public holiday · no XP" : "All day · Calendar, no XP"}</span></div>`).join("");
+      const allDay = todaysEvents.filter((e) => !e.start).map((e) => `<div class="event"><span class="qname">${px("calendar", 15)}${esc(e.title)}</span><span class="muted" style="color:inherit">${e.source === "holiday" ? "Public holiday · no XP" : "All day · Calendar, no XP"}</span></div>`).join("");
       const hasHolidays = state.events.some((e) => e.source === "holiday");
       const anytime = state.quests.filter((q) => !q.done && !q.time && q.day === today).map((q) => questCard(q, today))
         .concat(state.goals.filter((g) => !g.time && routineDue(g, today)).map((g) => goalCard(g, today))).join("");
@@ -907,7 +1134,7 @@
       const rows = weekDays(today).map((d) => {
         const s = daySummary(state, d);
         totals.completed += s.completed; totals.xp += s.xp; totals.claimed += s.claimed;
-        const holidayNames = state.events.filter((e) => e.source === "holiday" && e.date === d).map((e) => "📅 " + esc(e.title));
+        const holidayNames = state.events.filter((e) => e.source === "holiday" && e.date === d).map((e) => px("calendar", 13) + esc(e.title));
         const planned = holidayNames.concat(s.planned.map((q) => esc(q.name))).join("<br>") || '<span class="muted">—</span>';
         return `<tr class="${d === today ? "today" : ""}"><td>${short(d)}</td><td>${planned}</td><td>${s.completed}</td><td>${s.xp}</td><td>${s.claimed}</td></tr>`;
       }).join("");
@@ -915,7 +1142,7 @@
         ${weekly.length ? `<h3>Weekly goals</h3>${weekly.map((g) => goalCard(g, today)).join("")}` : '<div class="empty">Type <b>exercise 3 times a week</b> to add a weekly goal.</div>'}
         ${routines.length ? `<h3 style="margin-top:14px">Repeating quests</h3>${routines.map((g) => goalCard(g, today)).join("")}` : ""}
         ${upcoming.length ? `<h3 style="margin-top:14px">Coming up</h3>${upcoming.map((q) => `<div class="muted">${relative(q.day, today)}</div>${questCard(q, today)}`).join("")}` : ""}
-        ${holidays.length ? `<h3 style="margin-top:14px">Upcoming holidays</h3>${holidays.map((e) => `<div class="event"><span class="qname">📅 ${esc(e.title)}</span><span class="muted" style="color:inherit">${relative(e.date, today)} · Public holiday</span></div>`).join("")}` : ""}
+        ${holidays.length ? `<h3 style="margin-top:14px">Upcoming holidays</h3>${holidays.map((e) => `<div class="event"><span class="qname">${px("calendar", 15)}${esc(e.title)}</span><span class="muted" style="color:inherit">${relative(e.date, today)} · Public holiday</span></div>`).join("")}` : ""}
         <div class="panel"><h3>${totals.completed} done · ${totals.xp} XP · ${totals.claimed} rewards</h3>
           <div class="scroll"><table><tr><th>Day</th><th>Open</th><th>Done</th><th>XP</th><th>Rewards</th></tr>${rows}</table></div>
         </div>`;
@@ -925,14 +1152,26 @@
         const short2 = r.cost - state.spendableXp;
         return `<div class="item ${short2 > 0 ? "locked" : ""}" data-reward="${r.id}">
           <button class="iconbtn del" data-action="delete-reward" data-id="${r.id}" aria-label="Delete ${esc(r.name)}">×</button>
-          <div class="art">${r.emoji}</div>
+          <div class="art">${px(rewardArt(r), 44)}</div>
           <div class="title">${esc(r.name)}</div>
-          <div class="price">🪙 ${r.cost}</div>
-          <button class="btn" data-action="claim" data-id="${r.id}" ${short2 > 0 ? "disabled" : ""}>${short2 > 0 ? "🔒 " + short2 + " more" : "Claim"}</button>
+          <div class="price">${px("coin", 18)}${r.cost}</div>
+          <button class="btn" data-action="claim" data-id="${r.id}" ${short2 > 0 ? "disabled" : ""}>${short2 > 0 ? px("lock", 14) + short2 + " more" : "Claim"}</button>
         </div>`;
       }).join("");
-      const claims = state.claims.slice().reverse().map((c) => `<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0"><span>${esc(c.name)}</span><span class="muted">🪙 ${c.cost} · ${nice(c.date, { month: "short", day: "numeric" })}</span></div>`).join("");
-      return `<div class="board-head"><h2>Reward Shop</h2><div style="font-weight:800">🪙 ${state.spendableXp} coins</div></div>
+      const claims = state.claims.slice().reverse().map((c) => `<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0"><span>${esc(c.name)}</span><span class="muted">${px("coin", 13)}${c.cost} · ${nice(c.date, { month: "short", day: "numeric" })}</span></div>`).join("");
+      const shieldShort = SHIELD_PRICE - state.spendableXp;
+      const shieldFull = state.shields >= SHIELD_MAX;
+      const shieldItem = `<div class="item ${shieldShort > 0 || shieldFull ? "locked" : ""}">
+          <div class="art">${px("shield", 44)}</div>
+          <div class="title">Streak shield</div>
+          <div class="muted item-note">Saves your streak if you miss one day. You have ${state.shields} of ${SHIELD_MAX}.</div>
+          <div class="price">${px("coin", 18)}${SHIELD_PRICE}</div>
+          <button class="btn" data-action="buy-shield" ${shieldShort > 0 || shieldFull ? "disabled" : ""}>${shieldFull ? "Fully stocked" : shieldShort > 0 ? px("lock", 14) + shieldShort + " more" : "Buy"}</button>
+        </div>`;
+      return `<div class="board-head"><h2>Reward Shop</h2><div class="counters">${px("coin", 18)}${state.spendableXp} coins</div></div>
+        <h3>Power-ups</h3>
+        <div class="shop">${shieldItem}</div>
+        <h3 style="margin-top:18px">Your rewards</h3>
         <div class="shop">${items}</div>
         <div class="panel"><h3>Stock the shop</h3>
           <form id="rewardForm" style="display:flex;flex-wrap:wrap;gap:8px">
@@ -948,43 +1187,80 @@
       const questsDone = state.quests.filter((q) => q.done).length + state.goals.reduce((n, g) => n + g.log.length, 0);
       const stats = [["Lifetime XP", state.lifetimeXp], ["Quests done", questsDone], ["Current streak", currentStreak(state, today)], ["Best streak", state.bestStreak], ["Days cleared", state.daysCleared], ["Rewards claimed", state.claims.length]];
       const themes = THEMES.map((t) => `<option value="${t.id}" ${t.id === state.theme ? "selected" : ""} ${level < t.level ? "disabled" : ""}>${esc(t.name)}${level < t.level ? " (level " + t.level + ")" : ""}</option>`).join("");
+      const avatars = AVATARS.map((a) => {
+        const lv = avatarUnlockLevel(a.id), open = level >= lv;
+        return `<button class="avatar-pick ${state.avatar === a.id ? "on" : ""}" data-action="pick-avatar" data-avatar="${a.id}" ${open ? "" : "disabled"}
+          aria-label="${open ? "Use the " + a.name + " avatar" : a.name + " avatar, unlocks at level " + lv}">${mascotSvg(a.id)}<span>${open ? esc(a.name) : px("lock", 11) + "Lv " + lv}</span></button>`;
+      }).join("");
+      const heroStats = HERO_STATS.map((h) => {
+        const st = heroStat(state, h.category);
+        return `<div class="hero-stat ${catClass(h.category)}">
+          <div class="hs-top">${px(CATEGORY[h.category].icon, 18)}<b>${h.name}</b></div>
+          <div class="hs-bar"><div style="width:${(st.into / STAT_XP_PER_LEVEL) * 100}%"></div></div>
+          <div class="hs-foot"><span class="hs-lv">Lv ${st.level}</span><span class="muted">${st.xp} XP</span></div>
+        </div>`;
+      }).join("");
+      const badges = BADGES.map((b) => `<button class="badge ${level >= b.level ? "" : "locked"}" data-action="badge-info" data-level="${b.level}"><span>${px(b.icon, 40)}</span>${level >= b.level ? esc(b.name) : "Level " + b.level}</button>`).join("");
+      const earnedCount = ACHIEVEMENTS.filter((a) => state.achievements[a.id]).length;
+      const achievements = ACHIEVEMENTS.map((a) => `<button class="badge ${state.achievements[a.id] ? "" : "locked"}" data-action="ach-info" data-ach="${a.id}"><span>${px(a.icon, 36)}</span>${esc(a.name)}</button>`).join("");
       return `<div class="board-head"><h2>Hero Profile</h2></div>
-        <div class="panel" style="margin-top:0"><h3>Stats</h3><div class="stats">${stats.map(([k, v]) => `<div class="stat"><b>${v}</b>${k}</div>`).join("")}</div></div>
-        <div class="panel"><h3>Badges</h3><div class="badges">${BADGES.map((b) => `<div class="badge ${level >= b.level ? "" : "locked"}"><span>${b.emoji}</span>${level >= b.level ? esc(b.name) : "Level " + b.level}</div>`).join("")}</div></div>
+        <div class="panel" style="margin-top:0"><h3>Your avatar</h3><p class="muted" style="margin:-4px 0 10px">Each level badge unlocks a new one.</p><div class="avatars">${avatars}</div></div>
+        <div class="panel"><h3>Hero stats</h3><div class="hero-stats">${heroStats}</div></div>
+        <div class="panel"><h3>Stats</h3><div class="stats">${stats.map(([k, v]) => `<div class="stat"><b>${v}</b>${k}</div>`).join("")}</div></div>
+        <div class="panel"><h3>Badges</h3><p class="muted" style="margin:-4px 0 10px">Tap a badge to see what it means.</p><div class="badges">${badges}</div></div>
+        <div class="panel"><h3>Achievements · ${earnedCount} of ${ACHIEVEMENTS.length}</h3><p class="muted" style="margin:-4px 0 10px">Each one pays ${ACHIEVEMENT_COINS} coins. Tap to see how to earn it.</p><div class="badges">${achievements}</div></div>
         <div class="panel"><label class="field" style="margin-top:0">Theme<select id="themeSelect">${themes}</select></label></div>
+        <div class="panel"><h3>Your data</h3>
+          <p class="muted" style="margin:-4px 0 10px">Clear the sample quests and start with your own. This deletes everything saved in this browser.</p>
+          <button class="btn danger" data-action="reset-empty">Start fresh</button>
+        </div>
         <div class="panel"><h3>Demo tools</h3>
           <div class="toolbar" style="margin:0">
             <button class="btn soft" data-action="next-day">Simulate next day</button>
             <button class="btn soft" data-action="reset-sample">Reload sample data</button>
-            <button class="btn soft" data-action="reset-empty">Start empty</button>
           </div>
         </div>`;
     }
     function allTemplates() { return BUILT_IN_TEMPLATES.concat(state.templates); }
     function renderChips() {
       $("chips").innerHTML = allTemplates().map((t, i) =>
-        `<button class="chip ${catClass(t.category)}" data-action="use-template" data-index="${i}">${CATEGORY[t.category].emoji} ${esc(t.text)}</button>`
+        `<button class="chip ${catClass(t.category)}" data-action="use-template" data-index="${i}">${px(CATEGORY[t.category].icon, 14)}${esc(t.text)}</button>`
       ).join("") + '<button class="chip new" data-action="manage-templates">+ My template</button>';
     }
+    // The preview shows how DailyQuest read the typed text, as fields the user can correct before saving.
     function previewHtml(p, today) {
-      const when = p.kind === "goal"
-        ? `<span class="pill">🔁 ${esc(repeatLabel(p))}</span>`
-        : `<span class="pill">${p.dateType === "due" ? "Due " : ""}${relative(p.date, today)}</span>`;
-      return `<strong>${esc(p.name)}</strong>${when}${p.time ? `<span class="pill">🕒 ${fmtTime(p.time)}</span>` : ""}${metaHtml(p)}<span class="pill">+${questXp(p)} XP</span>`;
+      const opt = (list, cur) => list.map(([v, l]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${esc(l)}</option>`).join("");
+      const rv = repeatValue(p);
+      const repeatOpts = [["none", "Does not repeat"], ["daily", "Every day"], ["weekdays", "Every weekday"]]
+        .concat([1, 2, 3, 4, 5, 6, 7].map((n) => ["x" + n, n === 1 ? "Once a week" : n + " times a week"]));
+      if (rv === "custom") repeatOpts.push(["custom", repeatLabel(p)]);
+      return `<div class="pv-grid">
+          <label class="pv pv-name"><span>Title</span><input data-pv="name" value="${esc(p.name)}" maxlength="160" /></label>
+          ${p.kind === "quest" ? `<label class="pv"><span>When</span><select data-pv="dateType">${opt([["day", "Do on"], ["due", "Due by"]], p.dateType)}</select></label>
+          <label class="pv"><span>Date</span><input type="date" data-pv="date" value="${p.date}" min="${today}" /></label>` : ""}
+          <label class="pv"><span>Time</span><input type="time" data-pv="time" value="${p.time || ""}" /></label>
+          <label class="pv"><span>Type</span><select data-pv="category">${opt(Object.keys(CATEGORY).map((c) => [c, c]), p.category)}</select></label>
+          <label class="pv"><span>Difficulty</span><select data-pv="difficulty">${opt(Object.keys(XP_BY_DIFFICULTY).map((d) => [d, d]), p.difficulty)}</select></label>
+          <label class="pv"><span>Repeat</span><select data-pv="repeat">${opt(repeatOpts, rv)}</select></label>
+        </div>
+        <div class="pv-foot muted">${px(CATEGORY[p.category].icon, 13)}+${questXp(p)} XP${p.kind === "goal" ? " each time" : ""} · Press <b>Enter</b> to save</div>`;
     }
+    function currentEntry() { return applyOverrides(parseEntry(input().value, getToday()), pvOverrides); }
     function updatePreview() {
       const value = input().value;
+      if (!value.trim()) pvOverrides = {};
       $("preview").hidden = !value.trim();
-      $("preview").innerHTML = value.trim() ? previewHtml(parseEntry(value, getToday()), getToday()) : "";
+      $("preview").innerHTML = value.trim() ? previewHtml(currentEntry(), getToday()) : "";
     }
     function input() { return $("captureInput"); }
     function renderPlayer(forceWidth) {
       const today = getToday();
       const level = levelOf(state.lifetimeXp);
       const into = state.lifetimeXp % XP_PER_LEVEL;
+      $("avatar").innerHTML = mascotSvg(state.avatar);
       $("levelLine").textContent = "Level " + level;
-      $("coinLine").textContent = "🪙 " + state.spendableXp;
-      $("streakLine").textContent = "🔥 " + currentStreak(state, today);
+      $("coinLine").innerHTML = px("coin", 18) + state.spendableXp;
+      $("streakLine").innerHTML = px("flame", 18) + currentStreak(state, today) + (state.shields ? `<span class="shield-count" title="Streak shields">${px("shield", 16)}${state.shields}</span>` : "");
       $("barFill").style.width = forceWidth || (into / XP_PER_LEVEL) * 100 + "%";
       $("barLine").textContent = into + " / " + XP_PER_LEVEL + " XP to level " + (level + 1);
     }
@@ -1005,12 +1281,14 @@
       $("view").innerHTML = tab === "today" ? renderToday(today) : tab === "week" ? renderWeek(today) : tab === "shop" ? renderShop() : renderProfile(today);
       focusCapture();
     }
-    function toast(message) {
+    // A short message; with an action (like Undo) it stays a little longer.
+    function toast(message, icon, action) {
       const el = $("toast");
-      el.textContent = message;
+      el.innerHTML = (icon ? px(icon, 18) : "") + esc(message) +
+        (action ? `<button class="toast-btn" data-action="${action.id}">${esc(action.label)}</button>` : "");
       el.hidden = false;
       clearTimeout(toast.timer);
-      toast.timer = setTimeout(() => { el.hidden = true; }, 3000);
+      toast.timer = setTimeout(() => { el.hidden = true; }, action ? 6000 : 3000);
     }
     const FX_COLORS = ["#ffd24a", "#ff9a3c", "#6fdc8c", "#ff8fb1", "#4aa8ff"];
     function burst(el) {
@@ -1075,18 +1353,66 @@
         track("level_up", { level: result.levelAfter });
         const unlocked = BADGES.filter((b) => b.level > result.levelBefore && b.level <= result.levelAfter);
         const themes = THEMES.filter((t) => t.level > result.levelBefore && t.level <= result.levelAfter);
+        const newAvatars = unlocked.map((b) => AVATARS.find((a) => a.id === b.avatar)).filter(Boolean);
         moments.push({
-          art: mascotSvg(), title: "Level " + result.levelAfter + "!", button: "Awesome",
-          body: (unlocked.length ? "Badge unlocked: " + unlocked.map((b) => b.emoji + " <b>" + esc(b.name) + "</b>").join(", ") : "You're getting stronger.") +
+          art: mascotSvg(newAvatars.length ? newAvatars[newAvatars.length - 1].id : state.avatar), title: "Level " + result.levelAfter + "!", button: "Awesome",
+          body: (unlocked.length ? "Badge unlocked: " + unlocked.map((b) => px(b.icon, 20) + "<b>" + esc(b.name) + "</b>").join(", ") : "You're getting stronger.") +
+            (newAvatars.length ? "<br>New avatar: <b>" + newAvatars.map((a) => esc(a.name)).join(", ") + "</b>. Pick it in Profile." : "") +
             (themes.length ? "<br>New theme: <b>" + themes.map((t) => esc(t.name)).join(", ") + "</b>" : ""),
         });
       }
       if (checkDayCleared(state, today)) {
         track("day_cleared");
-        moments.push({ art: '<div class="big">🏆</div>', title: "Day cleared!", body: "Every quest for today is done. Go enjoy your evening.", button: "Victory" });
+        moments.push({ art: px("trophy", 96), title: "Day cleared!", body: "Every quest for today is done. Go enjoy your evening.", button: "Victory" });
+      }
+      queueAchievements(today);
+    }
+    // Checks for newly earned achievements and shows one celebration per achievement.
+    function queueAchievements(today) {
+      for (const a of checkAchievements(state, today)) {
+        track("achievement_unlocked", { id: a.id });
+        moments.push({ art: px(a.icon, 96), title: "Achievement!", body: `<b>${esc(a.name)}</b>: ${esc(a.desc)}<br>+${ACHIEVEMENT_COINS} coins`, button: "Nice" });
       }
       save();
+      renderPlayer();
       if (moments.length && $("momentOverlay").hidden) nextMoment();
+    }
+    function openBadgeInfo(level) {
+      const b = BADGES.find((x) => x.level === level);
+      if (!b) return;
+      const have = levelOf(state.lifetimeXp) >= b.level;
+      const need = (b.level - 1) * XP_PER_LEVEL - state.lifetimeXp;
+      const av = AVATARS.find((a) => a.id === b.avatar);
+      openSheet(`<div class="info ${have ? "" : "locked"}">${px(b.icon, 72)}
+        <h2>${esc(b.name)}</h2>
+        <p>${esc(b.desc)}</p>
+        <p>${have ? `<span class="pill earned">${px("check", 13)}Earned</span>` : `<span class="pill">${px("lock", 13)}${need} XP to go</span>`}</p>
+        ${av ? `<div class="reward-row">${mascotSvg(av.id)}<span>Reward: the <b>${esc(av.name)}</b> avatar${have ? "" : " (locked)"}</span></div>` : ""}
+        <div class="sheet-actions" style="justify-content:center">
+          ${have && av && state.avatar !== av.id ? `<button class="btn" data-action="pick-avatar" data-avatar="${av.id}">Use ${esc(av.name)}</button>` : ""}
+          <button class="btn soft" data-action="close-sheet">Close</button>
+        </div></div>`);
+    }
+    function openAchievementInfo(id) {
+      const a = ACHIEVEMENTS.find((x) => x.id === id);
+      if (!a) return;
+      const when = state.achievements[a.id];
+      openSheet(`<div class="info ${when ? "" : "locked"}">${px(a.icon, 72)}
+        <h2>${esc(a.name)}</h2>
+        <p>${esc(a.desc)}</p>
+        <p>${when ? `<span class="pill earned">${px("check", 13)}Earned ${nice(when, { month: "short", day: "numeric" })}</span>` : `<span class="pill">${px("lock", 13)}Not yet</span>`}</p>
+        <div class="reward-row">${px("coin", 28)}<span>Reward: <b>${ACHIEVEMENT_COINS} coins</b></span></div>
+        <div class="sheet-actions" style="justify-content:center"><button class="btn soft" data-action="close-sheet">Close</button></div></div>`);
+    }
+    function openWelcome() {
+      openSheet(`<div class="info">${mascotSvg("mint")}
+        <h2>Welcome to DailyQuest</h2>
+        <p>Plan your week once, then open the app each day to see exactly what to do, and earn rewards for finishing it.</p>
+        <div class="sheet-actions" style="flex-direction:column">
+          <button class="btn" data-action="welcome-sample">Explore with sample quests</button>
+          <button class="btn soft" data-action="welcome-fresh">Start fresh with my own quests</button>
+        </div>
+        <p class="muted" style="margin-top:10px">You can start fresh any time from Profile.</p></div>`);
     }
     function finishQuest(btn, result, leaves, today, note) {
       const card = btn.closest(".qcard");
@@ -1095,10 +1421,20 @@
       if (leaves && card) card.classList.add("leaving");
       const leveled = result.levelAfter > result.levelBefore;
       renderPlayer(leveled ? "100%" : undefined);
-      if (result.bonus) toast("Streak bonus included! 🔥");
-      if (note) toast(note);
+      const notes = [];
+      if (result.chest) { notes.push(`Daily chest: +${result.chest} coins`); track("daily_chest", { coins: result.chest }); }
+      if (result.shieldUsed) { notes.push("Your streak shield saved your streak"); track("shield_used"); }
+      if (result.bonus) notes.push("Streak bonus included");
+      if (note) notes.push(note);
+      toast(notes.length ? notes.join(" · ") : "Quest complete!", result.chest ? "chest" : result.shieldUsed ? "shield" : note ? "trophy" : result.bonus ? "flame" : "check",
+        { id: "undo-complete", label: "Undo" });
       save();
-      setTimeout(() => { render(); queueMoments(result, today); }, 400);
+      const token = completionToken;
+      setTimeout(() => {
+        if (token !== completionToken || !lastCompletion) return;   // undone before the celebrations ran
+        render();
+        queueMoments(result, today);
+      }, 400);
     }
     function addParsed(parsed, today, source) {
       const item = parsed.kind === "goal" ? addGoal(state, parsed) : addQuest(state, parsed, today);
@@ -1109,7 +1445,7 @@
       lastAdded = { kind: parsed.kind, id: item.id };
       const where = parsed.kind === "goal" ? (parsed.days ? repeatLabel(parsed) : "the Week tab") : relative(item.day, today);
       $("confirmLine").hidden = false;
-      $("confirmLine").innerHTML = `✅ Added <strong>${esc(item.name)}</strong> to ${esc(where)} <button class="linkbtn" data-action="undo-add">Undo</button>`;
+      $("confirmLine").innerHTML = `${px("check", 14)}Added <strong>${esc(item.name)}</strong> to ${esc(where)} <button class="linkbtn" data-action="undo-add">Undo</button>`;
     }
     function closeTemplate() { $("templateForm").hidden = true; $("templateForm").innerHTML = ""; activeTemplate = null; focusCapture(); }
     function openTemplate(t) {
@@ -1164,7 +1500,7 @@
       $("eName").focus();
     }
     function openTemplateManager() {
-      const mine = state.templates.map((t, i) => `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0"><span>${CATEGORY[t.category].emoji} ${esc(t.text)}</span><button class="iconbtn" data-action="delete-template" data-index="${i}" aria-label="Delete template">×</button></div>`).join("");
+      const mine = state.templates.map((t, i) => `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0"><span>${px(CATEGORY[t.category].icon, 14)}${esc(t.text)}</span><button class="iconbtn" data-action="delete-template" data-index="${i}" aria-label="Delete template">×</button></div>`).join("");
       openSheet(`<h2>My templates</h2>
         <form id="newTemplateForm">
           <label class="field">Template text (use ___ for the blank)<input id="tText" required maxlength="100" placeholder="Prep notes for ___" /></label>
@@ -1193,11 +1529,12 @@
       $("confirmLine").hidden = true;
     }
 
-    let state, tab = "today", todayMode = "quests", lastAdded = null, activeTemplate = null, editing = null;
+    let state, tab = "today", todayMode = "quests", lastAdded = null, activeTemplate = null, editing = null, firstVisit = false;
+    let pvOverrides = {}, reschedFor = null, lastCompletion = null, completionToken = 0;
     if (typeof document !== "undefined") {
       state = load();
       save();
-      $("avatar").innerHTML = mascotSvg();
+      document.querySelectorAll("[data-px]").forEach((el) => { el.innerHTML = px(el.dataset.px, 24); });
       const favicon = document.createElement("link");
       favicon.rel = "icon";
       favicon.href = "data:image/svg+xml," + encodeURIComponent(mascotSvg());
@@ -1212,21 +1549,50 @@
         const today = getToday();
         const id = Number(btn.dataset.id);
         const action = btn.dataset.action;
+        // Undo only covers the latest completion; any other change closes that window.
+        if (lastCompletion && !["undo-complete", "moment-next", "complete", "check-in"].includes(action)) lastCompletion = null;
         switch (action) {
           case "complete": {
             const quest = state.quests.find((q) => q.id === id);
+            const snapshot = JSON.stringify(state);
             const result = completeQuest(state, id, today);
             if (result) {
+              lastCompletion = { snapshot };
+              completionToken++;
               track("quest_completed", { kind: "quest", category: quest.category, difficulty: quest.difficulty, xp: result.xp, overdue: !!quest.dueDate && quest.dueDate < today });
               finishQuest(btn, result, true, today);
             }
             return;
           }
+          case "undo-complete": {
+            if (!lastCompletion) return;
+            state = Object.assign(newState(), JSON.parse(lastCompletion.snapshot));   // restores XP, coins, streak, chest, achievements
+            lastCompletion = null;
+            completionToken++;
+            moments.length = 0;
+            $("momentOverlay").hidden = true;
+            track("quest_uncompleted");
+            toast("Undone. XP and rewards were taken back.", "repeat");
+            break;
+          }
+          case "resched-menu": reschedFor = reschedFor === id ? null : id; break;
+          case "resched": {
+            const q = state.quests.find((x) => x.id === id);
+            const day = rescheduleTarget(btn.dataset.when, today);
+            const wasOverdue = !!q && isOverdue(q, today);
+            if (!rescheduleQuest(state, id, day, today)) return;
+            reschedFor = null;
+            track("quest_rescheduled", { when: btn.dataset.when, overdue: wasOverdue });
+            toast("Moved to " + relative(q.day, today), "calendar");
+            break;
+          }
           case "check-in": {
             const goal = state.goals.find((g) => g.id === id);
+            const snapshot = JSON.stringify(state);
             const result = checkInGoal(state, id, today);
+            if (result) { lastCompletion = { snapshot }; completionToken++; }
             if (result) track("quest_completed", { kind: goal.days ? "repeating" : "weekly_goal", category: goal.category, difficulty: goal.difficulty, xp: result.xp, finished_week: result.finishesWeek });
-            if (result) finishQuest(btn, result, !!(goal && goal.days), today, result.finishesWeek ? "Weekly goal complete! 🎯" : "");
+            if (result) finishQuest(btn, result, !!(goal && goal.days), today, result.finishesWeek ? "Weekly goal complete!" : "");
             return;
           }
           case "claim": {
@@ -1234,15 +1600,41 @@
             if (!claimReward(state, id, today)) return;
             const r = state.rewards.find((x) => x.id === id);
             card.classList.add("claimed");
-            floatText(btn, "-" + r.cost + " 🪙");
+            floatText(btn, "-" + r.cost + " coins");
             track("reward_claimed", { cost: r.cost });
             burst(btn);
             renderPlayer();
-            toast(r.emoji + " Enjoy your " + r.name + "!");
+            toast("Enjoy your " + r.name + "!", rewardArt(r));
             save();
-            setTimeout(render, 480);
+            setTimeout(() => { render(); queueAchievements(today); }, 480);
             return;
           }
+          case "buy-shield":
+            if (!buyShield(state, today)) return;
+            track("shield_bought", { held: state.shields });
+            burst(btn);
+            toast("Streak shield ready! It protects one missed day.", "shield");
+            break;
+          case "pick-avatar": {
+            const pick = AVATARS.find((a) => a.id === btn.dataset.avatar);
+            if (!pick || levelOf(state.lifetimeXp) < avatarUnlockLevel(pick.id)) return;
+            state.avatar = pick.id;
+            track("avatar_changed", { avatar: pick.id });
+            toast("You're now " + pick.name + "!");
+            if (!$("sheetOverlay").hidden) closeSheet();
+            break;
+          }
+          case "badge-info": openBadgeInfo(Number(btn.dataset.level)); return;
+          case "ach-info": openAchievementInfo(btn.dataset.ach); return;
+          case "welcome-sample":
+            track("welcome_choice", { choice: "sample" });
+            closeSheet();
+            break;
+          case "welcome-fresh":
+            track("welcome_choice", { choice: "fresh" });
+            resetTo(newState());
+            closeSheet();
+            break;
           case "moment-next": nextMoment(); return;
           case "use-template": {
             const t = allTemplates()[Number(btn.dataset.index)];
@@ -1301,10 +1693,12 @@
       document.addEventListener("submit", (e) => {
         e.preventDefault();
         const today = getToday();
+        lastCompletion = null;
         if (e.target.id === "captureForm") {
           const value = input().value;
           if (!value.trim()) return;
-          addParsed(parseEntry(value, today), today, "typed");
+          addParsed(currentEntry(), today, Object.keys(pvOverrides).length ? "typed_edited" : "typed");
+          pvOverrides = {};
           input().value = "";
           updatePreview();
         } else if (e.target.id === "templateForm") {
@@ -1328,8 +1722,31 @@
         render();
       });
 
-      document.addEventListener("input", (e) => { if (e.target.id === "captureInput") updatePreview(); });
+      document.addEventListener("input", (e) => {
+        if (e.target.id === "captureInput") updatePreview();
+        if (e.target.dataset.pv === "name") pvOverrides.name = e.target.value;   // no re-render, so typing keeps focus
+      });
       document.addEventListener("change", (e) => {
+        const pv = e.target.dataset.pv;
+        if (pv && pv !== "name") {
+          pvOverrides[pv] = e.target.value;
+          if (pv === "repeat" && e.target.value === "custom") delete pvOverrides.repeat;
+          updatePreview();
+          const again = document.querySelector(`[data-pv="${pv}"]`);
+          if (again) again.focus();
+          return;
+        }
+        if (e.target.dataset.reschedDate) {
+          const id = Number(e.target.dataset.reschedDate), today = getToday();
+          if (rescheduleQuest(state, id, e.target.value, today)) {
+            const q = state.quests.find((x) => x.id === id);
+            reschedFor = null;
+            track("quest_rescheduled", { when: "pick", overdue: false });
+            save(); render();
+            toast("Moved to " + relative(q.day, today), "calendar");
+          }
+          return;
+        }
         if (e.target.id === "themeSelect") { state.theme = e.target.value; save(); render(); }
         if (e.target.id === "eRepeat") $("eDays").hidden = e.target.value !== "days";
         if (e.target.id === "icsFile" && e.target.files[0]) {
@@ -1354,6 +1771,12 @@
 
       // Typing anywhere goes straight to the quick-add bar, on any tab.
       document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && e.target.dataset && e.target.dataset.pv) {   // Enter in a preview field saves too
+          e.preventDefault();
+          if (e.target.value !== "custom") pvOverrides[e.target.dataset.pv] = e.target.value;
+          $("captureForm").requestSubmit();
+          return;
+        }
         if (e.key === "Escape") {
           if (!$("sheetOverlay").hidden) closeSheet();
           else if (!$("templateForm").hidden) closeTemplate();
@@ -1371,6 +1794,7 @@
       }, { passive: false });
 
       render();
+      if (firstVisit) openWelcome();
     }
   </script>
 </body>

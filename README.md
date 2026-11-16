@@ -18,12 +18,16 @@ People juggling busy lives end up managing them across too many apps. MBA studen
 
 - **Type to add:** open the page and start typing. DailyQuest works out the date, time, category, difficulty, and repeats.
 - **Quick templates:** tap a chip like "Send thank-you note to ___", fill in the blank, and press Enter. You can save your own.
-- **Today's Quests:** only what's due today, with overdue quests on top in red. Tap a circle to finish one.
+- **Today's Quests:** only what's due today, with overdue quests on top in red. Tap a circle to finish one, and tap **Undo** in the message if you didn't mean to (XP and rewards are taken back).
+- **Edit and reschedule:** tap a quest to edit its title, dates, time, category, difficulty or repeat. The calendar button moves it to Today, Tomorrow, Next week or any date.
+- **Smart preview:** while you type, the fields DailyQuest understood appear below the box so you can fix them; Enter saves right away.
 - **Rewards:** earn XP, levels, badges, and streaks, then spend coins on real-life rewards you choose.
 - **Week view:** weekly goals, repeating quests, what's coming up, and a summary of the week.
 - **Schedule view:** a timeline of today's timed quests and calendar events, with untimed quests below.
 - **Calendar import:** load a `.ics` file exported from Google Calendar. Events show as read-only and earn no XP.
 - **Public holidays:** one tap adds upcoming US (and New York) holidays to your schedule and week.
+- **Game extras:** a daily loot chest of bonus coins, a streak shield you can buy to protect one missed day, hero stats that grow with each category, achievements that pay coins, and pixel avatars unlocked by level badges. Tap any badge or achievement to see what it means.
+- **Start fresh:** first-time visitors choose between sample quests and an empty board; Profile → **Start fresh** clears everything later.
 
 ### Things you can type
 
