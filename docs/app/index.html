@@ -4,6 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>DailyQuest</title>
+  <!-- PostHog analytics (same project as the Product Page). -->
+  <script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="Eh Rh Ph Oh Lh qh init yd bd dd fd Sd wc md xd ad Ed Ad Rd Pd Od Fd capture getExtension gr pd gd calculateEventProperties Ld register register_once register_for_session unregister unregister_for_session zd hd jd getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync Hd identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset Ud shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty qd Td createPersonProfile setInternalOrTestUser Bd Uh zh opt_in_capturing opt_out_capturing Hh has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing $d debug kc Ls getPageViewId captureTraceFeedback captureTraceMetric rd".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_z78E4byCUdHGptrqMwkU4kstwnZ4CeLj3QEjQsUq4FJG', {
+        api_host: 'https://us.i.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+        mask_all_text: true, // privacy: never send button or card text with clicks
+        session_recording: { maskAllInputs: true, maskTextSelector: '*' }, // privacy: hide all text in replays
+    })
+</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@600;800&display=swap" rel="stylesheet" />
@@ -734,6 +745,10 @@
     function relative(s, today) { return s === today ? "Today" : s === addDays(today, 1) ? "Tomorrow" : short(s); }
     function getToday() { return addDays(dateStr(new Date()), state.dayOffset); }
     function catClass(c) { return "cat-" + CATEGORY[c].slug; }
+    // Sends one analytics event to PostHog. Never include task or reward names here.
+    function track(event, props) {
+      try { if (window.posthog && window.posthog.capture) window.posthog.capture(event, props || {}); } catch (e) { /* analytics must never break the app */ }
+    }
 
     function metaHtml(item) {
       return `<span class="pill ${catClass(item.category)}">${CATEGORY[item.category].emoji} ${esc(item.category)}</span>` +
@@ -828,7 +843,8 @@
             <button class="${todayMode === "schedule" ? "on" : ""}" data-action="mode" data-mode="schedule">Schedule</button>
           </div>
         </div>
-        ${todayMode === "quests" ? renderTodayList(today) : renderSchedule(today)}`;
+        ${todayMode === "quests" ? renderTodayList(today) : renderSchedule(today)}
+        <p class="muted" style="text-align:center;margin-top:18px">This demo records visits, clicks and session replays with PostHog to improve DailyQuest. The text you type is hidden from recordings.</p>`;
     }
     function renderWeek(today) {
       const weekly = state.goals.filter((g) => !g.days);
@@ -982,6 +998,7 @@
     }
     function queueMoments(result, today) {
       if (result.levelAfter > result.levelBefore) {
+        track("level_up", { level: result.levelAfter });
         const unlocked = BADGES.filter((b) => b.level > result.levelBefore && b.level <= result.levelAfter);
         const themes = THEMES.filter((t) => t.level > result.levelBefore && t.level <= result.levelAfter);
         moments.push({
@@ -991,6 +1008,7 @@
         });
       }
       if (checkDayCleared(state, today)) {
+        track("day_cleared");
         moments.push({ art: '<div class="big">🏆</div>', title: "Day cleared!", body: "Every quest for today is done. Go enjoy your evening.", button: "Victory" });
       }
       save();
@@ -1008,8 +1026,12 @@
       save();
       setTimeout(() => { render(); queueMoments(result, today); }, 400);
     }
-    function addParsed(parsed, today) {
+    function addParsed(parsed, today, source) {
       const item = parsed.kind === "goal" ? addGoal(state, parsed) : addQuest(state, parsed, today);
+      track("quest_added", {
+        source, kind: parsed.kind === "goal" ? (parsed.days ? "repeating" : "weekly_goal") : "quest",
+        category: parsed.category, difficulty: parsed.difficulty, has_time: !!parsed.time, has_due_date: parsed.dateType === "due",
+      });
       lastAdded = { kind: parsed.kind, id: item.id };
       const where = parsed.kind === "goal" ? (parsed.days ? repeatLabel(parsed) : "the Week tab") : relative(item.day, today);
       $("confirmLine").hidden = false;
@@ -1118,13 +1140,18 @@
         const action = btn.dataset.action;
         switch (action) {
           case "complete": {
+            const quest = state.quests.find((q) => q.id === id);
             const result = completeQuest(state, id, today);
-            if (result) finishQuest(btn, result, true, today);
+            if (result) {
+              track("quest_completed", { kind: "quest", category: quest.category, difficulty: quest.difficulty, xp: result.xp, overdue: !!quest.dueDate && quest.dueDate < today });
+              finishQuest(btn, result, true, today);
+            }
             return;
           }
           case "check-in": {
             const goal = state.goals.find((g) => g.id === id);
             const result = checkInGoal(state, id, today);
+            if (result) track("quest_completed", { kind: goal.days ? "repeating" : "weekly_goal", category: goal.category, difficulty: goal.difficulty, xp: result.xp, finished_week: result.finishesWeek });
             if (result) finishQuest(btn, result, !!(goal && goal.days), today, result.finishesWeek ? "Weekly goal complete! 🎯" : "");
             return;
           }
@@ -1134,6 +1161,7 @@
             const r = state.rewards.find((x) => x.id === id);
             card.classList.add("claimed");
             floatText(btn, "-" + r.cost + " 🪙");
+            track("reward_claimed", { cost: r.cost });
             burst(btn);
             renderPlayer();
             toast(r.emoji + " Enjoy your " + r.name + "!");
@@ -1145,7 +1173,7 @@
           case "use-template": {
             const t = allTemplates()[Number(btn.dataset.index)];
             if (t.text.includes("___")) { openTemplate(t); return; }
-            addParsed(Object.assign(parseEntry("x", today), { name: t.text, category: t.category, difficulty: t.difficulty }), today);
+            addParsed(Object.assign(parseEntry("x", today), { name: t.text, category: t.category, difficulty: t.difficulty }), today, "template");
             break;
           }
           case "close-template": closeTemplate(); return;
@@ -1201,13 +1229,13 @@
         if (e.target.id === "captureForm") {
           const value = input().value;
           if (!value.trim()) return;
-          addParsed(parseEntry(value, today), today);
+          addParsed(parseEntry(value, today), today, "typed");
           input().value = "";
           updatePreview();
         } else if (e.target.id === "templateForm") {
           const blank = $("templateBlank").value;
           if (!blank.trim()) return;
-          addParsed(fromTemplate(activeTemplate, blank, today), today);
+          addParsed(fromTemplate(activeTemplate, blank, today), today, "template");
           closeTemplate();
         } else if (e.target.id === "editForm") {
           const f = readEditForm();
@@ -1235,6 +1263,7 @@
             const today = getToday();
             const events = parseIcs(String(reader.result), today);
             mergeEvents(state, events);
+            track("calendar_imported", { events: events.length });
             const saved = save();
             render();
             const todayCount = events.filter((ev) => occursOn(ev, today)).length;
