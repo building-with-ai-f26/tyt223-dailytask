@@ -220,13 +220,14 @@
         <strong>Current Status:</strong> Build 2: working app with live holiday import and PostHog analytics, hosted on GitHub Pages<br />
         <strong>Demo:</strong> <a href="app/" onclick="window.posthog && posthog.capture('clicked_try_product', { location: 'showcase' }, { send_instantly: true, transport: 'sendBeacon' })">Try DailyQuest</a> on your phone or laptop, with no sign-up. It opens with sample data.
       </p>
-      <img src="prototype.png" alt="DailyQuest prototype Week tab: a player header with level, XP bar, coins, and streak above weekly goals for Exercise (0 of 3) and Call home (0 of 1)." class="shot" />
+      <img src="journal-desktop.png" alt="DailyQuest on a laptop: a dark green journal header with a pixel landscape, the player's level, coins, streak and earned badges, an index-tab menu, and Today's Quests written as parchment entries with an overdue thank-you note on top." class="shot" />
+      <img src="journal-phone.png" alt="DailyQuest on a phone: the same quest journal with the header, a handwritten quick-add line, page tabs for Quests and Schedule, parchment quest entries and green bookmark ribbons for Today, Week, Shop and Profile." class="shot" style="max-width:320px" />
       <p class="meta">
-        The Week tab of the prototype, shown with sample data.
+        The quest journal design on a laptop and a phone, shown with sample data.
       </p>
 
       <h3>Build 2 in action: importing public holidays</h3>
-      <p>One tap on <strong>Add US holidays</strong> in the Schedule calls the free Nager.Date public holidays API straight from the browser and adds the results to the schedule and week. Captured on my laptop.</p>
+      <p>One tap on <strong>Add US holidays</strong> in the Schedule calls the free Nager.Date public holidays API straight from the browser and adds the results to the schedule and week. Captured on my laptop, before the journal redesign.</p>
       <img src="holiday.png" alt="DailyQuest Schedule view after tapping Update US holidays: the day's timeline of classes and quests, with a confirmation message reading Added 14 US holidays. Next: Thanksgiving Day, Thu, Nov 26." class="shot" />
       <img src="holiday2.png" alt="DailyQuest Week tab listing upcoming holidays: Thanksgiving Day on Thu, Nov 26, Christmas Day on Fri, Dec 25, and New Year's Day on Fri, Jan 1." class="shot" />
       <p class="meta">Top: the import confirmation on the Schedule. Bottom: the holidays waiting on the Week tab.</p>
@@ -263,6 +264,10 @@
             <li><strong>Schedule view:</strong> tasks can have an optional start time. A vertical timeline for today shows timed quests and calendar events in order, with untimed quests listed below as "Anytime quests."</li>
             <li><strong>Calendar import (.ics):</strong> read a .ics file exported from Google Calendar, entirely in the browser, and show those events on the timeline as read-only events that earn no XP.</li>
             <li><strong>Public holidays (Build 2):</strong> one tap on <em>Add US holidays</em> calls a free public holidays API and adds upcoming US and New York holidays to the schedule and week, so students can plan around days off.</li>
+            <li><strong>Edit, reschedule and undo:</strong> tap a quest to edit it; the calendar button moves it to Today, Tomorrow, Next week or any date (an overdue due date moves with it). An Undo button appears for a few seconds after completing a quest and takes back the XP and rewards exactly.</li>
+            <li><strong>Smart input preview:</strong> while typing, the fields DailyQuest understood (title, date, time, type, difficulty, repeat) appear as editable fields; Enter still saves immediately.</li>
+            <li><strong>More game elements:</strong> a daily loot chest of bonus coins, a streak shield that protects one missed day, hero stats per category (Scholar, Networker, Social, Vitality), achievements that pay coins, and pixel adventurer avatars unlocked by level badges. Badges and achievements can be tapped to see what they mean.</li>
+            <li><strong>Start fresh:</strong> first-time visitors choose between exploring sample quests or starting with an empty journal.</li>
           </ul>
         </li>
         <li><strong>Out of Scope #1: No live Google Calendar sync in v1.</strong> .ics import only; live sync is planned for a later build.</li>
@@ -315,7 +320,7 @@
       <div class="log-entry">
         <h3>Build 2 · Smallest Local Version & PostHog (Due Nov 16)</h3>
         <ul>
-          <li><strong>What shipped:</strong> A live API call: <em>Add US holidays</em> pulls upcoming US and New York holidays from the free Nager.Date API straight from the browser and adds them to the schedule and week (screenshots above). PostHog now runs on this page and in the app, with custom events (quest added, quest completed, reward claimed, holidays imported or failed) and session replay that hides typed text. PRD v2 adds the biggest risk, how this build tests it, the architecture and cost per run. AGENTS.md now documents the project structure, setup and checks. I also polished the app and this page for readability on phones.</li>
+          <li><strong>What shipped:</strong> A live API call: <em>Add US holidays</em> pulls upcoming US and New York holidays from the free Nager.Date API straight from the browser and adds them to the schedule and week (screenshots above). PostHog now runs on this page and in the app, with custom events (quest added, quest completed, reward claimed, holidays imported or failed) and session replay that hides typed text. PRD v2 adds the biggest risk, how this build tests it, the architecture and cost per run. AGENTS.md now documents the project structure, setup and checks. I also added edit/reschedule/undo, an editable input preview, game elements (daily chest, streak shield, hero stats, achievements, unlockable avatars), and redesigned the app and this page as an elegant fantasy quest journal that works on phones and as a two-page spread on laptops.</li>
           <li><strong>Lessons:</strong> Fast clicks can lose events: my "See the Product" click was sometimes lost because the page changed before PostHog sent it, so key events now send immediately. And check what a feature really requires before building it: I wanted a login so tasks wouldn't get mixed up, but they were already separate per browser. A login would only add cross-device sync at the cost of a backend, so I postponed it until users ask for it.</li>
           <li><strong>What broke / changed in PRD:</strong> PostHog showed no activity at first, because my browser blocked it and served a cached page. The fix was testing in an incognito window, and confirming events reached PostHog. Build 2 required an API call while DailyQuest must stay free, so I chose a free public holidays API instead of a paid AI key. The PRD's core workflow now describes typing tasks in plain English, weekly goals and the holiday import, and the riskiest assumption is that DailyQuest can bring in outside data reliably at $0 with no server.</li>
           <li><strong>Cost & time this week:</strong> $0 · 4 hours</li>

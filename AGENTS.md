@@ -14,14 +14,16 @@
 | --- | --- |
 | `docs/app/index.html` | The whole app: styles, the sample data, the typed-task parser, game logic, `.ics` import, holiday import, rendering and PostHog events, in that order inside one `<script>` |
 | `docs/index.html` | Public Product Page: pitch, living PRD and weekly build log. Has its own PostHog snippet |
-| `docs/prototype.png` | Screenshot used on the Product Page and README |
+| `docs/journal-desktop.png`, `docs/journal-phone.png` | Current screenshots (sample data) used on the Product Page and README |
+| `docs/holiday.png`, `docs/holiday2.png`, `docs/prototype.png` | Earlier screenshots kept for the build log (pre-redesign) |
 | `PRODUCT.md` | Product context for design work (users, positioning, constraints); read by the Impeccable plugin |
 | `.impeccable/config.json` | Impeccable design-hook settings (`config.local.json` is per-developer and ignored) |
 | `README.md` | Public project overview and how to try it |
 | `Intent.md`, `Plan.md`, `journal/`, `tests/README.md`, `SPONSOR_MEMO.md` | Course templates; mostly unfilled |
 
 ### How the app code is organized (`docs/app/index.html`)
-- **Game numbers** (`XP_BY_DIFFICULTY`, bonuses, `XP_PER_LEVEL`) sit at the top of the script; several are placeholders.
+- **Design tokens** (colors, fonts, shadows, corner ornaments) are CSS variables at the top of the `<style>` block; journal themes override `--accent` and the `--leather`/`--sky` colors. The look is an elegant fantasy quest journal (see `PRODUCT.md` → Brand Commitments): paper panels with torn edges come from the `#paper-edge` SVG filter applied to `::before` backgrounds only, so text stays crisp.
+- **Game numbers** (`XP_BY_DIFFICULTY`, bonuses, `XP_PER_LEVEL`, `SHIELD_PRICE`, `CHEST_MIN`/`CHEST_MAX`, `ACHIEVEMENT_COINS`) sit at the top of the script; several are placeholders.
 - **Pure logic** (`parseEntry`, `parseIcs`, `holidaysToEvents`, `completeQuest`, `checkInGoal`, `claimReward`, `applyEdit` and others) never touches the page, so it can be tested in Node.
 - **Page code** starts at `// ---------- Page code ----------`: `render*` functions build each tab, and one `click`, `submit` and `change` listener each route actions by `data-action`.
 - **Storage key** is `dailyquest.v2`. Changing the saved data shape needs a migration, or users lose their data.

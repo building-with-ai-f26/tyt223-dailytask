@@ -8,7 +8,7 @@
 - **Try it:** https://building-with-ai-f26.github.io/tyt223-dailytask/app/
 - **Course:** Building with AI, NYU Stern, Fall 2026
 
-![DailyQuest prototype showing the Week tab with weekly goals](./docs/prototype.png)
+![DailyQuest's quest journal on a laptop: a pixel landscape header with level, coins and badges, an index-tab menu, and Today's Quests as parchment entries](./docs/journal-desktop.png)
 
 ## Why it exists
 
