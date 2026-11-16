@@ -18,6 +18,15 @@
         ],
         "createdAt": "2026-11-16T03:57:40.987Z",
         "reason": "Agent: parchment quest-board palette shared with the app (docs/app/index.html); PRODUCT.md marks the cozy RPG look as binding"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "docs/app/index.html"
+        ],
+        "createdAt": "2026-11-16T04:42:51.183Z",
+        "reason": "user confirmed: chose the #F5EBDD parchment background in the fantasy quest journal brief"
       }
     ]
   }

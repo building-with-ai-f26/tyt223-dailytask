@@ -65,7 +65,7 @@ MBA-specific templates (recruiting follow-ups, thank-you notes, class prep) supp
 ## Brand Commitments
 
 - Name: **DailyQuest**.
-- **The playful RPG look is binding**, not a phase: a cozy quest-board feel, the crowned pixel mascot, and the game feel of earning XP, leveling up and claiming rewards.
+- **The look is an elegant fantasy quest journal with pixel RPG accents** (chosen by the builder on November 15, 2026, replacing the earlier cute, purple quest-board look). Binding: a warm parchment page, forest green for selected and primary actions, antique gold reserved for XP, levels, achievements and rewards, a serif for headings with a clean sans for functional text, and pixel art used selectively (avatar, category and reward icons, badges, level and XP numbers), never as the whole interface. The crowned pixel mascot and the game feel of earning XP, leveling up and claiming rewards stay. Decoration is reserved for special moments (header, celebrations, sheets), not every card.
 
 ## Evidence on Hand
 
