@@ -359,6 +359,10 @@
     .feed-row .feed-meta { font-size: 12px; color: var(--muted); }
     .feed-row .feed-meta.bad { color: var(--danger); }
     .feed-row > div { flex: 1; min-width: 0; }
+    .feed-row { flex-wrap: wrap; }
+    .feed-toggle { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+    .feed-toggle input { width: auto; margin: 0; accent-color: var(--accent); }
+    .pill.auto { background: #EAF0EC; color: var(--accent); }
     .install-steps { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; }
     .install-steps svg { vertical-align: -3px; }
     .install-sheet { text-align: left; }
@@ -1289,8 +1293,75 @@
     }
     function removeFeed(state, feedId) {
       state.feeds = state.feeds.filter((x) => x.id !== feedId);
+      state.quests = state.quests.filter((q) => q.autoFrom !== feedId || q.done);
       state.events = state.events.filter((e) => e.source !== "feed:" + feedId);
     }
+    // Calendar -> quests. Deadlines ("Problem Set 3 - Due", "Quiz 2 - Availability Ends") become Class quests;
+    // coffee chats and interviews add a thank-you note quest for the next day.
+    const AUTO_QUEST_DAYS = 60;   // only look this far ahead, so a whole semester doesn't flood Today
+    function deadlineName(title) {
+      const t = String(title || "").trim();
+      if (/\b(availability|start date|starts?|opens?)\b(?!.*\b(ends?|due|close)\b)/i.test(t) && !/\bdue\b/i.test(t)) return "";
+      if (!/\b(due|deadline|availability ends|end date|closes|submission|submit)\b/i.test(t)) return "";
+      let core = t.replace(/\s*[-–—:|]?\s*\(?\b(due( date)?|deadline|availability ends|end date|closes|submission( deadline)?)\b\)?\s*[:\-–—]?\s*/gi, " ").replace(/\s+/g, " ").trim();
+      core = core.replace(/^[-–—:|\s]+|[-–—:|\s]+$/g, "");
+      if (!core) return "";
+      if (/^(submit|finish|complete|turn in|hand in)\b/i.test(core)) return core.charAt(0).toUpperCase() + core.slice(1);
+      return (/\b(quiz|exam|test|midterm|final)\b/i.test(core) ? "Finish " : "Submit ") + core;
+    }
+    function followUpPerson(title) {
+      const t = String(title || "");
+      if (!/\b(coffee chat|coffee with|informational|info(rmational)? interview|interview|networking call)\b/i.test(t)) return "";
+      const m = t.match(/\bwith\s+([^,;|()\-–—]+)/i);
+      return (m ? m[1] : t).replace(/\s+(at|@)\s+.*$/i, "").trim().slice(0, 60);
+    }
+    // Quests a calendar's events should produce: [{ autoKey, kind, name, category, difficulty, day, dueDate, time }].
+    function autoQuestsFrom(events, today) {
+      const out = [], horizon = addDays(today, AUTO_QUEST_DAYS);
+      for (const e of events) {
+        if (e.rule || !e.date || e.date > horizon) continue;   // repeating events (classes) never become quests
+        const name = deadlineName(e.title);
+        if (name) {
+          const big = /\b(exam|midterm|final|project|paper|essay|case write-?up|presentation)\b/i.test(e.title);
+          out.push({ autoKey: e.key, kind: "deadline", name, category: "Class", difficulty: big ? "Hard" : "Medium", day: e.date, dueDate: e.date, time: e.start || null });
+          continue;
+        }
+        const who = followUpPerson(e.title);
+        if (who) out.push({ autoKey: "thanks|" + e.key, kind: "thanks", name: "Send thank-you note to " + who, category: "Recruiting", difficulty: "Easy", day: addDays(e.date, 1), dueDate: null, time: null });
+      }
+      return out;
+    }
+    // Brings one calendar's auto-quests up to date. Finished ones stay finished, quests the player deleted
+    // never come back, moved deadlines move, and cancelled future deadlines disappear if unfinished.
+    function syncAutoQuests(state, feed, events, today) {
+      const wanted = autoQuestsFrom(events, today);
+      const dismissed = new Set(state.autoDismissed || []);
+      const mine = state.quests.filter((q) => q.autoFrom === feed.id);
+      const byKey = new Map(mine.map((q) => [q.autoKey, q]));
+      const result = { created: 0, updated: 0, removed: 0 };
+      for (const w of wanted) {
+        const q = byKey.get(w.autoKey);
+        if (q) {
+          byKey.delete(w.autoKey);
+          if (q.done || w.kind !== "deadline") continue;
+          if (q.dueDate !== w.dueDate || q.time !== w.time) {
+            if (q.day === q.dueDate) q.day = w.day < today ? today : w.day;   // only move it if the player hadn't moved it
+            q.dueDate = w.dueDate; q.time = w.time; result.updated++;
+          }
+        } else if (!dismissed.has(w.autoKey) && !state.quests.some((x) => x.autoKey === w.autoKey)) {
+          const nq = addQuest(state, { name: w.name, category: w.category, difficulty: w.difficulty, date: w.day, dateType: w.dueDate ? "due" : "day", time: w.time }, today);
+          nq.autoFrom = feed.id; nq.autoKey = w.autoKey; result.created++;
+        }
+      }
+      for (const q of byKey.values()) {   // its event is gone from the calendar
+        if (!q.done && q.dueDate && q.dueDate >= today && !String(q.autoKey).startsWith("thanks|")) {
+          state.quests = state.quests.filter((x) => x.id !== q.id); result.removed++;
+        }
+      }
+      return result;
+    }
+    function feedMakesQuests(feed) { return feed.makeQuests !== false; }
+
     function feedDue(feed, nowMs, maxAgeMs) { return !feed.lastSync || nowMs - feed.lastSync >= maxAgeMs; }
 
     function mergeEvents(state, incoming) {
@@ -1665,7 +1736,8 @@
       const overdue = isOverdue(q, today);
       const extras = (overdue ? '<span class="pill red">Overdue</span>' : "") +
         (q.time ? `<span class="pill">${px("clock", 13)}${fmtTime(q.time)}</span>` : "") +
-        (q.dueDate && !overdue ? `<span class="pill">Due ${nice(q.dueDate, { month: "short", day: "numeric" })}</span>` : "");
+        (q.dueDate && !overdue ? `<span class="pill">Due ${nice(q.dueDate, { month: "short", day: "numeric" })}</span>` : "") +
+        (q.autoFrom ? `<span class="pill auto">${px("calendar", 13)}${esc(((state.feeds || []).find((x) => x.id === q.autoFrom) || { name: "Calendar" }).name)}</span>` : "");
       return `<article class="qcard ${catClass(q.category)} ${overdue ? "overdue" : ""} ${q.done ? "done" : ""}" ${q.done ? "" : `data-swipe="quest" data-id="${q.id}"`}>
         <button class="circle" data-action="complete" data-id="${q.id}" ${q.done ? "disabled" : ""} aria-label="Complete ${esc(q.name)}">${q.done ? "✓" : ""}</button>
         <button class="qbody ${q.done ? "static" : ""}" ${q.done ? "disabled" : `data-action="edit" data-kind="quest" data-id="${q.id}" title="Edit"`}>
@@ -2432,9 +2504,25 @@
       if (!account.user) return head + '<p class="muted" style="margin:0 0 8px">Connect your Google Calendar so classes and meetings show up here on their own. Log in first.</p><button class="btn soft" data-action="auth-open" data-mode="login">Log in</button></div>';
       const rows = state.feeds.map((x) => `<div class="feed-row">${px("calendar", 18)}<div><div class="feed-name">${esc(x.name)}</div>
         <div class="feed-meta ${x.error ? "bad" : ""}">${feedBusy.has(x.id) ? "Updating…" : x.error ? esc(x.error) : x.lastSync ? "Updated " + ago(x.lastSync) + " · refreshes automatically" : "Not updated yet"}</div></div>
+        <label class="feed-toggle" title="Turn deadlines and coffee chats into quests"><input type="checkbox" data-feed-quests="${x.id}" ${feedMakesQuests(x) ? "checked" : ""} /> Make quests</label>
         <button class="linkbtn" data-action="feed-refresh" data-id="${x.id}" ${feedBusy.has(x.id) ? "disabled" : ""}>Refresh</button><button class="linkbtn" data-action="feed-remove" data-id="${x.id}">Remove</button></div>`).join("");
       return head + (rows || '<p class="muted" style="margin:0 0 8px">Paste your calendar\'s subscription link once, and events keep updating on their own.</p>') +
         '<button class="btn soft" data-action="feed-add">+ Connect a calendar</button></div>';
+    }
+    // Turning "Make quests" on runs it now; turning it off removes that calendar's unfinished auto-quests.
+    function setFeedQuests(feedId, on) {
+      const feed = state.feeds.find((x) => x.id === feedId);
+      if (!feed) return;
+      feed.makeQuests = on;
+      if (on) {
+        const r = syncAutoQuests(state, feed, state.events.filter((e) => e.source === "feed:" + feedId), getToday());
+        toast(r.created ? `Added ${r.created} quest${r.created === 1 ? "" : "s"} from ${feed.name}` : `No deadlines or coffee chats found in ${feed.name}`, "calendar");
+      } else {
+        state.quests = state.quests.filter((q) => q.autoFrom !== feedId || q.done);
+        toast(`Removed quests made from ${feed.name}`, "calendar");
+      }
+      track("auto_quests_toggled", { on });
+      save(); render();
     }
     function openFeedForm(note) {
       openSheet(`<form id="feedForm" class="auth" novalidate>
@@ -2472,7 +2560,16 @@
         const live = state.feeds.find((x) => x.id === feedId);   // may have been removed meanwhile
         if (live) {
           if (code || !data || !data.ics) { live.error = feedErrorText(code || "not_a_calendar"); track("calendar_feed_failed", { reason: code || "empty" }); }
-          else { replaceFeedEvents(state, feedId, parseIcs(data.ics, getToday())); live.lastSync = Date.now(); live.error = ""; ok = true; }
+          else {
+            const today = getToday(), events = parseIcs(data.ics, today);
+            replaceFeedEvents(state, feedId, events);
+            if (feedMakesQuests(live)) {
+              const r = syncAutoQuests(state, live, state.events.filter((e) => e.source === "feed:" + feedId), today);
+              live.lastQuests = r.created;
+              if (r.created) track("auto_quest_created", { count: r.created });
+            }
+            live.lastSync = Date.now(); live.error = ""; ok = true;
+          }
           save();
         }
       } finally { feedBusy.delete(feedId); render(); }
@@ -2497,7 +2594,8 @@
         const count = state.events.filter((e) => e.source === "feed:" + feed.id).length;
         track("calendar_feed_connected", { host: new URL(url).hostname.split(".").slice(-2, -1)[0] || "other", events: count });
         closeSheet(); tab = "today"; todayMode = "schedule"; render();
-        toast(`Connected ${name}: ${count} upcoming events`, "calendar");
+        const made = (state.feeds.find((x) => x.id === feed.id) || {}).lastQuests || 0;
+        toast(`Connected ${name}: ${count} upcoming events${made ? `, ${made} new quest${made === 1 ? "" : "s"}` : ""}`, "calendar");
       } else if ($("feedForm")) {
         msg((state.feeds.find((x) => x.id === feed.id) || {}).error || "Couldn't connect.");
         removeFeed(state, feed.id); save();
@@ -3010,7 +3108,11 @@
           }
           case "delete-item":
             if (editing.kind === "goal") state.goals = state.goals.filter((g) => g.id !== editing.id);
-            else state.quests = state.quests.filter((q) => q.id !== editing.id);
+            else {
+              const gone = state.quests.find((q) => q.id === editing.id);
+              if (gone && gone.autoKey) state.autoDismissed = (state.autoDismissed || []).concat(gone.autoKey).slice(-300);
+              state.quests = state.quests.filter((q) => q.id !== editing.id);
+            }
             closeSheet();
             break;
           case "mode": todayMode = btn.dataset.mode; tab = "today"; break;
@@ -3112,6 +3214,7 @@
           }
           return;
         }
+        if (e.target.dataset && e.target.dataset.feedQuests) { setFeedQuests(e.target.dataset.feedQuests, e.target.checked); return; }
         if (e.target.id === "themeSelect") { state.theme = e.target.value; save(); render(); }
         if (e.target.id === "eRepeat") $("eDays").hidden = e.target.value !== "days";
         if (e.target.id === "icsFile" && e.target.files[0]) {
