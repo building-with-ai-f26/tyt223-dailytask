@@ -20,6 +20,7 @@ People juggling busy lives end up managing them across too many apps. MBA studen
 - **Quick templates:** tap a chip like "Send thank-you note to ___", fill in the blank, and press Enter. You can save your own.
 - **Today's Quests:** only what's due today, with overdue quests on top in red. Tap a circle to finish one, and tap **Undo** in the message if you didn't mean to (XP and rewards are taken back).
 - **Edit and reschedule:** tap a quest to edit its title, dates, time, category, difficulty or repeat. The calendar button moves it to Today, Tomorrow, Next week or any date.
+- **Smart compose:** like Gmail, a faint ending appears as you type, taken from your own past quests and templates. Press **Tab** or **→** to accept it (on a phone, tap the suggestion). With the optional AI helper running, it suggests endings for new tasks too.
 - **Smart preview:** while you type, the fields DailyQuest understood appear below the box so you can fix them; Enter saves right away.
 - **Rewards:** earn XP, levels, badges, and streaks, then spend coins on real-life rewards you choose.
 - **Week view:** weekly goals, repeating quests, what's coming up, and a summary of the week.
@@ -53,11 +54,19 @@ cd tyt223-dailytask
 
 Double-click [`docs/app/index.html`](./docs/app/index.html) to open it in your browser, or run `start docs/app/index.html` (Windows) or `open docs/app/index.html` (Mac) from the repo folder.
 
+### Optional: AI suggestions (on your own computer)
+
+The public app never calls AI. To try AI typing suggestions locally with your own OpenAI key:
+
+1. Copy `.env.example` to `.env` (`copy .env.example .env` on Windows) and put your key after `OPENAI_API_KEY=`. `.env` is git-ignored, so the key is never committed.
+2. Run `node server.js --models` and copy a fast, low-cost model name (often "mini" or "nano") into `OPENAI_MODEL=`.
+3. Run `node server.js` and open http://localhost:8787/app/. The server keeps your key, forwards suggestion requests to OpenAI, stops at `AI_DAILY_LIMIT` requests a day, and never logs what you type.
+
 The app opens with sample quests, rewards, and calendar events. On the **Profile** tab, **Simulate next day** demos rollover and streaks, **Reload sample data** resets the demo, and **Start empty** clears everything so you can use it for real.
 
 ## How it's built
 
-One HTML file with plain CSS and JavaScript and no packages. Your data stays in your browser's local storage, and `.ics` files are read in the browser without being uploaded. The app calls the free [Nager.Date](https://date.nager.at) public holidays API (no key) when you tap **Add US holidays**, loads Google Fonts (falling back to system fonts), and sends anonymous usage events and session replays to PostHog with all typed text hidden. Typed quests are understood by fixed rules, not AI.
+One HTML file with plain CSS and JavaScript and no packages. Your data stays in your browser's local storage, and `.ics` files are read in the browser without being uploaded. The app calls the free [Nager.Date](https://date.nager.at) public holidays API (no key) when you tap **Add US holidays**, loads Google Fonts (falling back to system fonts), and sends anonymous usage events and session replays to PostHog with all typed text hidden. Typed quests are understood by fixed rules, not AI. The optional [`server.js`](./server.js) (Node built-ins only, no packages) serves the app locally and adds AI typing suggestions from OpenAI; while it runs, the text you are typing and your recent quest names are sent to OpenAI.
 
 ## Current limits
 
@@ -72,6 +81,7 @@ One HTML file with plain CSS and JavaScript and no packages. Your data stays in 
 | --- | --- |
 | [`docs/app/index.html`](./docs/app/index.html) | The DailyQuest prototype, published by GitHub Pages |
 | [`docs/index.html`](./docs/index.html) | Public product page, living PRD, and weekly build log |
+| [`server.js`](./server.js) | Optional local server: serves the app and adds AI typing suggestions with your key from `.env` |
 | [`AGENTS.md`](./AGENTS.md) | Run commands, project context, and rules for coding agents |
 | [`Intent.md`](./Intent.md), [`Plan.md`](./Plan.md), [`journal/`](./journal/) | Optional drafting notes |
 | [`tests/`](./tests/) | Verification guidance for Build 4 |

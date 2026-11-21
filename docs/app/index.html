@@ -513,6 +513,16 @@
     .page.tabbed { border-radius: 0 2px 2px 2px; }
     .xpbar, .xpbar div, .hs-bar, .hs-bar div, .hs-bar::after { border-radius: 1px; }
     #captureInput { border-radius: 2px 2px 0 0; }
+    /* Smart compose: faint suggested ending drawn under the input text */
+    .compose { position: relative; flex: 1; min-width: 0; display: flex; }
+    .ghost { position: absolute; inset: 0; z-index: 2; pointer-events: none; display: flex; align-items: center; padding: 9px 16px 9px 14px;
+      font-family: var(--hand); font-size: 23px; font-weight: 500; white-space: pre; overflow: hidden; color: #A8957E; }
+    .ghost .typed { color: transparent; }
+    .ghost .hint { margin-left: 8px; font-family: Figtree, system-ui, sans-serif; font-size: 11px; font-weight: 600; color: #A8957E; border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; line-height: 16px; }
+    .suggest-chip { display: none; margin-top: 8px; max-width: 100%; text-align: left; font-family: var(--hand); font-size: 20px; color: var(--ink); background: #FFF8EC; border: 1px dashed var(--border-strong); border-radius: 3px; padding: 4px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .suggest-chip b { font-weight: 500; color: var(--accent); }
+    .suggest-chip small { font-family: Figtree, system-ui, sans-serif; font-size: 11px; font-weight: 600; color: var(--muted); margin-right: 6px; }
+    @media (hover: none) { .suggest-chip:not([hidden]) { display: block; } .ghost .hint { display: none; } }
     .tabs button.active { border-radius: 3px 3px 1px 1px; }
 
     /* Torn-paper panels: the parchment lives in ::before so only the paper's edge wobbles, never the text */
@@ -697,10 +707,14 @@
   <main class="wrap">
     <section class="quick" id="quickAdd">
       <form class="addbar" id="captureForm">
-        <input id="captureInput" autofocus autocomplete="off" spellcheck="false" maxlength="160"
-               placeholder="Write a new quest…" aria-label="Type a quest and press Enter" />
+        <div class="compose">
+          <input id="captureInput" autofocus autocomplete="off" spellcheck="false" maxlength="160"
+                 placeholder="Write a new quest…" aria-label="Type a quest and press Enter. Press Tab to accept a suggestion." />
+          <div class="ghost" id="ghost" aria-hidden="true"></div>
+        </div>
         <button class="addbtn" aria-label="Add quest">+</button>
       </form>
+      <button type="button" class="suggest-chip" id="suggestChip" data-action="accept-suggestion" hidden></button>
       <div class="preview" id="preview" hidden></div>
       <div class="confirm" id="confirmLine" hidden></div>
       <form class="tpl" id="templateForm" hidden></form>
@@ -1409,6 +1423,23 @@
       return "Every " + g.days.map((d) => DAY_NAMES[d]).join(", ");
     }
 
+    // Smart compose from history: the most recent past quest, routine or template that starts with what was typed.
+    // Returns only the missing ending (the user's own typing is kept as is), or "" when nothing fits.
+    function historySuggestion(text, names) {
+      if (text.trim().length < 2 || /\s{2}$/.test(text)) return "";
+      const typed = text.toLowerCase();
+      for (const raw of names) {
+        const name = String(raw).split("___")[0];
+        if (name.length > text.length && name.toLowerCase().startsWith(typed)) return name.slice(text.length);
+      }
+      return "";
+    }
+    // Names to match against, newest first: the player's quests and routines, then templates.
+    function suggestionSources(state, templates) {
+      const items = state.quests.concat(state.goals).slice().sort((a, b) => b.id - a.id).map((x) => x.name);
+      return Array.from(new Set(items.concat(templates.map((t) => t.text))));
+    }
+
     // ---------- Page code ----------
     function load() {
       try {
@@ -1668,6 +1699,61 @@
       $("preview").innerHTML = value.trim() ? previewHtml(currentEntry(), getToday()) : "";
     }
     function input() { return $("captureInput"); }
+    // Draws the suggestion as faint text after the cursor, plus a tappable chip on phones.
+    function showSuggestion(next) {
+      const el = input(), value = el.value;
+      const atEnd = el.selectionStart === value.length && el.selectionEnd === value.length;
+      const fits = el.scrollWidth <= el.clientWidth + 1;
+      suggestion = next && next.text && next.base === value && atEnd ? next : null;
+      $("ghost").innerHTML = suggestion && fits ? `<span class="typed">${esc(value)}</span>${esc(suggestion.text)}<span class="hint">Tab</span>` : "";
+      $("suggestChip").hidden = !suggestion;
+      $("suggestChip").innerHTML = suggestion ? `<small>${suggestion.source === "ai" ? "AI" : "Tap"}</small>${esc(value)}<b>${esc(suggestion.text)}</b>` : "";
+      if (suggestion && lastShown !== value + suggestion.text) {
+        lastShown = value + suggestion.text;
+        track("suggestion_shown", { source: suggestion.source });
+      }
+    }
+    // History first (instant, free, offline); the AI is asked only after a short pause when history has nothing.
+    function updateSuggestion() {
+      clearTimeout(aiTimer);
+      if (aiAbort) { aiAbort.abort(); aiAbort = null; }
+      const value = input().value;
+      const fromHistory = historySuggestion(value, suggestionSources(state, allTemplates()));
+      if (fromHistory) return showSuggestion({ base: value, text: fromHistory, source: "history" });
+      if (aiCache.has(value)) return showSuggestion({ base: value, text: aiCache.get(value), source: "ai" });
+      showSuggestion(null);
+      if (!aiReady || value.trim().length < 3 || /\s{2}$/.test(value)) return;
+      aiTimer = setTimeout(() => askAi(value), AI_PAUSE_MS);
+    }
+    async function askAi(value) {
+      aiAbort = new AbortController();
+      const recent = state.quests.concat(state.goals).slice().sort((a, b) => b.id - a.id).slice(0, 15).map((x) => x.name);
+      try {
+        const res = await fetch("/api/suggest", { method: "POST", signal: aiAbort.signal, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: value, recent }) });
+        const data = await res.json();
+        if (res.status === 429 && data.error === "daily_limit") aiReady = false;   // stop asking for the rest of the session
+        if (!res.ok) return;
+        const text = data.completion || "";
+        aiCache.set(value, text);
+        if (input().value === value) showSuggestion({ base: value, text, source: "ai" });
+      } catch (e) { /* aborted because the player kept typing, or the server stopped */ }
+    }
+    function acceptSuggestion() {
+      if (!suggestion) return false;
+      const source = suggestion.source;
+      input().value = suggestion.base + suggestion.text;
+      track("suggestion_accepted", { source });
+      suggestion = null;
+      updatePreview();
+      updateSuggestion();
+      input().focus();
+      return true;
+    }
+    // The AI helper exists only when the page is served by server.js on this computer, never on the public site.
+    function detectAi() {
+      if (!/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
+      fetch("/api/health").then((r) => r.json()).then((d) => { aiReady = Boolean(d.ai); }).catch(() => {});
+    }
     function renderPlayer(forceWidth) {
       const today = getToday();
       const level = levelOf(state.lifetimeXp);
@@ -2003,6 +2089,10 @@
 
     let state, tab = "today", todayMode = "quests", lastAdded = null, activeTemplate = null, editing = null, firstVisit = false;
     let pvOverrides = {}, reschedFor = null, lastCompletion = null, completionToken = 0;
+    // Smart compose: the suggestion on screen, and the optional AI helper (only when served by server.js on this computer).
+    let suggestion = null, aiReady = false, aiTimer = null, aiAbort = null, lastShown = "";
+    const aiCache = new Map();
+    const AI_PAUSE_MS = 350;
     if (typeof document !== "undefined") {
       state = load();
       save();
@@ -2110,6 +2200,7 @@
             closeSheet();
             break;
           case "moment-next": nextMoment(); return;
+          case "accept-suggestion": acceptSuggestion(); return;
           case "use-template": {
             const t = allTemplates()[Number(btn.dataset.index)];
             if (t.text.includes("___")) { openTemplate(t); return; }
@@ -2175,6 +2266,7 @@
           pvOverrides = {};
           input().value = "";
           updatePreview();
+          updateSuggestion();
         } else if (e.target.id === "templateForm") {
           const blank = $("templateBlank").value;
           if (!blank.trim()) return;
@@ -2197,7 +2289,7 @@
       });
 
       document.addEventListener("input", (e) => {
-        if (e.target.id === "captureInput") updatePreview();
+        if (e.target.id === "captureInput") { updatePreview(); updateSuggestion(); }
         if (e.target.dataset.pv === "name") pvOverrides.name = e.target.value;   // no re-render, so typing keeps focus
       });
       document.addEventListener("change", (e) => {
@@ -2245,6 +2337,13 @@
 
       // Typing anywhere goes straight to the quick-add bar, on any tab.
       document.addEventListener("keydown", (e) => {
+        // Smart compose: Tab (or the right arrow at the end of the text) accepts the faint suggestion.
+        if (e.target.id === "captureInput" && suggestion && !e.shiftKey && (e.key === "Tab" || (e.key === "ArrowRight" && e.target.selectionStart === e.target.value.length))) {
+          e.preventDefault();
+          acceptSuggestion();
+          return;
+        }
+        if (e.target.id === "captureInput" && e.key === "Escape" && suggestion) { showSuggestion(null); return; }
         if (e.key === "Enter" && e.target.dataset && e.target.dataset.pv) {   // Enter in a preview field saves too
           e.preventDefault();
           if (e.target.value !== "custom") pvOverrides[e.target.dataset.pv] = e.target.value;
@@ -2262,6 +2361,9 @@
         input().focus();
       });
       window.addEventListener("focus", focusCapture);
+      input().addEventListener("blur", () => setTimeout(() => { if (document.activeElement !== input()) $("ghost").innerHTML = ""; }, 200));
+      input().addEventListener("focus", () => { if (input().value) updateSuggestion(); });
+      detectAi();
       // A mouse wheel scrolls the template row sideways.
       $("chips").addEventListener("wheel", (e) => {
         if (e.deltaY) { $("chips").scrollLeft += e.deltaY; e.preventDefault(); }

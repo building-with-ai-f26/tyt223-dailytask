@@ -41,6 +41,7 @@ MBA-specific templates (recruiting follow-ups, thank-you notes, class prep) supp
 
 **Current capabilities** (prototype at `docs/app/index.html`, live at https://building-with-ai-f26.github.io/tyt223-dailytask/app/):
 - Type-to-add with rule-based parsing of dates, times, categories, difficulty and repeats (no AI).
+- Smart compose: while typing, a faint suggested ending from the user's own past quests and templates (Tab, the right arrow or a tap accepts it). Optional AI suggestions from OpenAI when the app runs through `node server.js` on the builder's computer, with a daily cap.
 - Quick templates with a fill-in blank; users can save their own.
 - Today's Quests with overdue items on top; tap a circle to complete.
 - Weekly goals ("N times a week") and repeating quests (daily or chosen weekdays); unfinished quests roll over.
@@ -52,7 +53,7 @@ MBA-specific templates (recruiting follow-ups, thank-you notes, class prep) supp
 **Terminology:** quests; categories Class, Recruiting, Events, Personal; difficulty Easy / Medium / Hard; XP and lifetime XP (levels); coins (spendable XP); streak; weekly goals; repeating quests; reward shop; Day cleared.
 
 **Firm constraints:**
-- **Free to run ($0).** Static hosting on GitHub Pages; no paid servers or paid AI calls.
+- **Free hosting ($0).** Static hosting on GitHub Pages; no paid servers. AI is optional and off on the public site: it only runs through the local `server.js` with the builder's own key and a daily cap (updated Nov 20, 2026).
 
 **Current state, not commitments** (the builder did not mark these firm):
 - No sign-up or login.
@@ -81,4 +82,4 @@ MBA-specific templates (recruiting follow-ups, thank-you notes, class prep) supp
 2. **Capture in seconds.** Adding a task should never take more than a sentence or a couple of taps.
 3. **Progress you can feel.** Every completion should visibly pay off, and rewards should be the user's own.
 4. **One place.** Prefer bringing a user's scattered tasks and events together over adding new places to check.
-5. **Free and simple to run.** New features must work within static hosting at $0.
+5. **Free and simple to run.** New features must work within static hosting at $0; AI extras must be optional, capped, and degrade to the free version.

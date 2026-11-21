@@ -210,7 +210,7 @@
         <a class="btn btn-secondary" href="#prd">Read the Living PRD</a>
         <a class="btn btn-secondary" href="#build-log">Weekly Build Log</a>
       </div>
-      <p class="meta privacy">This page and the app use PostHog to record visits, clicks and session replays so I can improve DailyQuest. Text typed in the app is hidden from recordings.</p>
+      <p class="meta privacy">This page and the app use PostHog to record visits, clicks and session replays so I can improve DailyQuest. Text typed in the app is hidden from recordings. The public app sends nothing you type anywhere. Optional AI suggestions only run when the builder starts the app on their own computer, and then the text you are typing and your recent quest names go to OpenAI to suggest an ending.</p>
     </header>
 
     <!-- DEMO / SCREENSHOT / VIDEO SHOWCASE -->
@@ -278,8 +278,8 @@
       <h3>3. How It Works Under the Hood & Riskiest Assumption (Week 2+)</h3>
       <p><strong>Riskiest Assumption:</strong> DailyQuest only becomes students' one place if it can pull in what already lives elsewhere (calendars, holidays, and later Google Calendar) reliably and at $0, with no server. If it can't, it's just one more app to check.</p>
       <p><strong>How Build 2 tests it:</strong> the holiday import is the app's first live call to an outside service, made straight from the browser with no server or key. PostHog records each <code>holidays_imported</code> and <code>holidays_failed</code> event, so I can see how often it works for real users and whether people who import come back.</p>
-      <p><strong>Simple Architecture:</strong> [You type or tap] → [DailyQuest app in your browser: plain-English rules + game logic] → [Saved in your browser's local storage] → [Today's Quests, Week, Shop]. Optional inputs: a Google Calendar <code>.ics</code> file read in the browser, and the free Nager.Date holidays API. PostHog receives anonymous usage events with typed text hidden. GitHub Pages hosts it for free. No AI model and no server.</p>
-      <p><strong>Cost per run:</strong> $0. Hosting, the holidays API and the PostHog free tier cost nothing, and there are no AI calls.</p>
+      <p><strong>Simple Architecture:</strong> [You type or tap] → [DailyQuest app in your browser: plain-English rules + game logic] → [Saved in your browser's local storage] → [Today's Quests, Week, Shop]. Optional inputs: a Google Calendar <code>.ics</code> file read in the browser, and the free Nager.Date holidays API. PostHog receives anonymous usage events with typed text hidden. GitHub Pages hosts it for free with no server. Optional: run locally through <code>server.js</code>, smart compose asks OpenAI to finish a half-typed quest, with the key kept in a private <code>.env</code> file and a daily cap.</p>
+      <p><strong>Cost per run:</strong> $0 on the public site. Hosting, the holidays API and the PostHog free tier cost nothing. The optional local AI suggestions cost a fraction of a cent per request on a small OpenAI model and are capped per day; suggestions from the user's own past quests are free.</p>
 
       <h3>4. Unit Economics & Analytics Snapshot (Updated Weekly)</h3>
       <div class="grid-2">
