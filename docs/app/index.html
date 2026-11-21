@@ -363,6 +363,34 @@
     .feed-toggle { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
     .feed-toggle input { width: auto; margin: 0; accent-color: var(--accent); }
     .pill.auto { background: #EAF0EC; color: var(--accent); }
+    /* Gear: pet beside the avatar, portrait frames, titles */
+    .avatar .pet { position: absolute; left: -12px; bottom: -6px; width: 30px; height: 30px; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35)); }
+    .avatar .pet svg { width: 100%; height: 100%; }
+    .avatar[data-frame="silver"] { box-shadow: 0 0 0 3px #D7DCE3, 0 0 0 5px #8D96A3; }
+    .avatar[data-frame="gold"] { box-shadow: 0 0 0 3px #E8C77F, 0 0 0 5px #A9802F; }
+    .avatar[data-frame="laurel"] { box-shadow: 0 0 0 3px #E8C77F, 0 0 0 6px #4F7D55, 0 0 0 8px #2E5A3A; }
+    .gear-art { height: 56px; display: grid; place-items: center; }
+    .gear-art svg { width: 48px; height: 48px; }
+    .frame-demo { width: 44px; height: 44px; border-radius: 50%; background: #FFF8EC; display: grid; place-items: center; overflow: hidden; }
+    .frame-demo svg { width: 34px; height: 34px; }
+    .frame-demo.silver { box-shadow: 0 0 0 3px #D7DCE3, 0 0 0 5px #8D96A3; }
+    .frame-demo.gold { box-shadow: 0 0 0 3px #E8C77F, 0 0 0 5px #A9802F; }
+    .frame-demo.laurel { box-shadow: 0 0 0 3px #E8C77F, 0 0 0 6px #4F7D55, 0 0 0 8px #2E5A3A; }
+    .title-demo { font-family: var(--serif); font-style: italic; font-size: 17px; color: var(--gold-ink, #8A6424); padding: 4px 10px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .item.equipped { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .level .gear-title { font-family: var(--serif); font-style: italic; font-weight: 400; opacity: .85; }
+    /* Adventure map */
+    .advmap { position: relative; height: 336px; margin: 6px 0 4px; }
+    .advmap svg.trail { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .advmap .node { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #E9DCC5; border: 2px solid #CDB48F; }
+    .advmap .node.done { background: var(--gold); border-color: #A9802F; }
+    .advmap .mark { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 1px; width: 84px; text-align: center; font-size: 10px; font-weight: 600; line-height: 1.15; color: var(--muted); }
+    .advmap .mark .medal { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #FFF8EC; border: 2px solid #CDB48F; }
+    .advmap .mark.done { color: var(--ink); }
+    .advmap .mark.done .medal { border-color: #A9802F; background: #FBEFD3; }
+    .advmap .mark:not(.done) svg { filter: grayscale(1) opacity(.5); }
+    .advmap .hero { position: absolute; z-index: 2; width: 38px; height: 38px; transform: translate(-50%, -78%); animation: boss-bob 2.4s ease-in-out infinite; filter: drop-shadow(0 2px 1px rgba(0, 0, 0, .3)); }
+    .advmap .hero svg { width: 100%; height: 100%; }
     /* Weekly boss */
     .boss-card { display: flex; gap: 16px; align-items: center; }
     .boss-art { position: relative; flex: none; width: 104px; height: 104px; display: grid; place-items: center; border-radius: 12px;
@@ -1030,6 +1058,51 @@
       { id: "hydra", name: "The Recruiting Hydra", sprite: [".KK...K...KK.", "KBBK.KBK.KBBK", "KWBK.KWK.KBWK", "KBBK.KBK.KBBK", ".KBK.KBK.KBK.", "..KBKKBKKBK..", "..KBBBBBBBK..", ".KBBDBBBDBBK.", ".KBBBBBBBBBK.", ".KBDBBBBBDBK.", "..KBBBBBBBK..", "...KK...KK...", "............."] },
       { id: "golem", name: "The Deadline Golem", sprite: ["...KKKKKKK...", "..KSSSSSSSK..", "..KSOOSOOSK..", "..KSSSSSSSK..", "..KSMMMMMSK..", "KKKKSSSSSKKKK", "KSSKSSSSSKSSK", "KSSKSMSMSKSSK", "KSSKSSSSSKSSK", "KKKKSSSSSKKKK", "...KSSKSSK...", "...KSSKSSK...", "...KKKKKKK..."] },
     ];
+    // Adventurer gear: bought with coins, one of each slot equipped. Prices are placeholders to tune.
+    const GEAR = [
+      { id: "slime", slot: "pet", name: "Slime companion", price: 80, sprite: [".............", ".............", ".............", ".....KKK.....", "...KKGGGKK...", "..KGGWGGGGK..", ".KGGWGGGGGGK.", ".KGGKGGGKGGK.", "KGGGGGGGGGGGK", "KGGGGTTTGGGGK", "KTGGGGGGGGGTK", ".KKKKKKKKKKK.", "............."] },
+      { id: "owl", slot: "pet", name: "Owl companion", price: 120, sprite: [".............", "...K.....K...", "..KNK...KNK..", "..KNNKKKNNK..", ".KNWWNNNWWNK.", ".KNWKNYNKWNK.", ".KNNNNYNNNNK.", ".KNCCNNNCCNK.", ".KNCCCCCCCNK.", "..KNCCCCCNK..", "...KNNNNNK...", "...KOK.KOK...", "............."] },
+      { id: "cat", slot: "pet", name: "Cat companion", price: 120, sprite: [".............", "..K.......K..", "..KK.....KK..", "..KOK...KOK..", "..KOOKKKOOK..", ".KOOOOOOOOOK.", ".KOWKOOOWKOK.", ".KOOOOPOOOOK.", ".KOOOKOKOOOK.", "..KOOOOOOOK..", "..KOKOOOKOK..", "..KK.KKK.KK..", "............."] },
+      { id: "silver", slot: "frame", name: "Silver frame", price: 100 },
+      { id: "gold", slot: "frame", name: "Gold frame", price: 200 },
+      { id: "laurel", slot: "frame", name: "Laurel frame", price: 300 },
+      { id: "diligent", slot: "title", name: "the Diligent", price: 60 },
+      { id: "bold", slot: "title", name: "the Bold", price: 60 },
+      { id: "networker", slot: "title", name: "Master Networker", price: 150 },
+    ];
+    function gearOf(state) { return Object.assign({ owned: [], pet: null, frame: null, title: null }, state.gear || {}); }
+    // Buys an item (and puts it on). Returns false if it's already owned or the player can't afford it.
+    function buyGear(state, id) {
+      const item = GEAR.find((g) => g.id === id), gear = gearOf(state);
+      if (!item || gear.owned.includes(id) || state.spendableXp < item.price) return false;
+      state.spendableXp -= item.price;
+      gear.owned.push(id);
+      gear[item.slot] = id;
+      state.gear = gear;
+      return true;
+    }
+    // Puts an owned item on, or takes it off if it's already on.
+    function equipGear(state, id) {
+      const item = GEAR.find((g) => g.id === id), gear = gearOf(state);
+      if (!item || !gear.owned.includes(id)) return false;
+      gear[item.slot] = gear[item.slot] === id ? null : id;
+      state.gear = gear;
+      return true;
+    }
+
+    // Adventure map: each cleared day (every quest done) is one step; a landmark every 5 steps.
+    const MAP_LANDMARKS = [
+      { at: 0, name: "Village", icon: "house" }, { at: 5, name: "Whispering Forest", icon: "sprout" }, { at: 10, name: "Moonlit River", icon: "moon" },
+      { at: 15, name: "Castle Gate", icon: "crown" }, { at: 20, name: "Frost Peaks", icon: "sword" }, { at: 25, name: "Dragon's Lair", icon: "flame" }, { at: 30, name: "Treasure Vault", icon: "chest" },
+    ];
+    const MAP_STEPS = 30;
+    function mapProgress(daysCleared) {
+      const lap = Math.floor(daysCleared / MAP_STEPS) + 1, step = daysCleared % MAP_STEPS;
+      const reached = MAP_LANDMARKS.filter((l) => l.at <= step).pop();
+      const next = MAP_LANDMARKS.find((l) => l.at > step);
+      return { lap, step, reached, next, toNext: next.at - step };
+    }
+
     function bossInfo(id) { return BOSSES.find((b) => b.id === id) || BOSSES[0]; }
     // How much damage the planned week could deal: this week's quests, routine days and weekly-goal check-ins.
     function plannedDamage(state, today) {
@@ -1471,7 +1544,7 @@
       return {
         quests: [], goals: [], rewards: [], claims: [], events: [], templates: [], feeds: [], nextId: 1,
         lifetimeXp: 0, spendableXp: 0,
-        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0, boss: null, bossesDefeated: 0,
+        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0, boss: null, bossesDefeated: 0, gear: { owned: [], pet: null, frame: null, title: null },
         theme: "classic", dayOffset: 0,
         avatar: "mint", shields: 0, chestOn: null, achievements: {}, weeklyGoalsDone: 0,
         catXp: { Class: 0, Recruiting: 0, Events: 0, Personal: 0 },
@@ -1949,6 +2022,21 @@
           <div class="scroll"><table><tr><th>Day</th><th>Open</th><th>Done</th><th>XP</th><th>Rewards</th></tr>${rows}</table></div>
         </div></div>`;
     }
+    function gearItems() {
+      const gear = gearOf(state);
+      return GEAR.map((g) => {
+        const owned = gear.owned.includes(g.id), on = gear[g.slot] === g.id, short2 = g.price - state.spendableXp;
+        const art = g.slot === "pet" ? spriteSvg(g.sprite) : g.slot === "frame" ? `<span class="frame-demo ${g.id}">${mascotSvg(state.avatar)}</span>` : `<span class="title-demo">${esc(g.name)}</span>`;
+        const label = g.slot === "title" ? "Title" : g.slot === "frame" ? g.name : g.name;
+        const button = owned ? `<button class="btn ${on ? "soft" : ""}" data-action="equip-gear" data-gear="${g.id}">${on ? "Take off" : "Equip"}</button>`
+          : `<button class="btn" data-action="buy-gear" data-gear="${g.id}" ${short2 > 0 ? "disabled" : ""}>${short2 > 0 ? px("lock", 14) + short2 + " more" : "Buy"}</button>`;
+        return `<div class="item ${!owned && short2 > 0 ? "locked" : ""} ${on ? "equipped" : ""}">
+          <div class="gear-art">${art}</div>
+          <div class="title">${esc(label)}</div>
+          <div class="price">${owned ? (on ? "Equipped" : "Owned") : px("coin", 18) + g.price}</div>
+          ${button}</div>`;
+      }).join("");
+    }
     function renderShop() {
       const items = state.rewards.map((r) => {
         const short2 = r.cost - state.spendableXp;
@@ -1973,6 +2061,9 @@
       return `<div class="board-head"><h2>Reward Shop</h2><div class="counters">${px("coin", 18)}${state.spendableXp} coins</div></div>
         <h3>Power-ups</h3>
         <div class="shop">${shieldItem}</div>
+        <h3 style="margin-top:18px">Adventurer gear</h3>
+        <p class="muted" style="margin:-4px 0 10px">Dress up your adventurer. One pet, frame and title at a time.</p>
+        <div class="shop">${gearItems()}</div>
         <h3 style="margin-top:18px">Your rewards</h3>
         <div class="shop">${items}</div>
         <div class="panel"><h3>Stock the shop</h3>
@@ -2012,6 +2103,7 @@
         ${installPanel()}
         <div class="panel" ${acct ? "" : 'style="margin-top:0"'}><h3>Your avatar</h3><p class="muted" style="margin:-4px 0 10px">Each level badge unlocks a new one.</p><div class="avatars">${avatars}</div></div>
         <div class="panel"><h3>Hero stats</h3><div class="hero-stats">${heroStats}</div></div>
+        ${adventureMap()}
         <div class="panel"><h3>Stats</h3><div class="stats">${stats.map(([k, v]) => `<div class="stat"><b>${v}</b>${k}</div>`).join("")}</div></div>
         <div class="panel"><h3>Badges</h3><p class="muted" style="margin:-4px 0 10px">Tap a badge to see what it means.</p><div class="badges">${badges}</div></div>
         <div class="panel"><h3>Achievements · ${earnedCount} of ${ACHIEVEMENTS.length}</h3><p class="muted" style="margin:-4px 0 10px">Each one pays ${ACHIEVEMENT_COINS} coins. Tap to see how to earn it.</p><div class="badges">${achievements}</div></div>
@@ -2118,8 +2210,10 @@
       const today = getToday();
       const level = levelOf(state.lifetimeXp);
       const into = state.lifetimeXp % XP_PER_LEVEL;
-      $("avatar").innerHTML = mascotSvg(state.avatar) + `<span class="crest" title="Level ${level}">${level}</span>`;
-      $("levelLine").textContent = "Level " + level;
+      const gear = gearOf(state), pet = GEAR.find((g) => g.id === gear.pet), title = GEAR.find((g) => g.id === gear.title);
+      $("avatar").innerHTML = mascotSvg(state.avatar) + `<span class="crest" title="Level ${level}">${level}</span>` + (pet ? `<span class="pet" title="${esc(pet.name)}">${spriteSvg(pet.sprite)}</span>` : "");
+      if (gear.frame) $("avatar").dataset.frame = gear.frame; else delete $("avatar").dataset.frame;
+      $("levelLine").innerHTML = "Level " + level + (title ? ` <span class="gear-title">· ${esc(title.name)}</span>` : "");
       $("tabAvatar").innerHTML = mascotSvg(state.avatar);
       $("hudBadges").innerHTML = BADGES.filter((b) => level >= b.level).map((b) => `<button class="hud-badge" data-action="badge-info" data-level="${b.level}" title="${esc(b.name)}" aria-label="Badge: ${esc(b.name)}">${px(b.icon, 14)}</button>`).join("");
       $("coinLine").innerHTML = px("coin", 18) + state.spendableXp;
@@ -2698,6 +2792,31 @@
       }
     }
 
+    // ---------- Adventure map ----------
+    function adventureMap() {
+      const p = mapProgress(state.daysCleared || 0);
+      const perRow = 6, rowH = 56, top = 24;
+      const pos = (i) => { const row = Math.floor(i / perRow), col = i % perRow, c = row % 2 ? perRow - 1 - col : col; return { x: 7 + c * (86 / (perRow - 1)), y: top + row * rowH }; };
+      const pts = Array.from({ length: MAP_STEPS + 1 }, (_, i) => pos(i));
+      const height = top * 2 + Math.floor(MAP_STEPS / perRow) * rowH;
+      const pathD = pts.map((q, i) => (i ? "L" : "M") + q.x + " " + q.y).join(" ");
+      const doneD = pts.slice(0, p.step + 1).map((q, i) => (i ? "L" : "M") + q.x + " " + q.y).join(" ");
+      const marks = new Set(MAP_LANDMARKS.map((l) => l.at));
+      const nodes = pts.map((q, i) => marks.has(i) ? "" : `<span class="node ${i <= p.step ? "done" : ""}" style="left:${q.x}%;top:${q.y}px"></span>`).join("");
+      const landmarks = MAP_LANDMARKS.map((l) => { const q = pts[l.at]; return `<span class="mark ${l.at <= p.step ? "done" : ""}" style="left:${q.x}%;top:${q.y + 8}px;transform:translate(${q.x > 80 ? -80 : q.x < 20 ? -20 : -50}%,-50%)"><span class="medal">${px(l.icon, 20)}</span>${esc(l.name)}</span>`; }).join("");
+      const hero = pts[p.step];
+      return `<div class="panel"><h3>Adventure map${p.lap > 1 ? " · journey " + p.lap : ""}</h3>
+        <p class="muted" style="margin:-4px 0 4px">Each day you clear every quest moves you one step. You're at <b>${esc(p.reached.name)}</b>; ${p.toNext} more cleared day${p.toNext === 1 ? "" : "s"} to <b>${esc(p.next.name)}</b>.</p>
+        <div class="advmap" style="height:${height}px" aria-label="Adventure map: step ${p.step} of ${MAP_STEPS}">
+          <svg class="trail" viewBox="0 0 100 ${height}" preserveAspectRatio="none" aria-hidden="true">
+            <path d="${pathD}" fill="none" stroke="#CDB48F" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+            <path d="${doneD}" fill="none" stroke="#C69A50" stroke-width="4" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+          </svg>
+          ${nodes}${landmarks}
+          <span class="hero" style="left:${hero.x}%;top:${hero.y}px" title="You are here">${mascotSvg(state.avatar)}</span>
+        </div></div>`;
+    }
+
     // ---------- Sealed Profile (shown until someone logs in) ----------
     function sealedProfile(avatars, heroStats) {
       const perks = [["crown", "Pick your adventurer avatar"], ["sword", "Grow hero stats and earn badges"], ["trophy", "Unlock achievements and keep streaks"],
@@ -3174,6 +3293,19 @@
               .then(({ error }) => authMessage(error ? friendlyAuthError(error) : "We emailed you a link to set a new password.", !error));
             return;
           case "install-help": openInstallHelp(); return;
+          case "buy-gear": {
+            const g = GEAR.find((x) => x.id === btn.dataset.gear);
+            if (!g || !buyGear(state, g.id)) return;
+            track("gear_bought", { item: g.id, slot: g.slot, price: g.price });
+            toast(`${g.slot === "title" ? "New title: " + g.name : g.name + " equipped"}!`, "gift");
+            break;
+          }
+          case "equip-gear": {
+            const g = GEAR.find((x) => x.id === btn.dataset.gear);
+            if (!g || !equipGear(state, g.id)) return;
+            track("gear_equipped", { item: g.id, on: gearOf(state)[g.slot] === g.id });
+            break;
+          }
           case "goto-week": tab = "week"; render(); window.scrollTo(0, 0); return;
           case "push-on": pushOn(); return;
           case "push-off": pushOff(); return;

@@ -32,6 +32,7 @@ People juggling busy lives end up managing them across too many apps. MBA studen
 - **Home-screen app:** on iPhone, open the app in Safari → **Share** → **Add to Home Screen** (Android and desktop Chrome offer **Install app**). It opens full-screen with the Sprout icon and works offline.
 - **Reminders:** in the home-screen app, log in and tap Profile → **Turn on reminders** for a morning summary at 8:00 AM and a nudge 30 minutes before quests with a time.
 - **Optional account:** log in with email and password to save your quests to your account and use them on your phone and laptop. Without an account, everything stays in your browser.
+- **More game:** swipe a quest right to complete it (a gold DONE stamp presses onto it) or left to move it to tomorrow; a new pixel boss every week that your quests damage; an adventure map that advances each day you clear your quests; and adventurer gear (pets, portrait frames, titles) to buy with coins.
 - **Start fresh:** first-time visitors choose between sample quests and an empty board; Profile → **Start fresh** clears everything later.
 
 ### Things you can type
