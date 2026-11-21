@@ -351,7 +351,7 @@
     .sealed .toolbar { justify-content: center; margin: 0; }
     .sealed-preview { position: relative; margin-top: 14px; max-height: 260px; overflow: hidden; pointer-events: none; user-select: none; filter: blur(2.5px) grayscale(.35); opacity: .55;
       -webkit-mask-image: linear-gradient(#000 30%, transparent); mask-image: linear-gradient(#000 30%, transparent); }
-    .feeds { margin: 14px 0 6px; }
+    .feeds { margin: 4px 0 10px; }
     .feeds h3 { margin-bottom: 6px; }
     .feed-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px dashed var(--border); }
     .feed-row:first-of-type { border-top: 0; }
@@ -1883,6 +1883,7 @@
       return `<div class="toolbar">
           <button class="btn" data-action="import-ics">Import calendar (.ics)</button>
           <button class="btn soft" data-action="import-holidays">${hasHolidays ? "Update US holidays" : "Add US holidays"}</button>
+          ${account.status !== "off" ? '<button class="btn soft" data-action="feed-add">Connect a calendar</button>' : ""}
           ${state.events.length ? '<button class="linkbtn" data-action="clear-events">Clear calendar events</button>' : ""}
         </div>
         ${feedsPanel()}
@@ -2595,15 +2596,13 @@
       return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " d ago";
     }
     function feedsPanel() {
-      if (account.status === "off") return "";
-      const head = '<div class="feeds"><h3>Connected calendars</h3>';
-      if (!account.user) return head + '<p class="muted" style="margin:0 0 8px">Connect your Google Calendar so classes and meetings show up here on their own. Log in first.</p><button class="btn soft" data-action="auth-open" data-mode="login">Log in</button></div>';
+      if (account.status === "off" || !account.user || !state.feeds.length) return "";
+      const head = '<div class="feeds" aria-label="Connected calendars">';
       const rows = state.feeds.map((x) => `<div class="feed-row">${px("calendar", 18)}<div><div class="feed-name">${esc(x.name)}</div>
         <div class="feed-meta ${x.error ? "bad" : ""}">${feedBusy.has(x.id) ? "Updating…" : x.error ? esc(x.error) : x.lastSync ? "Updated " + ago(x.lastSync) + " · refreshes automatically" : "Not updated yet"}</div></div>
         <label class="feed-toggle" title="Turn deadlines and coffee chats into quests"><input type="checkbox" data-feed-quests="${x.id}" ${feedMakesQuests(x) ? "checked" : ""} /> Make quests</label>
         <button class="linkbtn" data-action="feed-refresh" data-id="${x.id}" ${feedBusy.has(x.id) ? "disabled" : ""}>Refresh</button><button class="linkbtn" data-action="feed-remove" data-id="${x.id}">Remove</button></div>`).join("");
-      return head + (rows || '<p class="muted" style="margin:0 0 8px">Paste your calendar\'s subscription link once, and events keep updating on their own.</p>') +
-        '<button class="btn soft" data-action="feed-add">+ Connect a calendar</button></div>';
+      return head + rows + "</div>";
     }
     // Turning "Make quests" on runs it now; turning it off removes that calendar's unfinished auto-quests.
     function setFeedQuests(feedId, on) {
@@ -3230,7 +3229,7 @@
             break;
           case "delete-reward": state.rewards = state.rewards.filter((r) => r.id !== id); break;
           case "import-ics": $("icsFile").click(); return;
-          case "feed-add": openFeedForm(); return;
+          case "feed-add": if (!account.user) { openAuth("login", "Log in to connect a calendar. Events then keep updating on their own.", true); return; } openFeedForm(); return;
           case "feed-refresh": refreshFeed(btn.dataset.id); return;
           case "feed-remove": {
             const x = state.feeds.find((y) => y.id === btn.dataset.id);
