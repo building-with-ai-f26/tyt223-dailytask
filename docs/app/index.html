@@ -360,6 +360,9 @@
     .feed-row .feed-meta.bad { color: var(--danger); }
     .feed-row > div { flex: 1; min-width: 0; }
     .feed-row { flex-wrap: wrap; }
+    .safe-note { display: flex; gap: 10px; margin-top: 12px; padding: 10px 12px; border: 1px solid #CFE0D3; border-radius: 10px; background: #EEF5F0; font-size: 13px; line-height: 1.45; }
+    .safe-note svg { flex: none; margin-top: 1px; }
+    .safe-note ul { margin: 4px 0 6px; padding-left: 18px; }
     .feed-toggle { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
     .feed-toggle input { width: auto; margin: 0; accent-color: var(--accent); }
     .pill.auto { background: #EAF0EC; color: var(--accent); }
@@ -1954,9 +1957,9 @@
       const anytime = state.quests.filter((q) => !q.done && !q.time && q.day === today).map((q) => questCard(q, today))
         .concat(state.goals.filter((g) => !g.time && routineDue(g, today)).map((g) => goalCard(g, today))).join("");
       return `<div class="toolbar">
-          <button class="btn" data-action="import-ics">Import calendar (.ics)</button>
+          ${account.status !== "off" ? '<button class="btn" data-action="feed-add">Connect a calendar</button>' : ""}
+          <button class="btn soft" data-action="import-ics">Import calendar (.ics)</button>
           <button class="btn soft" data-action="import-holidays">${hasHolidays ? "Update US holidays" : "Add US holidays"}</button>
-          ${account.status !== "off" ? '<button class="btn soft" data-action="feed-add">Connect a calendar</button>' : ""}
           ${state.events.length ? '<button class="linkbtn" data-action="clear-events">Clear calendar events</button>' : ""}
         </div>
         ${feedsPanel()}
@@ -2722,8 +2725,11 @@
         <p class="auth-msg" id="feedMsg" role="status">${esc(note || "")}</p>
         <details open><summary>How do I get my Google Calendar link?</summary>
           <ol class="install-steps" style="margin-top:6px"><li>On a computer, open <b>Google Calendar</b> and click <b>⚙ Settings</b></li><li>On the left, under <b>Settings for my calendars</b>, click your calendar</li><li>Scroll to <b>Integrate calendar</b></li><li>Copy the <b>Secret address in iCal format</b> and paste it above</li></ol>
-          <p class="muted" style="margin:6px 0 0;font-size:13px">Treat this link like a password: anyone with it can see that calendar. School (NYU) accounts sometimes hide it; a personal Gmail calendar always has one.</p>
+          <p class="muted" style="margin:6px 0 0;font-size:13px">School (NYU) accounts sometimes hide it; a personal Gmail calendar always has one.</p>
         </details>
+        <div class="safe-note">${px("shield", 18)}<div><b>Is this safe?</b> Google warns you not to give this link to <i>other people</i>, because anyone holding it can read that calendar. Connecting it to DailyQuest is different:
+          <ul><li>Your calendar stays private in Google (it is never made public).</li><li>The link is saved only in your DailyQuest account, where only you can read it.</li><li>It is used only to download your events, and is never shared, shown to others or sent to analytics.</li><li>You can cut access any time: Google Calendar → Settings → your calendar → Integrate calendar → <b>Reset</b>.</li></ul>
+          <span class="muted">Extra careful? Make a separate Google calendar just for classes and recruiting, and connect only that one.</span></div></div>
         <details><summary>Outlook, iCloud or Brightspace?</summary>
           <p style="margin:6px 0 0;font-size:14px"><b>Outlook:</b> Settings → Calendar → Shared calendars → Publish a calendar → copy the ICS link.<br><b>iCloud:</b> in Calendar, share the calendar as a <b>Public Calendar</b> and copy the link.<br><b>Brightspace:</b> Calendar → Subscribe → copy the feed link.</p>
         </details>
