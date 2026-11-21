@@ -312,6 +312,27 @@
     .auth-msg.ok { color: var(--accent); }
     .auth-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; margin-top: 10px; }
     .textlink { background: none; border: 0; padding: 6px 0; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+    /* Sealed Profile (logged out): a wax-sealed journal page with a faded preview behind it */
+    .sealed { text-align: center; padding: 26px 20px 22px; }
+    .seal-wrap { position: relative; width: 120px; height: 96px; margin: 0 auto 10px; }
+    .seal-wrap::before, .seal-wrap::after { content: ""; position: absolute; top: 46px; width: 26px; height: 52px; background: linear-gradient(180deg, var(--accent), var(--accent-dark, #1B3A31));
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%); box-shadow: 0 2px 3px rgba(0, 0, 0, .2); }
+    .seal-wrap::before { left: 34px; transform: rotate(14deg); }
+    .seal-wrap::after { right: 34px; transform: rotate(-14deg); }
+    .wax-seal { position: absolute; z-index: 1; left: 50%; top: 4px; transform: translateX(-50%) rotate(-6deg); width: 84px; height: 84px; display: grid; place-items: center;
+      border-radius: 47% 53% 50% 46% / 52% 46% 54% 48%;
+      background: radial-gradient(circle at 34% 30%, #C9654D 0, #9B3527 45%, #6F2219 100%);
+      box-shadow: inset 0 0 0 5px rgba(60, 14, 8, .28), inset 0 0 0 8px rgba(255, 210, 190, .12), 0 3px 5px rgba(60, 20, 10, .35); }
+    .wax-seal svg { filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .35)); opacity: .95; }
+    .sealed h3 { font-family: var(--serif); font-size: 24px; font-weight: 400; margin: 6px 0 2px; justify-content: center; }
+    .sealed h3::before { display: none; }
+    .sealed-sub { font-family: var(--hand); font-size: 21px; color: var(--muted); margin: 0 0 14px; }
+    .sealed-perks { list-style: none; margin: 0 auto 18px; padding: 0; max-width: 340px; text-align: left; display: grid; gap: 8px; font-size: 14px; }
+    .sealed-perks li { display: flex; align-items: center; gap: 10px; }
+    .sealed-perks li svg { flex: none; }
+    .sealed .toolbar { justify-content: center; margin: 0; }
+    .sealed-preview { position: relative; margin-top: 14px; max-height: 260px; overflow: hidden; pointer-events: none; user-select: none; filter: blur(2.5px) grayscale(.35); opacity: .55;
+      -webkit-mask-image: linear-gradient(#000 30%, transparent); mask-image: linear-gradient(#000 30%, transparent); }
     .install-steps { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; }
     .install-steps svg { vertical-align: -3px; }
     .install-sheet { text-align: left; }
@@ -1715,6 +1736,7 @@
       const badges = BADGES.map((b) => `<button class="badge ${level >= b.level ? "" : "locked"}" data-action="badge-info" data-level="${b.level}"><span>${px(b.icon, 40)}</span>${level >= b.level ? esc(b.name) : "Level " + b.level}</button>`).join("");
       const earnedCount = ACHIEVEMENTS.filter((a) => state.achievements[a.id]).length;
       const achievements = ACHIEVEMENTS.map((a) => `<button class="badge ${state.achievements[a.id] ? "" : "locked"}" data-action="ach-info" data-ach="${a.id}"><span>${px(a.icon, 36)}</span>${esc(a.name)}</button>`).join("");
+      if (account.status !== "off" && !account.user) return sealedProfile(avatars, heroStats);
       const acct = accountPanel();
       return `<div class="board-head"><h2>Hero Profile</h2></div>
         ${acct}
@@ -2274,6 +2296,28 @@
         if ($("authSubmit")) $("authSubmit").disabled = false;
       }
     }
+    // ---------- Sealed Profile (shown until someone logs in) ----------
+    function sealedProfile(avatars, heroStats) {
+      const perks = [["crown", "Pick your adventurer avatar"], ["sword", "Grow hero stats and earn badges"], ["trophy", "Unlock achievements and keep streaks"],
+        ["clock", "Get quest reminders on your phone"], ["scroll", "Keep your quests on every device"]];
+      const action = account.status === "loading" ? '<p class="muted" style="margin:0">Opening the journal…</p>'
+        : account.status === "unavailable" ? '<p class="muted" style="margin:0">Can\'t reach the login server right now. Check your connection and try again.</p>'
+        : '<div class="toolbar"><button class="btn" data-action="auth-open" data-mode="login">Log in</button><button class="btn soft" data-action="auth-open" data-mode="signup">Create free account</button></div>';
+      return `<div class="board-head"><h2>Hero Profile</h2></div>
+        <div class="panel sealed" style="margin-top:0">
+          <div class="seal-wrap" aria-hidden="true"><div class="wax-seal">${px("crown", 38)}</div></div>
+          <h3>Your hero journal is sealed</h3>
+          <p class="sealed-sub">Log in to break the seal</p>
+          <ul class="sealed-perks">${perks.map(([icon, text]) => `<li>${px(icon, 20)}${text}</li>`).join("")}</ul>
+          ${action}
+        </div>
+        ${installPanel()}
+        <div class="sealed-preview" aria-hidden="true" inert>
+          <div class="panel" style="margin-top:0"><h3>Your avatar</h3><div class="avatars">${avatars}</div></div>
+          <div class="panel"><h3>Hero stats</h3><div class="hero-stats">${heroStats}</div></div>
+        </div>`;
+    }
+
     // ---------- Home-screen app ----------
     let installPrompt = null;   // Android / desktop Chrome hand us this; iPhone never does
     function isInstalled() { return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; }
@@ -2285,7 +2329,8 @@
     function installPanel() {
       if (isInstalled()) return "";
       return `<div class="panel"><h3>Get the app</h3>
-        <p class="muted" style="margin:-4px 0 10px">Add DailyQuest to your phone's home screen. It opens full-screen like an app and works offline.</p>
+        <p class="muted" style="margin:-4px 0 8px">Add DailyQuest to your phone's home screen. It opens full-screen like an app and works offline.</p>
+        <p class="sync-line" style="margin:0 0 12px">${px("clock", 14)}Once it's on your home screen, you can turn on reminders: a summary at 8:00 AM and a nudge 30 minutes before quests with a time.</p>
         <button class="btn" data-action="install-help">${px("scroll", 16)} Add to Home Screen</button></div>`;
     }
     // The pop-up: steps for the device in hand first, the other phones folded underneath.
@@ -2306,7 +2351,9 @@
         <p class="muted" style="margin:0;text-align:center">Takes 10 seconds. It opens full-screen like an app and works offline.</p>
         ${main}
         ${others ? "<details>" + others + "</details>" : ""}
-        <p class="muted" style="margin:14px 0 0;font-size:13px">Tip: the home-screen app keeps its own copy of your quests. Log in on the Profile tab to see the same quests everywhere.</p>
+        <h3>Then turn on reminders</h3>
+        <p style="margin:0;font-size:14px">Open DailyQuest from your home screen, log in, and tap <b>Profile → Reminders → Turn on reminders</b>. You'll get a morning summary at 8:00 AM and a nudge 30 minutes before quests with a time.${isIphone() ? " On iPhone, reminders only work in the home-screen app, not in Safari." : ""}</p>
+        <p class="muted" style="margin:12px 0 0;font-size:13px">Tip: the home-screen app keeps its own copy of your quests. Logging in shows the same quests everywhere.</p>
         <div class="sheet-actions"><button class="btn soft" style="width:100%" data-action="close-sheet">Got it</button></div>
       </div>`);
     }
