@@ -175,6 +175,24 @@
     .qcard.done { opacity: .6; box-shadow: none; }
     .qcard.done .qname { text-decoration: line-through; text-decoration-color: var(--muted); }
     .qcard.leaving { animation: leave .38s ease-in forwards; pointer-events: none; }
+    /* Swipe on phones: right completes, left moves to tomorrow. The colored strip sits behind the card. */
+    .qcard[data-swipe] { touch-action: pan-y; }
+    .qcard.swiping { transition: none !important; z-index: 2; }
+    .qcard.snap { transition: transform .22s ease; }
+    .swipe-under { position: fixed; z-index: 1; display: flex; align-items: center; padding: 0 20px; border-radius: 10px; font-weight: 700; font-size: 14px; color: #FFF8EC; pointer-events: none; }
+    .swipe-under.right { background: var(--accent); justify-content: flex-start; }
+    .swipe-under.left { background: #A9802F; justify-content: flex-end; }
+    .swipe-under span { opacity: .55; transition: opacity .12s, transform .12s; display: flex; align-items: center; gap: 8px; }
+    .swipe-under.ready span { opacity: 1; transform: scale(1.06); }
+    /* Completion stamp: a gold-ink seal pressed onto the card */
+    .qcard.stamped { position: relative; }
+    .stamp { position: absolute; z-index: 3; top: 50%; right: 88px; width: 74px; height: 74px; margin-top: -37px; display: grid; place-items: center; pointer-events: none;
+      border: 3px double rgba(138, 100, 36, .9); border-radius: 50%; color: rgba(138, 100, 36, .95); font-family: var(--serif); font-size: 17px; letter-spacing: .12em;
+      background: radial-gradient(circle, rgba(226, 193, 127, .32), rgba(226, 193, 127, .1) 70%); mix-blend-mode: multiply;
+      animation: stamp-press .42s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+    .stamp::before { content: ""; position: absolute; inset: 5px; border: 1px solid rgba(138, 100, 36, .55); border-radius: 50%; }
+    @keyframes stamp-press { 0% { transform: scale(2.2) rotate(-24deg); opacity: 0; } 60% { opacity: 1; } 100% { transform: scale(1) rotate(-14deg); opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .stamp { display: none; } }
     @keyframes leave { 30% { transform: scale(1.01); } 100% { transform: translateX(40px); opacity: 0; } }
     .circle {
       flex: none; width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--c); background: #fff; color: #fff;
@@ -1648,7 +1666,7 @@
       const extras = (overdue ? '<span class="pill red">Overdue</span>' : "") +
         (q.time ? `<span class="pill">${px("clock", 13)}${fmtTime(q.time)}</span>` : "") +
         (q.dueDate && !overdue ? `<span class="pill">Due ${nice(q.dueDate, { month: "short", day: "numeric" })}</span>` : "");
-      return `<article class="qcard ${catClass(q.category)} ${overdue ? "overdue" : ""} ${q.done ? "done" : ""}">
+      return `<article class="qcard ${catClass(q.category)} ${overdue ? "overdue" : ""} ${q.done ? "done" : ""}" ${q.done ? "" : `data-swipe="quest" data-id="${q.id}"`}>
         <button class="circle" data-action="complete" data-id="${q.id}" ${q.done ? "disabled" : ""} aria-label="Complete ${esc(q.name)}">${q.done ? "✓" : ""}</button>
         <button class="qbody ${q.done ? "static" : ""}" ${q.done ? "disabled" : `data-action="edit" data-kind="quest" data-id="${q.id}" title="Edit"`}>
           <span class="qname">${esc(q.name)}</span>
@@ -1671,7 +1689,7 @@
         ? `<span class="pips">${Array.from({ length: g.target }, (_, i) => `<i class="${i < count ? "on" : ""}"></i>`).join("")}</span>` : "";
       const progress = g.days ? "" : `<span class="pill">${count} / ${g.target}</span>`;
       const time = g.time ? `<span class="pill">${px("clock", 13)}${fmtTime(g.time)}</span>` : "";
-      return `<article class="qcard ${catClass(g.category)}">
+      return `<article class="qcard ${catClass(g.category)}" ${canCheck ? `data-swipe="goal" data-id="${g.id}"` : ""}>
         <button class="circle" data-action="check-in" data-id="${g.id}" ${canCheck ? "" : "disabled"} aria-label="Check in ${esc(g.name)}">${finished ? "✓" : ""}</button>
         <button class="qbody" data-action="edit" data-kind="goal" data-id="${g.id}">
           <span class="qname">${esc(g.name)}</span>
@@ -1962,6 +1980,7 @@
       renderChips();
       $("view").innerHTML = tab === "today" ? renderToday(today) : tab === "week" ? renderWeek(today) : `<div class="page">${tab === "shop" ? renderShop() : renderProfile(today)}</div>`;
       focusCapture();
+      if (tab === "today") maybeSwipeHint();
     }
     // A short message; with an action (like Undo) it stays a little longer.
     function toast(message, icon, action) {
@@ -2638,11 +2657,92 @@
         <div class="toolbar" style="margin:0"><button class="btn soft" data-action="auth-open" data-mode="change">Change password</button><button class="btn soft" data-action="logout">Log out</button></div></div>`;
     }
 
+    // ---------- Swipe on phones ----------
+    // Right = complete (same as tapping the circle), left = move to tomorrow (quests only).
+    // A swipe starts only after a clearly sideways move, so scrolling the list still works.
+    const swipe = { card: null, under: null, x0: 0, y0: 0, dx: 0, mode: "", id: 0, kind: "", pointer: null };
+    let suppressClick = false;
+    function swipeStart(e) {
+      if (e.pointerType === "mouse" || modalOpen()) return;
+      const card = e.target.closest(".qcard[data-swipe]");
+      if (!card || e.target.closest("input, .resched-row")) return;
+      Object.assign(swipe, { card, under: null, x0: e.clientX, y0: e.clientY, dx: 0, mode: "", id: Number(card.dataset.id), kind: card.dataset.swipe, pointer: e.pointerId });
+    }
+    function swipeMove(e) {
+      if (!swipe.card || e.pointerId !== swipe.pointer) return;
+      const dx = e.clientX - swipe.x0, dy = e.clientY - swipe.y0;
+      if (!swipe.mode) {
+        if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { swipe.card = null; return; }   // it's a scroll
+        if (Math.abs(dx) < 12 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        swipe.mode = "swiping";
+        try { swipe.card.setPointerCapture(e.pointerId); } catch (err) { /* older browsers */ }
+        swipe.card.classList.add("swiping");
+        const r = swipe.card.getBoundingClientRect();
+        swipe.under = document.createElement("div");
+        Object.assign(swipe.under.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px" });
+        document.body.appendChild(swipe.under);
+      }
+      const d = swipe.kind === "goal" ? Math.max(0, dx) : dx;   // routines and weekly goals only swipe right
+      swipe.dx = d;
+      swipe.card.style.transform = `translateX(${d}px)`;
+      const ready = Math.abs(d) > swipe.card.offsetWidth * 0.33;
+      swipe.under.className = "swipe-under " + (d >= 0 ? "right" : "left") + (ready ? " ready" : "");
+      swipe.under.innerHTML = d >= 0 ? `<span>${px("check", 18)} ${ready ? "Release to complete" : "Complete"}</span>` : `<span>${ready ? "Release: move to tomorrow" : "Tomorrow"} ${px("calendar", 18)}</span>`;
+    }
+    function swipeEnd(e) {
+      if (!swipe.card || e.pointerId !== swipe.pointer) return;
+      const { card, under, dx, mode, id, kind } = swipe;
+      swipe.card = null;
+      if (mode !== "swiping") return;
+      const blockTap = () => { suppressClick = true; setTimeout(() => { suppressClick = false; }, 350); };   // the finger lifting is not a tap
+      const done = Math.abs(dx) > card.offsetWidth * 0.33;
+      const cleanUp = () => { if (under) under.remove(); };
+      if (!done) {
+        card.classList.remove("swiping"); card.classList.add("snap"); card.style.transform = "";
+        setTimeout(() => { card.classList.remove("snap"); cleanUp(); }, 230);
+        blockTap();
+        return;
+      }
+      card.classList.remove("swiping"); card.style.transform = "";
+      cleanUp();
+      track("quest_swiped", { direction: dx > 0 ? "right" : "left", kind });
+      if (dx > 0) {
+        const circle = card.querySelector(kind === "goal" ? '[data-action="check-in"]' : '[data-action="complete"]');
+        if (circle) circle.click();   // before blockTap, so this click counts
+        blockTap();
+      } else {
+        const today = getToday(), q = state.quests.find((x) => x.id === id);
+        const wasOverdue = !!q && isOverdue(q, today);
+        if (q && rescheduleQuest(state, id, rescheduleTarget("tomorrow", today), today)) {
+          lastCompletion = null;
+          track("quest_rescheduled", { when: "tomorrow", overdue: wasOverdue, via: "swipe" });
+          save(); card.classList.add("leaving");
+          setTimeout(render, 380);
+          toast("Moved to tomorrow", "calendar");
+        }
+        blockTap();
+      }
+    }
+    function swipeCancel(e) {
+      if (!swipe.card || e.pointerId !== swipe.pointer) return;
+      const { card, under } = swipe; swipe.card = null;
+      card.classList.remove("swiping"); card.style.transform = ""; if (under) under.remove();
+    }
+    // One-time tip the first time a phone user sees swipeable quests.
+    function maybeSwipeHint() {
+      if (!window.matchMedia || !window.matchMedia("(hover: none)").matches || !document.querySelector(".qcard[data-swipe]")) return;
+      try { if (localStorage.getItem("dailyquest.swipeHint")) return; localStorage.setItem("dailyquest.swipeHint", "1"); } catch (e) { return; }
+      setTimeout(() => toast("Tip: swipe a quest right to complete it, or left to move it to tomorrow", "check"), 900);
+    }
+
     function finishQuest(btn, result, leaves, today, note) {
       const card = btn.closest(".qcard");
       floatText(btn, "+" + result.xp + " XP");
       burst(btn);
-      if (leaves && card) card.classList.add("leaving");
+      const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const stampMs = card && !calm ? 420 : 0;
+      if (stampMs) { card.classList.add("stamped"); card.insertAdjacentHTML("beforeend", '<span class="stamp" aria-hidden="true">DONE</span>'); }
+      if (leaves && card) setTimeout(() => card.classList.add("leaving"), stampMs);
       const leveled = result.levelAfter > result.levelBefore;
       renderPlayer(leveled ? "100%" : undefined);
       const notes = [];
@@ -2658,7 +2758,7 @@
         if (token !== completionToken || !lastCompletion) return;   // undone before the celebrations ran
         render();
         queueMoments(result, today);
-      }, 400);
+      }, 400 + stampMs);
     }
     function addParsed(parsed, today, source) {
       const item = parsed.kind === "goal" ? addGoal(state, parsed) : addQuest(state, parsed, today);
@@ -3060,6 +3160,11 @@
         input().focus();
       });
       window.addEventListener("focus", focusCapture);
+      document.addEventListener("pointerdown", swipeStart);
+      document.addEventListener("pointermove", swipeMove);
+      document.addEventListener("pointerup", swipeEnd);
+      document.addEventListener("pointercancel", swipeCancel);
+      document.addEventListener("click", (e) => { if (suppressClick) { e.stopPropagation(); e.preventDefault(); suppressClick = false; } }, true);   // a swipe isn't a tap
       input().addEventListener("blur", () => setTimeout(() => { if (document.activeElement !== input()) $("ghost").innerHTML = ""; }, 200));
       input().addEventListener("focus", () => { if (input().value) updateSuggestion(); });
       detectAi();
