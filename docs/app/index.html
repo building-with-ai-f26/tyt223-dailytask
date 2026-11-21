@@ -475,6 +475,28 @@
     .ptab:not(.on) .px { filter: saturate(.55); opacity: .8; }
     @media (max-width: 420px) { .ptab { padding: 8px 11px 10px; font-size: 14px; } .pagetabs { padding-left: 10px; } }
     @media (prefers-reduced-motion: reduce) { .ptab { transition: none; } }
+
+    /* Opening animation: the journal's leather cover swings open, then the page fades into the app */
+    #bookIntro { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: var(--bg); perspective: 1600px; cursor: pointer;
+      animation: bi-fade .45s ease 1.25s forwards; }
+    .bi-book { position: relative; width: min(72vw, 300px); aspect-ratio: 3 / 4; transform-style: preserve-3d; animation: bi-lift 1.25s cubic-bezier(.3, .7, .2, 1) forwards; }
+    .bi-page { position: absolute; inset: 0; border-radius: 3px 8px 8px 3px; background: #FFF8EC;
+      background-image: repeating-linear-gradient(#FFF8EC 0 27px, #EADBC4 27px 28px); box-shadow: 0 12px 30px rgba(48, 40, 32, .25), inset 10px 0 18px -10px rgba(48, 40, 32, .35); }
+    .bi-page::after { content: "Today's Quests"; position: absolute; left: 0; right: 0; top: 18%; text-align: center; font-family: var(--serif); font-size: 26px; color: var(--ink); opacity: .8; }
+    .bi-cover { position: absolute; inset: 0; transform-origin: left center; transform-style: preserve-3d; animation: bi-open .95s cubic-bezier(.55, .05, .35, 1) .25s forwards; }
+    .bi-front, .bi-back { position: absolute; inset: 0; border-radius: 3px 8px 8px 3px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .bi-front { display: grid; place-content: center; gap: 10px; text-align: center; color: #E2C17F;
+      background: radial-gradient(ellipse at 40% 35%, #2F5C4F, #1B3A31 70%, #142C25);
+      box-shadow: inset 14px 0 14px -8px rgba(0, 0, 0, .45), inset 0 0 0 10px rgba(0, 0, 0, .08), 0 12px 30px rgba(20, 30, 25, .35); }
+    .bi-front::before { content: ""; position: absolute; inset: 14px 14px 14px 22px; border: 1.5px solid rgba(226, 193, 127, .8); outline: 1px solid rgba(226, 193, 127, .35); outline-offset: 4px; border-radius: 2px; }
+    .bi-front svg { margin: 0 auto; }
+    .bi-title { font-family: var(--serif); font-size: clamp(30px, 9vw, 40px); letter-spacing: .02em; text-shadow: 0 1px 0 rgba(0, 0, 0, .45); }
+    .bi-sub { font-family: var(--serif); font-style: italic; font-size: 15px; color: rgba(226, 193, 127, .8); }
+    .bi-back { transform: rotateY(180deg); background: linear-gradient(90deg, #E9DCC5, #F5EBDD); box-shadow: inset -12px 0 16px -10px rgba(48, 40, 32, .35); }
+    @keyframes bi-open { to { transform: rotateY(-168deg); } }
+    @keyframes bi-lift { 0% { transform: scale(.92) translateY(8px); } 30% { transform: scale(1) translateY(0); } 100% { transform: scale(1.06) translateX(6%); } }
+    @keyframes bi-fade { to { opacity: 0; visibility: hidden; } }
+    @media (prefers-reduced-motion: reduce) { #bookIntro { display: none; } }
     #tabAvatar svg { width: 26px; height: 26px; display: block; }
     .page::before { content: ""; position: absolute; inset: 6px; border: 1px solid rgba(198, 154, 80, .45); border-radius: 3px 12px 12px 3px; pointer-events: none; }
     .page::after { content: ""; position: absolute; bottom: -12px; right: -8px; width: 58px; height: 58px; pointer-events: none; background: var(--foliage) center / contain no-repeat; transform: scaleY(-1); }
@@ -746,6 +768,32 @@
   </style>
 </head>
 <body>
+  <!-- Opening animation: once per visit; tap to skip; skipped with "reduce motion" -->
+  <div id="bookIntro" aria-hidden="true">
+    <div class="bi-book">
+      <div class="bi-page"></div>
+      <div class="bi-cover">
+        <div class="bi-front">
+          <svg width="44" height="34" viewBox="0 0 11 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="#E2C17F" d="M0 0h1v1H0zM5 0h1v1H5zM10 0h1v1h-1zM0 1h2v1H0zM4 1h3v1H4zM9 1h2v1H9zM0 2h11v4H0zM0 6h11v2H0z"/><path fill="#9B3527" d="M2 3h2v2H2zM7 3h2v2H7z"/></svg>
+          <div class="bi-title">DailyQuest</div>
+          <div class="bi-sub">Quest Journal</div>
+        </div>
+        <div class="bi-back"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var el = document.getElementById("bookIntro");
+      var done = function () { if (el && el.parentNode) el.parentNode.removeChild(el); };
+      try {
+        if (sessionStorage.getItem("dailyquest.intro") || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) return done();
+        sessionStorage.setItem("dailyquest.intro", "1");
+      } catch (e) { /* storage blocked: still play it */ }
+      el.addEventListener("click", done);
+      setTimeout(done, 1800);
+    })();
+  </script>
   <header class="player ornate" id="player">
     <div class="banner" id="banner" aria-hidden="true"></div>
     <div class="avatar" id="avatar"></div>
