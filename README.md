@@ -28,6 +28,7 @@ People juggling busy lives end up managing them across too many apps. MBA studen
 - **Calendar import:** load a `.ics` file exported from Google Calendar. Events show as read-only and earn no XP.
 - **Public holidays:** one tap adds upcoming US (and New York) holidays to your schedule and week.
 - **Game extras:** a daily loot chest of bonus coins, a streak shield you can buy to protect one missed day, hero stats that grow with each category, achievements that pay coins, and pixel avatars unlocked by level badges. Tap any badge or achievement to see what it means.
+- **Home-screen app:** on iPhone, open the app in Safari → **Share** → **Add to Home Screen** (Android and desktop Chrome offer **Install app**). It opens full-screen with the Sprout icon and works offline.
 - **Optional account:** log in with email and password to save your quests to your account and use them on your phone and laptop. Without an account, everything stays in your browser.
 - **Start fresh:** first-time visitors choose between sample quests and an empty board; Profile → **Start fresh** clears everything later.
 
@@ -44,7 +45,7 @@ People juggling busy lives end up managing them across too many apps. MBA studen
 
 ## Try it
 
-The easiest way is the [live app](https://building-with-ai-f26.github.io/tyt223-dailytask/app/), which works on a phone or laptop with no sign-up.
+The easiest way is the [live app](https://building-with-ai-f26.github.io/tyt223-dailytask/app/), which works on a phone or laptop with no sign-up. On iPhone, add it to your home screen from Safari's Share menu to use it like an app.
 
 To run it on your own computer, no install, server, or API keys are needed.
 

@@ -1,0 +1,17 @@
+{
+  "name": "DailyQuest",
+  "short_name": "DailyQuest",
+  "description": "A gamified quest journal: type tasks in plain English, see today's quests, earn XP and rewards.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5EBDD",
+  "theme_color": "#F5EBDD",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

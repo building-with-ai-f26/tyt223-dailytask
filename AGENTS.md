@@ -13,6 +13,7 @@
 | Path | What it is |
 | --- | --- |
 | `docs/app/index.html` | The whole app: styles, the sample data, the typed-task parser, game logic, `.ics` import, holiday import, rendering and PostHog events, in that order inside one `<script>` |
+| `docs/app/manifest.webmanifest`, `docs/app/sw.js`, `docs/app/icons/` | Home-screen app: name, colors and icons (drawn from the Sprout mascot), and a service worker that caches the app's files for offline use. The page is fetched network-first, so pushes show up whenever there's a connection; Supabase, PostHog, the holidays API and `/api/` are never cached |
 | `server.js` | Optional local server: serves `docs/`, keeps the OpenAI key from `.env`, exposes `/api/health` and `/api/suggest`, enforces a per-minute and daily cap (`AI_DAILY_LIMIT`), never logs typed text |
 | `.env.example` | Names of the variables `server.js` reads (`OPENAI_API_KEY`, `OPENAI_MODEL`, `AI_DAILY_LIMIT`); copy to the git-ignored `.env` |
 | `supabase/schema.sql`, `supabase/README.md` | The `saves` table and its Row Level Security policies, and the click-by-click Supabase setup and test guide |
@@ -39,7 +40,7 @@
 - **Run locally:** Double-click `docs/app/index.html`, or run `start docs/app/index.html` (Windows) / `open docs/app/index.html` (Mac). It opens with sample data. Holiday import, PostHog and fonts need internet; everything else works offline.
 - **Run with accounts:** works by double-clicking or with `node server.js`; email links (confirm, reset) return to the Site URL set in Supabase. Setup in `supabase/README.md`.
 - **Run with AI suggestions:** set up `.env` from `.env.example`, then `node server.js` and open http://localhost:8787/app/. `node server.js --models` lists the models the key can use. Without a key the server still serves the app with AI off.
-- **Deploy:** Push to `main`. GitHub Pages republishes `docs/` in about a minute; browsers may cache the old page for up to 10 minutes.
+- **Deploy:** Push to `main`. GitHub Pages republishes `docs/` in about a minute; browsers may cache the old page for up to 10 minutes. Installed home-screen apps pick up the new page on their next launch with a connection; bump `CACHE` in `sw.js` only if a device must drop its old copy.
 - **Reset the demo:** Profile tab → **Reload sample data** or **Start empty**. **Simulate next day** tests rollover and streaks.
 - **Run deterministic tests:** No automated test suite is committed yet. Before pushing, manually check: add a typed quest (e.g. `exercise 3 times a week`, `coffee chat at 3pm`), use a template chip, complete a quest, claim a reward, import a `.ics` file, tap **Add US holidays** in Schedule, type `send th` and press Tab to accept the suggestion, and check a phone-width window (about 390px). Server tests should use a fake `fetch` (`createServer(env, fakeFetch)`) so they never spend OpenAI credits.
 - **Run model evals:** Not set up yet. The only model use is optional local typing suggestions; judge them by hand from `node server.js` and PostHog's `suggestion_shown` / `suggestion_accepted` (property `source`: history or ai).

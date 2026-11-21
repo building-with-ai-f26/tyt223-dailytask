@@ -4,6 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>DailyQuest</title>
+  <!-- Home-screen app: name, icon and colors when installed (iPhone: Share > Add to Home Screen) -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="icons/favicon-64.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="theme-color" content="#F5EBDD" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="DailyQuest" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <!-- PostHog analytics (same project as the Product Page). -->
   <script>
     !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="Eh Rh Ph Oh Lh qh init yd bd dd fd Sd wc md xd ad Ed Ad Rd Pd Od Fd capture getExtension gr pd gd calculateEventProperties Ld register register_once register_for_session unregister unregister_for_session zd hd jd getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync Hd identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset Ud shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty qd Td createPersonProfile setInternalOrTestUser Bd Uh zh opt_in_capturing opt_out_capturing Hh has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing $d debug kc Ls getPageViewId captureTraceFeedback captureTraceMetric rd".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
@@ -303,6 +312,8 @@
     .auth-msg.ok { color: var(--accent); }
     .auth-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; margin-top: 10px; }
     .textlink { background: none; border: 0; padding: 6px 0; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+    .install-steps { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; }
+    .install-steps svg { vertical-align: -3px; }
     .sync-line { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 13px; color: var(--muted); }
     .info > svg { width: 72px; height: 72px; display: block; margin: 4px auto 10px; }
     .info.locked > svg { filter: grayscale(1); opacity: .5; }
@@ -1699,6 +1710,7 @@
       const acct = accountPanel();
       return `<div class="board-head"><h2>Hero Profile</h2></div>
         ${acct}
+        ${installPanel()}
         <div class="panel" ${acct ? "" : 'style="margin-top:0"'}><h3>Your avatar</h3><p class="muted" style="margin:-4px 0 10px">Each level badge unlocks a new one.</p><div class="avatars">${avatars}</div></div>
         <div class="panel"><h3>Hero stats</h3><div class="hero-stats">${heroStats}</div></div>
         <div class="panel"><h3>Stats</h3><div class="stats">${stats.map(([k, v]) => `<div class="stat"><b>${v}</b>${k}</div>`).join("")}</div></div>
@@ -2252,6 +2264,21 @@
         if ($("authSubmit")) $("authSubmit").disabled = false;
       }
     }
+    // ---------- Home-screen app ----------
+    let installPrompt = null;   // Android / desktop Chrome hand us this; iPhone never does
+    function isInstalled() { return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; }
+    function isIphone() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); }
+    const SHARE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 11v9h14v-9"/></svg>';
+    function installPanel() {
+      if (isInstalled() || !/^https?:$/.test(location.protocol)) return "";
+      const head = '<div class="panel"><h3>Get the app</h3>';
+      if (isIphone()) return head + `<p class="muted" style="margin:-4px 0 8px">Put DailyQuest on your home screen. It opens full-screen and works offline.</p>
+        <ol class="install-steps"><li>Open this page in <b>Safari</b></li><li>Tap <b>Share</b> ${SHARE_ICON}</li><li>Choose <b>Add to Home Screen</b>, then <b>Add</b></li></ol>
+        <p class="muted" style="margin:8px 0 0">The home-screen app keeps its own data, so log in to see the same quests in both.</p></div>`;
+      if (installPrompt) return head + '<p class="muted" style="margin:-4px 0 10px">Install DailyQuest so it opens like an app and works offline.</p><button class="btn" data-action="install-app">Install app</button></div>';
+      return "";
+    }
+
     // The Profile tab's account panel.
     function accountPanel() {
       if (account.status === "off") return "";
@@ -2496,6 +2523,9 @@
           case "accept-suggestion": acceptSuggestion(); return;
           case "auth-open": case "auth-mode": openAuth(btn.dataset.mode); return;
           case "logout": logout(); return;
+          case "install-app":
+            if (installPrompt) { installPrompt.prompt(); installPrompt.userChoice.then((c) => { track("app_install_prompt", { outcome: c.outcome }); installPrompt = null; render(); }); }
+            return;
           case "sync-cloud": closeSheet(); track("sync_choice", { choice: "account" }); applyCloud(account.cloudRow, "Loaded your quests from your account"); return;
           case "sync-local": closeSheet(); track("sync_choice", { choice: "browser" }); pushNow().then(() => toast("Saved this browser's quests to your account", "check")); return;
           case "use-template": {
@@ -2671,6 +2701,13 @@
       const backFromLogin = /[?&](code|error_description)=|access_token=/.test(location.search + location.hash);
       if (firstVisit && !backFromLogin) openWelcome();
       initAccounts();
+      // Home-screen app: keep a copy for offline use (needs https or localhost; skipped when opened as a file).
+      if ("serviceWorker" in navigator && (location.protocol === "https:" || /^(localhost|127\.0\.0\.1)$/.test(location.hostname))) {
+        navigator.serviceWorker.register("sw.js").catch(() => { /* the app still works online */ });
+      }
+      window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; if (tab === "profile") render(); });
+      window.addEventListener("appinstalled", () => { installPrompt = null; track("app_installed"); });
+      if (isInstalled()) track("opened_as_app");
       document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refreshFromCloud(); });
       window.addEventListener("online", () => { if (account.user && readMeta().pending) pushNow(); });
     }
