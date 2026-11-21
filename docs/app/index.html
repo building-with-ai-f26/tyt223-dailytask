@@ -383,18 +383,46 @@
     .item.equipped { outline: 2px solid var(--accent); outline-offset: -2px; }
     .level .gear-title { font-family: var(--serif); font-style: italic; font-weight: 400; opacity: .85; }
     /* Adventure map */
-    .advmap { position: relative; height: 336px; margin: 6px 0 4px; }
-    .advmap svg.trail { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-    .advmap .node { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #E9DCC5; border: 2px solid #CDB48F; }
-    .advmap .node.done { background: var(--gold); border-color: #A9802F; }
-    .advmap .mark { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 1px; width: 84px; text-align: center; font-size: 10px; font-weight: 600; line-height: 1.15; color: var(--muted); }
-    .advmap .mark .medal { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #FFF8EC; border: 2px solid #CDB48F; }
-    .advmap .mark.done { color: var(--ink); }
-    .advmap .mark-reward { display: block; font-size: 9.5px; font-weight: 600; color: var(--gold-ink, #8A6424); }
-    .advmap { margin-bottom: 18px; }
-    .advmap .mark.done .medal { border-color: #A9802F; background: #FBEFD3; }
-    .advmap .mark:not(.done) svg { filter: grayscale(1) opacity(.5); }
-    .advmap .hero { position: absolute; z-index: 2; width: 38px; height: 38px; transform: translate(-50%, -78%); animation: boss-bob 2.4s ease-in-out infinite; filter: drop-shadow(0 2px 1px rgba(0, 0, 0, .3)); }
+    /* Adventure map: a fine pen sketch in the journal's margin */
+    .advmap { position: relative; margin: 8px 0 6px; }
+    .advmap > svg { display: block; width: 100%; height: auto; }
+    .advmap .lm-name { font-family: var(--serif); font-size: 8.6px; letter-spacing: .13em; text-transform: uppercase; fill: #45362A; paint-order: stroke; stroke: #F8EEDB; stroke-width: 2.6px; stroke-linejoin: round; }
+    .advmap .scale-text { font-family: var(--hand); font-size: 10px; fill: #6F5641; }
+    .advmap .far { opacity: .38; }
+    .advmap .note { font-family: var(--hand); font-size: 12px; fill: #6F5641; }
+    .advmap .ribbon-text { font-family: var(--serif); font-style: italic; font-size: 13px; fill: #4A3A2C; letter-spacing: .03em; }
+    .advmap .sparkle { animation: map-twinkle 2.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+    @keyframes map-twinkle { 0%, 100% { opacity: .25; transform: scale(.7); } 50% { opacity: 1; transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) { .advmap .sparkle { animation: none; } }
+    .advmap .map-title { font-family: var(--serif); font-style: italic; font-size: 10.5px; fill: #6B5442; letter-spacing: .04em; }
+    .advmap .hero { position: absolute; z-index: 2; width: 7.5%; aspect-ratio: 1; transform: translate(-50%, -92%); animation: map-float 3.2s ease-in-out infinite; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .3)); pointer-events: none; }
+    @keyframes map-float { 0%, 100% { transform: translate(-50%, -92%); } 50% { transform: translate(-50%, calc(-92% - 1.5px)); } }
+    @media (prefers-reduced-motion: reduce) { .advmap .hero { animation: none; } }
+    .advmap .lm-btn { position: absolute; z-index: 1; width: 6.2%; aspect-ratio: 1; transform: translate(-50%, -50%); padding: 0; display: grid; place-items: center; border-radius: 50%;
+      border: 1px solid #8C7A66; background: radial-gradient(circle at 40% 35%, #FFFBF1, #F1E3C6); box-shadow: 0 1px 2px rgba(60, 40, 20, .25); cursor: pointer; transition: transform .15s; }
+    .advmap .lm-btn::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; }   /* bigger tap area */
+    .advmap .lm-btn svg { width: 64%; height: 64%; }
+    .advmap .lm-btn:not(.on) svg { filter: grayscale(1) opacity(.5); }
+    .advmap .lm-btn.on { border: 1.5px solid #A9802F; background: radial-gradient(circle at 40% 35%, #FFF6DE, #EED6A0); box-shadow: 0 0 0 2px rgba(198, 154, 80, .28), 0 1px 2px rgba(60, 40, 20, .3); }
+    .advmap .lm-btn.far { opacity: .55; }
+    .advmap .lm-btn:hover, .advmap .lm-btn:focus-visible { transform: translate(-50%, -50%) scale(1.15); outline: none; box-shadow: 0 0 0 2px var(--accent); }
+    .lm-sheet .lm-art { width: 72px; height: 72px; margin: 0 auto 6px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid #CDB48F; background: #FBF3E4; }
+    .lm-sheet .lm-art.on { border-color: #A9802F; background: #FBEFD3; box-shadow: 0 0 0 3px rgba(198, 154, 80, .25); }
+    .lm-sheet .lm-art:not(.on) svg { filter: grayscale(1) opacity(.55); }
+    .lm-sheet .lm-lore { font-family: var(--hand); font-size: 19px; color: #6B5442; margin: 2px 0 12px; }
+    .lm-sheet .lm-reward { display: inline-flex; align-items: center; gap: 10px; text-align: left; padding: 8px 14px; border: 1px dashed var(--border-strong); border-radius: 10px; background: #FFF8EC; }
+    .lm-sheet .lm-reward.got { border-style: solid; border-color: #A9802F; background: #FBEFD3; }
+    .lm-sheet .lm-status { margin: 12px 0 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+    .lm-sheet .lm-status.on { color: #8A6424; }
+    .map-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; margin: 6px 0 0; padding: 0; list-style: none; }
+    .map-legend li { display: grid; grid-template-columns: 22px 1fr; align-items: center; column-gap: 6px; min-width: 0; }
+    .map-legend .ico { grid-row: span 2; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; border: 1px solid #CDB48F; background: #FBF3E4; }
+    .map-legend li.got .ico { border-color: #A9802F; background: #FBEFD3; }
+    .map-legend li:not(.got) .ico svg { filter: grayscale(1) opacity(.55); }
+    .map-legend b { font-family: var(--hand); font-size: 15px; font-weight: 600; color: var(--ink); line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .map-legend .rw { display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--muted); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .map-legend .rw svg { flex: none; width: 13px; height: 13px; }
+    .map-legend li.got .rw { color: #8A6424; font-weight: 600; }
     .advmap .hero svg { width: 100%; height: 100%; }
     /* Weekly boss */
     .boss-card { display: flex; gap: 16px; align-items: center; }
@@ -555,25 +583,29 @@
     @media (max-width: 420px) { .ptab { padding: 8px 11px 10px; font-size: 14px; } .pagetabs { padding-left: 10px; } }
     @media (prefers-reduced-motion: reduce) { .ptab { transition: none; } }
 
-    /* Opening animation: the journal's leather cover swings open, then the page fades into the app */
-    #bookIntro { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: var(--bg); perspective: 1600px; cursor: pointer;
-      animation: bi-fade .45s ease 1.25s forwards; }
-    .bi-book { position: relative; width: min(72vw, 300px); aspect-ratio: 3 / 4; transform-style: preserve-3d; animation: bi-lift 1.25s cubic-bezier(.3, .7, .2, 1) forwards; }
-    .bi-page { position: absolute; inset: 0; border-radius: 3px 8px 8px 3px; background: #FFF8EC;
-      background-image: repeating-linear-gradient(#FFF8EC 0 27px, #EADBC4 27px 28px); box-shadow: 0 12px 30px rgba(48, 40, 32, .25), inset 10px 0 18px -10px rgba(48, 40, 32, .35); }
-    .bi-page::after { content: "Today's Quests"; position: absolute; left: 0; right: 0; top: 18%; text-align: center; font-family: var(--serif); font-size: 26px; color: var(--ink); opacity: .8; }
-    .bi-cover { position: absolute; inset: 0; transform-origin: left center; transform-style: preserve-3d; animation: bi-open .95s cubic-bezier(.55, .05, .35, 1) .25s forwards; }
-    .bi-front, .bi-back { position: absolute; inset: 0; border-radius: 3px 8px 8px 3px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-    .bi-front { display: grid; place-content: center; gap: 10px; text-align: center; color: #E2C17F;
-      background: radial-gradient(ellipse at 40% 35%, #2F5C4F, #1B3A31 70%, #142C25);
-      box-shadow: inset 14px 0 14px -8px rgba(0, 0, 0, .45), inset 0 0 0 10px rgba(0, 0, 0, .08), 0 12px 30px rgba(20, 30, 25, .35); }
-    .bi-front::before { content: ""; position: absolute; inset: 14px 14px 14px 22px; border: 1.5px solid rgba(226, 193, 127, .8); outline: 1px solid rgba(226, 193, 127, .35); outline-offset: 4px; border-radius: 2px; }
-    .bi-front svg { margin: 0 auto; }
-    .bi-title { font-family: var(--serif); font-size: clamp(30px, 9vw, 40px); letter-spacing: .02em; text-shadow: 0 1px 0 rgba(0, 0, 0, .45); }
-    .bi-sub { font-family: var(--serif); font-style: italic; font-size: 15px; color: rgba(226, 193, 127, .8); }
-    .bi-back { transform: rotateY(180deg); background: linear-gradient(90deg, #E9DCC5, #F5EBDD); box-shadow: inset -12px 0 16px -10px rgba(48, 40, 32, .35); }
-    @keyframes bi-open { to { transform: rotateY(-168deg); } }
-    @keyframes bi-lift { 0% { transform: scale(.92) translateY(8px); } 30% { transform: scale(1) translateY(0); } 100% { transform: scale(1.06) translateX(6%); } }
+    /* Opening animation: a fine leather journal with gold filigree opens softly, a page flutters, gold dust rises */
+    #bookIntro { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 45%, #FBF4E6, var(--bg) 70%); perspective: 1800px; cursor: pointer;
+      animation: bi-fade .6s ease 1.55s forwards; }
+    .bi-book { position: relative; width: min(64vw, 260px); aspect-ratio: 3 / 4; transform-style: preserve-3d; animation: bi-lift 1.9s cubic-bezier(.25, .7, .25, 1) forwards; }
+    .bi-page, .bi-leaf { position: absolute; inset: 0; border-radius: 2px 6px 6px 2px; background: #FFF9EE;
+      background-image: repeating-linear-gradient(transparent 0 25px, rgba(150, 120, 80, .16) 25px 26px); background-position: 0 58px; }
+    .bi-page { box-shadow: 0 18px 40px -12px rgba(60, 45, 30, .35), inset 12px 0 16px -12px rgba(60, 45, 30, .35); }
+    .bi-page-title { position: absolute; left: 0; right: 0; top: 13%; text-align: center; font-family: var(--hand); font-size: 26px; color: #5E4A38; }
+    .bi-page svg { position: absolute; left: 50%; top: 27%; width: 46%; transform: translateX(-50%); opacity: .7; }
+    .bi-leaf { transform-origin: left center; backface-visibility: hidden; -webkit-backface-visibility: hidden; animation: bi-leaf .9s cubic-bezier(.45, .05, .3, 1) .62s forwards; box-shadow: inset 10px 0 14px -10px rgba(60, 45, 30, .3); }
+    .bi-cover { position: absolute; inset: 0; transform-origin: left center; transform-style: preserve-3d; animation: bi-open 1.15s cubic-bezier(.5, .08, .28, 1) .28s forwards; }
+    .bi-front, .bi-back { position: absolute; inset: 0; border-radius: 2px 6px 6px 2px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .bi-front { background: radial-gradient(ellipse at 42% 32%, #2E5B4E, #1D3D33 62%, #15302A);
+      box-shadow: inset 10px 0 12px -8px rgba(0, 0, 0, .5), inset 0 0 30px rgba(0, 0, 0, .18), 0 18px 40px -12px rgba(20, 30, 25, .45); }
+    .bi-front > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .bi-title { font-family: var(--serif); font-style: italic; font-size: 25px; fill: #E6CB8C; letter-spacing: .03em; }
+    .bi-sub { font-family: var(--hand); font-size: 13px; fill: rgba(230, 203, 140, .8); }
+    .bi-back { transform: rotateY(180deg); background: #F3E7D2; box-shadow: inset -12px 0 16px -12px rgba(60, 45, 30, .35); }
+    .bi-dust { position: absolute; left: 50%; top: 52%; width: 3px; height: 3px; border-radius: 50%; background: #E2C17F; opacity: 0; box-shadow: 0 0 4px rgba(226, 193, 127, .9); animation: bi-dust 1.3s ease-out forwards; }
+    @keyframes bi-open { to { transform: rotateY(-164deg); } }
+    @keyframes bi-leaf { to { transform: rotateY(-150deg); } }
+    @keyframes bi-lift { 0% { transform: scale(.95) translateY(6px); opacity: 0; } 18% { opacity: 1; } 45% { transform: scale(1) translateY(0); } 100% { transform: scale(1.03) translateX(5%); } }
+    @keyframes bi-dust { 0% { opacity: 0; transform: translate(0, 0) scale(.6); } 25% { opacity: .95; } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1); } }
     @keyframes bi-fade { to { opacity: 0; visibility: hidden; } }
     @media (prefers-reduced-motion: reduce) { #bookIntro { display: none; } }
     #tabAvatar svg { width: 26px; height: 26px; display: block; }
@@ -850,15 +882,40 @@
   <!-- Opening animation: once per visit; tap to skip; skipped with "reduce motion" -->
   <div id="bookIntro" aria-hidden="true">
     <div class="bi-book">
-      <div class="bi-page"></div>
+      <div class="bi-page">
+        <div class="bi-page-title">Today's Quests</div>
+        <svg viewBox="0 0 120 40" fill="none" stroke="#8A6E55" stroke-width=".8" stroke-linecap="round"><path d="M8 20 C30 8, 46 32, 60 20 S90 8, 112 20"/><path d="M60 20 c-3 -6 3 -9 5 -5 c2 4 -3 7 -5 5 Z" fill="#E6CB8C" stroke-width=".6"/><path d="M20 26 q5 -3 10 0 M90 14 q5 3 10 0" opacity=".6"/></svg>
+      </div>
+      <div class="bi-leaf"></div>
       <div class="bi-cover">
         <div class="bi-front">
-          <svg width="44" height="34" viewBox="0 0 11 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="#E2C17F" d="M0 0h1v1H0zM5 0h1v1H5zM10 0h1v1h-1zM0 1h2v1H0zM4 1h3v1H4zM9 1h2v1H9zM0 2h11v4H0zM0 6h11v2H0z"/><path fill="#9B3527" d="M2 3h2v2H2zM7 3h2v2H7z"/></svg>
-          <div class="bi-title">DailyQuest</div>
-          <div class="bi-sub">Quest Journal</div>
+          <svg viewBox="0 0 150 200" fill="none" stroke="#D8B873" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="11" y="10" width="129" height="180" rx="2" stroke-width=".9"/>
+            <rect x="15" y="14" width="121" height="172" rx="1.5" stroke-width=".4" opacity=".7"/>
+            <g stroke-width=".7">
+              <path d="M15 34 C15 22, 22 15, 34 15 M22 15 c-4 3 -4 8 0 9 c3 0 3 -4 0 -4 M15 22 c3 -4 8 -4 9 0 c0 3 -4 3 -4 0"/>
+              <path transform="translate(151 0) scale(-1 1)" d="M15 34 C15 22, 22 15, 34 15 M22 15 c-4 3 -4 8 0 9 c3 0 3 -4 0 -4 M15 22 c3 -4 8 -4 9 0 c0 3 -4 3 -4 0"/>
+              <path transform="translate(0 200) scale(1 -1)" d="M15 34 C15 22, 22 15, 34 15 M22 15 c-4 3 -4 8 0 9 c3 0 3 -4 0 -4 M15 22 c3 -4 8 -4 9 0 c0 3 -4 3 -4 0"/>
+              <path transform="translate(151 200) scale(-1 -1)" d="M15 34 C15 22, 22 15, 34 15 M22 15 c-4 3 -4 8 0 9 c3 0 3 -4 0 -4 M15 22 c3 -4 8 -4 9 0 c0 3 -4 3 -4 0"/>
+            </g>
+            <g transform="translate(75.5 74)" stroke-width=".6">
+              <circle r="15"/><circle r="11.5" opacity=".6"/>
+              <path d="M0 -21 L2.6 -2.6 L21 0 L2.6 2.6 L0 21 L-2.6 2.6 L-21 0 L-2.6 -2.6 Z"/>
+              <path d="M0 -21 L2.6 -2.6 L0 0 Z M0 21 L-2.6 2.6 L0 0 Z" fill="#D8B873" stroke="none"/>
+              <path d="M-11 -11 L-1.6 -1.6 M11 11 L1.6 1.6 M11 -11 L1.6 -1.6 M-11 11 L-1.6 1.6" opacity=".55"/>
+            </g>
+            <text class="bi-title" x="75.5" y="128" text-anchor="middle" stroke="none">DailyQuest</text>
+            <path d="M44 138 H64 M87 138 H107" stroke-width=".5"/><path d="M75.5 135 l3 3 l-3 3 l-3 -3 Z" stroke-width=".5" fill="#D8B873"/>
+            <text class="bi-sub" x="75.5" y="155" text-anchor="middle" stroke="none">~ a journal of quests ~</text>
+          </svg>
         </div>
         <div class="bi-back"></div>
       </div>
+      <span class="bi-dust" style="--dx:-38px;--dy:-70px;animation-delay:.75s"></span>
+      <span class="bi-dust" style="--dx:22px;--dy:-88px;animation-delay:.9s"></span>
+      <span class="bi-dust" style="--dx:46px;--dy:-52px;animation-delay:1.02s;width:2px;height:2px"></span>
+      <span class="bi-dust" style="--dx:-12px;--dy:-100px;animation-delay:1.1s;width:2px;height:2px"></span>
+      <span class="bi-dust" style="--dx:60px;--dy:-84px;animation-delay:.95s"></span>
     </div>
   </div>
   <script>
@@ -870,7 +927,7 @@
         sessionStorage.setItem("dailyquest.intro", "1");
       } catch (e) { /* storage blocked: still play it */ }
       el.addEventListener("click", done);
-      setTimeout(done, 1800);
+      setTimeout(done, 2250);
     })();
   </script>
   <header class="player ornate" id="player">
@@ -2848,30 +2905,146 @@
 
     // ---------- Adventure map ----------
     function claimedAt(at, p) { return (state.landmarksClaimed || []).includes((p.lap - 1) * MAP_STEPS + at); }
+    // Short reward names for the map legend.
+    function shortReward(r) {
+      if (r.coins) return r.coins + " coins";
+      const g = GEAR.find((x) => x.id === r.gear);
+      return g.slot === "pet" ? g.name.replace(" companion", " pet") : g.slot === "title" ? "“" + g.name + "”" : g.name;
+    }
     function adventureMap() {
       const p = mapProgress(state.daysCleared || 0);
-      const perRow = 6, rowH = 56, top = 24;
-      const pos = (i) => { const row = Math.floor(i / perRow), col = i % perRow, c = row % 2 ? perRow - 1 - col : col; return { x: 7 + c * (86 / (perRow - 1)), y: top + row * rowH }; };
-      const pts = Array.from({ length: MAP_STEPS + 1 }, (_, i) => pos(i));
-      const height = top * 2 + Math.floor(MAP_STEPS / perRow) * rowH;
-      const pathD = pts.map((q, i) => (i ? "L" : "M") + q.x + " " + q.y).join(" ");
-      const doneD = pts.slice(0, p.step + 1).map((q, i) => (i ? "L" : "M") + q.x + " " + q.y).join(" ");
-      const marks = new Set(MAP_LANDMARKS.map((l) => l.at));
-      const nodes = pts.map((q, i) => marks.has(i) ? "" : `<span class="node ${i <= p.step ? "done" : ""}" style="left:${q.x}%;top:${q.y}px"></span>`).join("");
-      const landmarks = MAP_LANDMARKS.map((l) => { const q = pts[l.at]; return `<span class="mark ${l.at <= p.step ? "done" : ""}" style="left:${q.x}%;top:${q.y + 8}px;transform:translate(${q.x > 80 ? -80 : q.x < 20 ? -20 : -50}%,-50%)"><span class="medal">${px(l.icon, 20)}</span>${esc(l.name)}${l.reward ? `<span class="mark-reward">${l.at <= p.step && p.lap === 1 || claimedAt(l.at, p) ? "✓ " : ""}${esc(rewardLabel(l.reward))}</span>` : ""}</span>`; }).join("");
-      const hero = pts[p.step];
+      const W = 340, H = 256, INK = "#5E4A38", nextIdx = MAP_LANDMARKS.indexOf(p.next);
+      // Landmarks, composed by hand: the Village bottom-left, up through the forest, over the river,
+      // past the castle to the peaks, down by the volcano to the treasure on the coast.
+      const POS = [{ x: 40, y: 206 }, { x: 92, y: 128 }, { x: 146, y: 186 }, { x: 188, y: 112 }, { x: 236, y: 72 }, { x: 268, y: 168 }, { x: 312, y: 218 }];
+      const seg = (a, b, c, d, u) => { const u2 = u * u, u3 = u2 * u; const k = (p0, p1, p2, p3) => .5 * (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u2 + (-p0 + 3 * p1 - 3 * p2 + p3) * u3); return { x: k(a.x, b.x, c.x, d.x), y: k(a.y, b.y, c.y, d.y) }; };
+      const along = (t) => { const i = Math.min(POS.length - 2, Math.floor(t / 5)), u = (t - i * 5) / 5; return seg(POS[Math.max(0, i - 1)], POS[i], POS[i + 1], POS[Math.min(POS.length - 1, i + 2)], u); };
+      const path = (a, b) => { const n = Math.max(2, Math.round((b - a) * 6)); return Array.from({ length: n + 1 }, (_, k) => along(a + (b - a) * k / n)).map((q, i) => (i ? "L" : "M") + q.x.toFixed(1) + " " + q.y.toFixed(1)).join(" "); };
+      const pen = (w = .7, c = INK) => `fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`;
+      const PAPER = "#F8EEDB";
+      const penF = (w = .7, fill = PAPER) => pen(w).replace('fill="none"', 'fill="' + fill + '"');
+      const wash = (cx, cy, rx, ry, c, o = .24) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" opacity="${o}" filter="url(#mapSoft)"/>`;
+      const sparkle = (x, y, r = 3, delay = 0) => `<path class="sparkle" style="animation-delay:${delay}s" d="M${x} ${y - r} Q${x} ${y} ${x + r} ${y} Q${x} ${y} ${x} ${y + r} Q${x} ${y} ${x - r} ${y} Q${x} ${y} ${x} ${y - r} Z" fill="#D9AE5C"/>`;
+
+      // ---- Little pen-and-ink drawings ----
+      const tree = (x, y, k = 1) => `<path transform="translate(${x} ${y}) scale(${k})" d="M0 0 V3 M-3.2 0 C-4.6 -1.2 -3.6 -4 -1.8 -3.8 C-1.6 -6.2 1.8 -6.4 2 -3.9 C3.8 -4.1 4.6 -1.2 3.2 0 Z" ${penF()}/>`;
+      const pine = (x, y, k = 1) => `<path transform="translate(${x} ${y}) scale(${k})" d="M0 -8 L3.2 -2.5 H1.6 L3.8 1.5 H-3.8 L-1.6 -2.5 H-3.2 Z M0 1.5 V3.5" ${penF()}/>`;
+      const cottage = (x, y) => `<g transform="translate(${x} ${y})"><path d="M-4 0 V-4.5 L0 -8 L4 -4.5 V0 Z" ${penF()}/><path d="M-5 -4 L0 -8.6 L5 -4" ${pen(.9, "#9C4A36")}/><path d="M-1 0 V-2.4 H1 V0" ${pen(.55)}/></g>`;
+      const tower = (x, y) => `<g transform="translate(${x} ${y})"><path d="M-3 0 V-12 H3 V0 Z" ${penF()}/><path d="M-4 -12 L0 -18 L4 -12 Z" ${penF(.7, "#E7D2B0")}/><path d="M0 -18 V-22 L3.5 -21 L0 -20" ${pen(.6, "#9C4A36")}/><path d="M-1 -8 H1 M-1 -4 H1" ${pen(.5)}/></g>`;
+      const peak = (x, y, k = 1) => `<g transform="translate(${x} ${y}) scale(${k})"><path d="M-11 0 L-2 -15 L2 -10 L5 -13 L12 0" ${penF()}/><path d="M-5 -10 L-2 -15 L0 -12 M3.6 -11 L5 -13 L7 -9.5" ${pen(.55)}/><path d="M0 -9 L-3 -2 M2.5 -8 L.5 -2 M5 -7.5 L4 -2 M7 -7 L7 -2.5" ${pen(.45)} opacity=".7"/></g>`;
+      const castle = (x, y) => `<g transform="translate(${x} ${y})"><path d="M-10 0 V-8 H-8 V-10 H-6.5 V-8 H-5 V-10 H-3.5 V-8 H3.5 V-10 H5 V-8 H6.5 V-10 H8 V-8 H10 V0 Z" ${penF()}/><path d="M-13 0 V-13 H-11.5 V-14.5 H-10 V-13 H-8.5 V0 M13 0 V-13 H11.5 V-14.5 H10 V-13 H8.5 V0" ${penF()}/><path d="M-2.5 0 V-3.5 A2.5 2.5 0 0 1 2.5 -3.5 V0" ${pen(.6)}/><path d="M-10.7 -14.5 V-18.5 L-7.5 -17.4 L-10.7 -16.3 M10.7 -14.5 V-18.5 L13.9 -17.4 L10.7 -16.3" ${pen(.6, "#9C4A36")}/></g>`;
+      const volcano = (x, y) => `<g transform="translate(${x} ${y})"><path d="M-15 0 L-4.5 -14 H4.5 L15 0" ${penF()}/><path d="M-4.5 -14 Q0 -11.5 4.5 -14" ${pen(.8, "#B5543A")}/><path d="M-6 -6 L-9 -1 M-3 -8 L-5 -2 M3 -9 L5 -3 M6 -6 L8 -2" ${pen(.45)} opacity=".7"/><path d="M-1 -16 C-4 -19 1 -21 -1.5 -24.5 M2 -16.5 C5 -19 2 -21.5 4 -24" ${pen(.55)} opacity=".75"/></g>`;
+      const dragon = (x, y) => `<g transform="translate(${x} ${y})"><path d="M-7 1 Q-2 -1 2 0 Q5 1 8 -1 M2 0 Q0 -6 -5 -7 Q-2 -3 -1 0 M3 0 Q6 -6 10 -6 Q7 -3 5 0 M8 -1 L10 -2.5 L9 0" ${pen(.6)}/></g>`;
+      const serpent = (x, y) => `<g transform="translate(${x} ${y})"><path d="M-12 2 Q-9 -6 -6 2 M-3 2 Q0 -6 3 2 M6 2 Q9 -7 11 -3 Q12 -1 13.5 -2" ${pen(.65, "#5E7F93")}/><path d="M-14 3 H15" ${pen(.4, "#6E8FA6")} opacity=".6"/></g>`;
+      const ripple = (x, y) => `<path d="M${x} ${y} q2 -1.6 4 0 t4 0" ${pen(.55, "#6E8FA6")}/>`;
+      const compass = (x, y) => `<g transform="translate(${x} ${y})"><circle r="9" ${pen(.45)}/><circle r="6.5" ${pen(.3)}/><path d="M0 -13 L1.8 -1.8 L13 0 L1.8 1.8 L0 13 L-1.8 1.8 L-13 0 L-1.8 -1.8 Z" ${penF(.55)}/><path d="M0 -13 L1.8 -1.8 L0 0 Z M0 13 L-1.8 1.8 L0 0 Z" fill="#B8893C"/><path d="M-1.6 -18.5 V-15 L1.6 -18.5 V-15" ${pen(.55)}/></g>`;
+      const hill = (x, y, k = 1) => `<g transform="translate(${x} ${y}) scale(${k})"><path d="M-7 0 Q-1 -7 7 0" ${penF(.6)}/><path d="M1 -3.5 L3 -.8 M3 -2.5 L4.6 -.5" ${pen(.4)} opacity=".7"/></g>`;
+      const tuft = (x, y) => `<path transform="translate(${x} ${y})" d="M-2 0 L-2.8 -2.6 M0 0 V-3.4 M2 0 L2.8 -2.6" ${pen(.45)} opacity=".75"/>`;
+      const vine = (x, y, a, b) => `<g transform="translate(${x} ${y}) scale(${a} ${b})"><path d="M0 22 Q0 0 22 0" ${pen(.6)}/><path d="M3 12 q4 -1 5 -5 q-4 0 -5 5 M12 3 q-1 4 -5 5 q0 -4 5 -5" ${pen(.5, "#5F7F5C").replace('fill="none"', 'fill="#DCE6CF"')}/><circle cx="5" cy="5" r="1.4" fill="#C69A50"/></g>`;
+
+      // ---- Each region's scene (faint pencil until you get close) ----
+      const scenes = [
+        wash(40, 196, 34, 16, "#9DBB8C") + cottage(22, 196) + cottage(32, 186) + cottage(54, 190) + tower(16, 178),
+        wash(90, 128, 50, 26, "#8FB28E", .28) + [[62, 124], [68, 140], [78, 118], [104, 118], [110, 142], [118, 128], [58, 154], [86, 152], [100, 158], [120, 116]].map(([x, y], i) => (i % 3 ? tree(x, y) : pine(x, y, .95))).join(""),
+        `<path d="M128 34 C136 66, 116 96, 134 130 S160 170, 150 214 S160 240, 164 256" fill="none" stroke="#9EC0D6" stroke-width="5" opacity=".28" stroke-linecap="round"/><path d="M125 34 C133 66, 113 96, 131 130 S157 170, 147 214 S157 240, 161 256 M131 34 C139 66, 119 96, 137 130 S163 170, 153 214 S163 240, 167 256" ${pen(.55, "#6E8FA6")}/>` +
+          ripple(127, 76) + ripple(137, 140) + ripple(150, 228) + `<path d="M140 182 Q147 178 155 181 M140.3 185.6 Q147.3 181.6 155.3 184.6 M143 181 V184.6 M147 180 V183.6 M151 180.6 V184.2" ${pen(.6)}/>`,
+        wash(212, 128, 28, 15, "#D8C9A6") + castle(214, 134),
+        wash(262, 60, 48, 18, "#B9C6D3", .3) + peak(250, 64, .9) + peak(268, 56, 1.05) + peak(288, 66, .9) + peak(304, 74, .7) + peak(262, 76, .6),
+        wash(292, 160, 30, 18, "#D99A80", .26) + volcano(298, 170) + dragon(286, 140) + pine(320, 158, .75),
+        wash(318, 232, 40, 22, "#A9C5D6", .32) + `<path d="M270 256 C278 238, 294 230, 304 234 S328 226, 340 220" ${pen(.7)}/>` +
+          [[-3, 5, .55], [-6, 10, .38], [-9, 15, .24]].map(([dx, dy, o]) => `<path transform="translate(${dx} ${dy})" d="M270 256 C278 238, 294 230, 304 234 S328 226, 340 220" ${pen(.45, "#6E8FA6")} opacity="${o}"/>`).join("") +
+          ripple(330, 238) + serpent(226, 240) +
+          `<path d="M309 214 L315 220 M315 214 L309 220" ${pen(.95, "#9C4A36")}/>` + sparkle(322, 208, 2.6, .4) + sparkle(302, 206, 2, 1.3),
+      ].map((g, i) => `<g class="${i > nextIdx ? "far" : ""}">${g}</g>`).join("");
+
+      // ---- Quest path: footsteps ahead, a fine gold line behind ----
+      const trail = `<path d="${path(0, MAP_STEPS)}" ${pen(1)} stroke-dasharray=".2 3.6" opacity=".85"/>` +
+        (p.step ? `<path d="${path(0, p.step)}" fill="none" stroke="#F0D9A3" stroke-width="3.4" stroke-linecap="round" opacity=".65"/><path d="${path(0, p.step)}" fill="none" stroke="#A97E35" stroke-width="1.15" stroke-linecap="round" stroke-dasharray="5 2.2"/>` : "");
+
+      // ---- Landmark dots, handwritten names and margin notes ----
+      // Names sit clear of each landmark's medallion (about 10 map units across).
+      const LABEL = [[15, 4, "start"], [0, -22, "middle"], [13, 18, "start"], [13, -9, "start"], [13, 17, "start"], [-6, 21, "end"], [-15, 4, "end"]];
+      const marks = MAP_LANDMARKS.map((l, i) => {
+        const q = POS[i], reached = l.at <= p.step, [dx, dy, anchor] = LABEL[i];
+        return `<g class="${i > nextIdx ? "far" : ""}">${reached ? sparkle(q.x + 11, q.y - 11, 2.2, i * .35) : ""}
+          <text class="lm-name" data-map-text x="${q.x + dx}" y="${q.y + dy}" text-anchor="${anchor}">${esc(l.name)}</text></g>`;
+      }).join("");
+      // Tappable landmark medallions (HTML buttons over the map, so they work with touch, keyboard and screen readers).
+      const medallions = MAP_LANDMARKS.map((l, i) => {
+        const q = POS[i], reached = l.at <= p.step;
+        return `<button class="lm-btn ${reached ? "on" : ""} ${i > nextIdx ? "far" : ""}" data-action="landmark-info" data-at="${l.at}" style="left:${(q.x / W * 100).toFixed(2)}%;top:${(q.y / H * 100).toFixed(2)}%" aria-label="${esc(l.name)}${l.reward ? ", reward: " + esc(rewardLabel(l.reward)) : ""}">${px(l.icon, 14)}</button>`;
+      }).join("");
+      const NOTES = [
+        [32, 140, -6, "the pines", "whisper..."],
+        [104, 222, -4, "cross at the", "old bridge"],
+        [304, 106, 6, "here be", "dragons!"],
+        [196, 52, -3, "the peaks are", "cold at dawn"],
+      ];
+      const notes = NOTES.map(([x, y, rot, a, b], i) => `<g class="${i === 1 && nextIdx < 2 || i === 2 && nextIdx < 5 || i === 3 && nextIdx < 4 ? "far" : ""}" transform="rotate(${rot} ${x} ${y})"><text class="note" data-map-text x="${x}" y="${y}" text-anchor="middle">${a}</text><text class="note" data-map-text x="${x}" y="${y + 11}" text-anchor="middle">${b}</text></g>`).join("");
+
+      const hero = along(p.step);
       return `<div class="panel"><h3>Adventure map${p.lap > 1 ? " · journey " + p.lap : ""}</h3>
-        <p class="muted" style="margin:-4px 0 4px">Each day you clear every quest moves you one step, and each landmark pays a reward. You're at <b>${esc(p.reached.name)}</b>; ${p.toNext} more cleared day${p.toNext === 1 ? "" : "s"} to <b>${esc(p.next.name)}</b>${p.next.reward ? " (" + esc(rewardLabel(p.next.reward)) + ")" : ""}.</p>
-        <div class="advmap" style="height:${height}px" aria-label="Adventure map: step ${p.step} of ${MAP_STEPS}">
-          <svg class="trail" viewBox="0 0 100 ${height}" preserveAspectRatio="none" aria-hidden="true">
-            <path d="${pathD}" fill="none" stroke="#CDB48F" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-            <path d="${doneD}" fill="none" stroke="#C69A50" stroke-width="4" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+        <p class="muted" style="margin:-4px 0 2px">Each day you clear every quest moves you one step. You're at <b>${esc(p.reached.name)}</b>; ${p.toNext} more cleared day${p.toNext === 1 ? "" : "s"} to <b>${esc(p.next.name)}</b>. Tap a landmark to see its reward.</p>
+        <div class="advmap" role="group" aria-label="Adventure map: step ${p.step} of ${MAP_STEPS}, at ${esc(p.reached.name)}">
+          <svg viewBox="0 0 ${W} ${H}" aria-hidden="true">
+            <defs>
+              <filter id="mapSoft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5"/></filter>
+              <filter id="mapGrain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 .42  0 0 0 0 .31  0 0 0 0 .2  0 0 0 .55 -.18"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+              <filter id="inkWobble" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency=".06" numOctaves="2" seed="11"/><feDisplacementMap in="SourceGraphic" scale="1.7" xChannelSelector="R" yChannelSelector="G"/></filter>
+              <filter id="mapEdge"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="3" seed="3"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+              <radialGradient id="mapAge" cx="48%" cy="44%" r="72%"><stop offset=".55" stop-color="#F8EEDB" stop-opacity="0"/><stop offset="1" stop-color="#C9A877" stop-opacity=".55"/></radialGradient>
+            </defs>
+            <g filter="url(#mapEdge)"><rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="3" fill="${PAPER}"/><rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="3" fill="url(#mapAge)"/></g>
+            <rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="3" fill="#000" filter="url(#mapGrain)" opacity=".5"/>
+            <g opacity=".07" stroke="#5E4A38" stroke-width=".5">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => `<path d="M${i * 34} 12 V${H - 12}"/>`).join("")}${[1, 2, 3, 4, 5, 6, 7].map((i) => `<path d="M12 ${i * 32} H${W - 12}"/>`).join("")}</g>
+            <path d="M58 62 c4 -3 9 -1 8 3 c3 1 2 6 -2 5 c-1 4 -7 4 -7 0 c-4 1 -5 -5 -1 -6 c-1 -1 0 -2 2 -2 Z M70 72 a1.3 1.3 0 1 0 .1 0 M52 58 a.9 .9 0 1 0 .1 0" fill="#5E4A38" opacity=".07"/>
+            <g filter="url(#inkWobble)">
+              <rect x="8" y="8" width="${W - 16}" height="${H - 16}" rx="2" ${pen(.6)}/><rect x="11" y="11" width="${W - 22}" height="${H - 22}" rx="1.5" ${pen(.3)}/>
+              ${vine(12, 12, 1, 1)}${vine(W - 12, 12, -1, 1)}${vine(12, H - 12, 1, -1)}${vine(W - 12, H - 12, -1, -1)}
+              ${hill(36, 84)}${hill(52, 94, .8)}${hill(26, 100, .7)}${tuft(70, 82)}${tuft(44, 112)}${tuft(176, 160)}${tuft(204, 150)}${tuft(226, 112)}${tuft(120, 206)}
+              <g transform="translate(22 44)"><path d="M0 0 H34 M0 -2 V2 M8.5 -1.5 V1.5 M17 -2 V2 M25.5 -1.5 V1.5 M34 -2 V2" ${pen(.55)}/><path d="M0 0 H8.5 M17 0 H25.5" stroke="#5E4A38" stroke-width="1.8"/></g>
+              ${scenes}${trail}
+            </g>
+            <text class="scale-text" data-map-text x="22" y="56">0 — 5 leagues</text>
+            ${marks}${notes}
+            ${compass(296, 30)}
+            <g transform="translate(${W / 2 - 8} 24)"><path d="M-62 -9 H62 L56 0 L62 9 H-62 L-56 0 Z" fill="${PAPER}" ${pen(.7).replace('fill="none" ', "")}/><path d="M-62 -9 L-70 -5 L-64 0 L-70 5 L-62 9 M62 -9 L70 -5 L64 0 L70 5 L62 9" ${pen(.6)}/><text class="ribbon-text" data-map-text y="4.5" text-anchor="middle">The Realm of Quests</text></g>
+            <g transform="translate(${hero.x.toFixed(1)} ${hero.y.toFixed(1)})"><path d="M5 -3 V-21" ${pen(.7)}/><path d="M5 -21 L13 -18.5 L5 -16 Z" fill="#9C4A36" stroke="${INK}" stroke-width=".45"/></g>
           </svg>
-          ${nodes}${landmarks}
-          <span class="hero" style="left:${hero.x}%;top:${hero.y}px" title="You are here">${mascotSvg(state.avatar)}</span>
+          <span class="hero" style="left:${(hero.x / W * 100).toFixed(2)}%;top:${(hero.y / H * 100).toFixed(2)}%" title="You are here">${mascotSvg(state.avatar)}</span>
+          ${medallions}
         </div></div>`;
     }
-
+    function rewardIcon(r, size = 18) {
+      if (r.coins) return px("coin", size);
+      const g = GEAR.find((x) => x.id === r.gear);
+      return g.slot === "pet" ? `<span style="display:inline-block;width:${size}px;height:${size}px">${spriteSvg(g.sprite)}</span>` : px(g.slot === "frame" ? "medal" : "scroll", size);
+    }
+    const LANDMARK_LORE = {
+      "Village": "Every journey begins at the village well.",
+      "Whispering Forest": "The pines whisper secrets to those who listen.",
+      "Moonlit River": "Cross at the old bridge while the moon is high.",
+      "Castle Gate": "Stone walls, red banners, and a gate that opens for the steadfast.",
+      "Frost Peaks": "The peaks are cold at dawn, but the view is worth it.",
+      "Dragon's Lair": "Here be dragons. Tread boldly.",
+      "Treasure Vault": "X marks the spot at the edge of the sea.",
+    };
+    // Pop-up for one landmark: its story, reward and how far away it is.
+    function openLandmark(at) {
+      const l = MAP_LANDMARKS.find((x) => x.at === at);
+      if (!l) return;
+      const p = mapProgress(state.daysCleared || 0);
+      const reached = at <= p.step, got = l.reward && (claimedAt(at, p) || (reached && p.lap === 1));
+      const status = at === 0 ? "Where your journey starts." : reached ? (got ? "✓ Reward collected" : "✓ Reached") : at === p.next.at ? `Next stop: ${p.toNext} more cleared day${p.toNext === 1 ? "" : "s"}` : `Ahead: ${at - p.step} more cleared days`;
+      const reward = l.reward ? `<div class="lm-reward ${got ? "got" : ""}">${rewardIcon(l.reward, 22)}<span><span class="muted" style="display:block;font-size:12px">Reward</span><b>${esc(rewardLabel(l.reward))}</b>${l.reward.gear ? '<span class="muted" style="display:block;font-size:12px">Equip it in the Shop</span>' : ""}</span></div>` : "";
+      track("landmark_opened", { landmark: l.name });
+      openSheet(`<div class="info lm-sheet"><div class="lm-art ${reached ? "on" : ""}">${px(l.icon, 44)}</div>
+        <h2>${esc(l.name)}</h2>
+        <p class="lm-lore">${esc(LANDMARK_LORE[l.name] || "")}</p>
+        ${reward}
+        <p class="lm-status ${reached ? "on" : ""}">${status}</p>
+        <div class="sheet-actions" style="justify-content:center"><button class="btn soft" data-action="close-sheet">Close</button></div></div>`);
+    }
     // ---------- Sealed Profile (shown until someone logs in) ----------
     function sealedProfile(avatars, heroStats) {
       const perks = [["crown", "Pick your adventurer avatar"], ["sword", "Grow hero stats and earn badges"], ["trophy", "Unlock achievements and keep streaks"],
@@ -3348,6 +3521,7 @@
               .then(({ error }) => authMessage(error ? friendlyAuthError(error) : "We emailed you a link to set a new password.", !error));
             return;
           case "install-help": openInstallHelp(); return;
+          case "landmark-info": openLandmark(Number(btn.dataset.at)); return;
           case "buy-gear": {
             const g = GEAR.find((x) => x.id === btn.dataset.gear);
             if (!g || !buyGear(state, g.id)) return;
