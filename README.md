@@ -25,6 +25,7 @@ People juggling busy lives end up managing them across too many apps. MBA studen
 - **Rewards:** earn XP, levels, badges, and streaks, then spend coins on real-life rewards you choose.
 - **Week view:** weekly goals, repeating quests, what's coming up, and a summary of the week.
 - **Schedule view:** a timeline of today's timed quests and calendar events, with untimed quests below.
+- **Connected calendars:** paste your Google Calendar's *Secret address in iCal format* (or an Outlook, iCloud or Brightspace link) under Schedule → **Connect a calendar**, and events keep updating on their own. Needs an account.
 - **Calendar import:** load a `.ics` file exported from Google Calendar. Events show as read-only and earn no XP.
 - **Public holidays:** one tap adds upcoming US (and New York) holidays to your schedule and week.
 - **Game extras:** a daily loot chest of bonus coins, a streak shield you can buy to protect one missed day, hero stats that grow with each category, achievements that pay coins, and pixel avatars unlocked by level badges. Tap any badge or achievement to see what it means.

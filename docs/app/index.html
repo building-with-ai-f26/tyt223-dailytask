@@ -333,6 +333,14 @@
     .sealed .toolbar { justify-content: center; margin: 0; }
     .sealed-preview { position: relative; margin-top: 14px; max-height: 260px; overflow: hidden; pointer-events: none; user-select: none; filter: blur(2.5px) grayscale(.35); opacity: .55;
       -webkit-mask-image: linear-gradient(#000 30%, transparent); mask-image: linear-gradient(#000 30%, transparent); }
+    .feeds { margin: 14px 0 6px; }
+    .feeds h3 { margin-bottom: 6px; }
+    .feed-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px dashed var(--border); }
+    .feed-row:first-of-type { border-top: 0; }
+    .feed-row .feed-name { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+    .feed-row .feed-meta { font-size: 12px; color: var(--muted); }
+    .feed-row .feed-meta.bad { color: var(--danger); }
+    .feed-row > div { flex: 1; min-width: 0; }
     .install-steps { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; }
     .install-steps svg { vertical-align: -3px; }
     .install-sheet { text-align: left; }
@@ -1189,6 +1197,36 @@
       });
       return out.filter((ev) => (ev.rule ? !ev.rule.until || ev.rule.until >= today : ev.date >= today));
     }
+    // ---------- Connected calendars (subscription links) ----------
+    // Same rules as supabase/functions/fetch-calendar/feeds.ts (the server's check is the real one).
+    const FEED_HOSTS = ["calendar.google.com", "outlook.office365.com", "outlook.office.com", "outlook.live.com"];
+    const FEED_SUFFIXES = [".icloud.com", ".brightspace.com", ".d2l.com"];
+    function feedHostAllowed(host) {
+      host = String(host || "").toLowerCase();
+      return FEED_HOSTS.includes(host) || FEED_SUFFIXES.some((x) => host.endsWith(x)) || host.split(".").includes("brightspace");
+    }
+    // A pasted link as a safe https URL, or "" if it isn't a supported calendar link (webcal:// becomes https://).
+    function normalizeFeedUrl(raw) {
+      let text = String(raw || "").trim();
+      if (/^webcals?:\/\//i.test(text)) text = text.replace(/^webcals?:\/\//i, "https://");
+      let url;
+      try { url = new URL(text); } catch (e) { return ""; }
+      if (url.protocol !== "https:" || url.username || url.password || (url.port && url.port !== "443")) return "";
+      if (!feedHostAllowed(url.hostname)) return "";
+      return url.href;
+    }
+    // Replaces one connected calendar's events with a fresh copy, so moved or cancelled meetings update.
+    function replaceFeedEvents(state, feedId, events) {
+      const source = "feed:" + feedId;
+      state.events = state.events.filter((e) => e.source !== source)
+        .concat(events.map((e) => Object.assign({}, e, { source, key: source + "|" + e.key })));
+    }
+    function removeFeed(state, feedId) {
+      state.feeds = state.feeds.filter((x) => x.id !== feedId);
+      state.events = state.events.filter((e) => e.source !== "feed:" + feedId);
+    }
+    function feedDue(feed, nowMs, maxAgeMs) { return !feed.lastSync || nowMs - feed.lastSync >= maxAgeMs; }
+
     function mergeEvents(state, incoming) {
       const keys = new Set(incoming.map((e) => e.key));
       state.events = state.events.filter((e) => !keys.has(e.key)).concat(incoming);
@@ -1227,7 +1265,7 @@
     // ---------- Game logic: no page access, so it can be tested alone ----------
     function newState() {
       return {
-        quests: [], goals: [], rewards: [], claims: [], events: [], templates: [], nextId: 1,
+        quests: [], goals: [], rewards: [], claims: [], events: [], templates: [], feeds: [], nextId: 1,
         lifetimeXp: 0, spendableXp: 0,
         streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0,
         theme: "classic", dayOffset: 0,
@@ -1640,6 +1678,7 @@
           <button class="btn soft" data-action="import-holidays">${hasHolidays ? "Update US holidays" : "Add US holidays"}</button>
           ${state.events.length ? '<button class="linkbtn" data-action="clear-events">Clear calendar events</button>' : ""}
         </div>
+        ${feedsPanel()}
         ${allDay}
         ${timeline || '<div class="empty">Nothing timed today. Add one like <b>coffee chat at 3pm</b>.</div>'}
         <h3 style="margin-top:16px">Anytime quests</h3>
@@ -2129,6 +2168,7 @@
       if (!$("authForm") || authMode !== "newpass") closeSheetIfAuth();
       await loginSync();
       refreshAccountUi();
+      refreshDueFeeds(FEED_OPEN_AGE);
     }
     function closeSheetIfAuth() { if ($("authForm") || $("welcomeSheet")) closeSheet(); }
 
@@ -2295,6 +2335,93 @@
         if ($("authSubmit")) $("authSubmit").disabled = false;
       }
     }
+    // ---------- Connected calendars: page code ----------
+    const FEED_OPEN_AGE = 60 * 60 * 1000;          // refresh on open if older than 1 hour
+    const FEED_BACKGROUND_AGE = 3 * 60 * 60 * 1000; // and every 3 hours while the app stays open
+    const feedBusy = new Set();
+    function ago(ms) {
+      const m = Math.round((Date.now() - ms) / 60000);
+      return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " d ago";
+    }
+    function feedsPanel() {
+      if (account.status === "off") return "";
+      const head = '<div class="feeds"><h3>Connected calendars</h3>';
+      if (!account.user) return head + '<p class="muted" style="margin:0 0 8px">Connect your Google Calendar so classes and meetings show up here on their own. Log in first.</p><button class="btn soft" data-action="auth-open" data-mode="login">Log in</button></div>';
+      const rows = state.feeds.map((x) => `<div class="feed-row">${px("calendar", 18)}<div><div class="feed-name">${esc(x.name)}</div>
+        <div class="feed-meta ${x.error ? "bad" : ""}">${feedBusy.has(x.id) ? "Updating…" : x.error ? esc(x.error) : x.lastSync ? "Updated " + ago(x.lastSync) + " · refreshes automatically" : "Not updated yet"}</div></div>
+        <button class="linkbtn" data-action="feed-refresh" data-id="${x.id}" ${feedBusy.has(x.id) ? "disabled" : ""}>Refresh</button><button class="linkbtn" data-action="feed-remove" data-id="${x.id}">Remove</button></div>`).join("");
+      return head + (rows || '<p class="muted" style="margin:0 0 8px">Paste your calendar\'s subscription link once, and events keep updating on their own.</p>') +
+        '<button class="btn soft" data-action="feed-add">+ Connect a calendar</button></div>';
+    }
+    function openFeedForm(note) {
+      openSheet(`<form id="feedForm" class="auth" novalidate>
+        <h2>Connect a calendar</h2>
+        <p class="muted" style="margin:0">Events will appear on Schedule and Week and update on their own. They're read-only and earn no XP.</p>
+        <label class="field">Name<input id="feedName" maxlength="40" value="Google Calendar" /></label>
+        <label class="field">Subscription link<input id="feedUrl" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://calendar.google.com/calendar/ical/…" required /></label>
+        <p class="auth-msg" id="feedMsg" role="status">${esc(note || "")}</p>
+        <details open><summary>How do I get my Google Calendar link?</summary>
+          <ol class="install-steps" style="margin-top:6px"><li>On a computer, open <b>Google Calendar</b> and click <b>⚙ Settings</b></li><li>On the left, under <b>Settings for my calendars</b>, click your calendar</li><li>Scroll to <b>Integrate calendar</b></li><li>Copy the <b>Secret address in iCal format</b> and paste it above</li></ol>
+          <p class="muted" style="margin:6px 0 0;font-size:13px">Treat this link like a password: anyone with it can see that calendar. School (NYU) accounts sometimes hide it; a personal Gmail calendar always has one.</p>
+        </details>
+        <details><summary>Outlook, iCloud or Brightspace?</summary>
+          <p style="margin:6px 0 0;font-size:14px"><b>Outlook:</b> Settings → Calendar → Shared calendars → Publish a calendar → copy the ICS link.<br><b>iCloud:</b> in Calendar, share the calendar as a <b>Public Calendar</b> and copy the link.<br><b>Brightspace:</b> Calendar → Subscribe → copy the feed link.</p>
+        </details>
+        <button class="btn" type="submit" id="feedSubmit">Connect</button>
+      </form>`);
+      $("feedUrl").focus();
+    }
+    function feedErrorText(code) {
+      return { unsupported_link: "That link isn't from a supported calendar (Google, Outlook, iCloud or Brightspace).", not_found: "Calendar not found. The link may have been reset; copy a fresh one.",
+        private: "That calendar isn't shared. Use the secret iCal address.", not_a_calendar: "That link didn't return a calendar.", too_large: "That calendar is too big to load.",
+        unreachable: "Couldn't reach the calendar. Try again later.", login_required: "Log in again to update calendars." }[code] || "Couldn't update. Try again later.";
+    }
+    // Downloads one calendar through the fetch-calendar function and replaces its events.
+    async function refreshFeed(feedId) {
+      const feed = state.feeds.find((x) => x.id === feedId);
+      if (!feed || !account.client || !account.user || feedBusy.has(feedId)) return false;
+      feedBusy.add(feedId); if (tab === "today" && todayMode === "schedule") render();
+      let ok = false;
+      try {
+        const { data, error } = await account.client.functions.invoke("fetch-calendar", { body: { url: feed.url } });
+        let code = "";
+        if (error) { try { code = (await error.context.json()).error; } catch (e) { code = "unreachable"; } }
+        const live = state.feeds.find((x) => x.id === feedId);   // may have been removed meanwhile
+        if (live) {
+          if (code || !data || !data.ics) { live.error = feedErrorText(code || "not_a_calendar"); track("calendar_feed_failed", { reason: code || "empty" }); }
+          else { replaceFeedEvents(state, feedId, parseIcs(data.ics, getToday())); live.lastSync = Date.now(); live.error = ""; ok = true; }
+          save();
+        }
+      } finally { feedBusy.delete(feedId); render(); }
+      return ok;
+    }
+    async function refreshDueFeeds(maxAgeMs) {
+      if (!account.user || !state.feeds || !state.feeds.length) return;
+      for (const x of state.feeds.slice()) if (feedDue(x, Date.now(), maxAgeMs)) await refreshFeed(x.id);
+    }
+    async function submitFeed() {
+      const url = normalizeFeedUrl($("feedUrl").value);
+      const name = ($("feedName").value || "").trim() || "Calendar";
+      const msg = (t) => { $("feedMsg").textContent = t; };
+      if (!url) return msg("Paste a calendar subscription link from Google, Outlook, iCloud or Brightspace (it starts with https:// or webcal://).");
+      if (state.feeds.some((x) => x.url === url)) return msg("That calendar is already connected.");
+      const feed = { id: "f" + Date.now().toString(36), name, url, lastSync: null, error: "" };
+      state.feeds.push(feed);
+      save();
+      $("feedSubmit").disabled = true; msg("Connecting…");
+      const ok = await refreshFeed(feed.id);
+      if (ok) {
+        const count = state.events.filter((e) => e.source === "feed:" + feed.id).length;
+        track("calendar_feed_connected", { host: new URL(url).hostname.split(".").slice(-2, -1)[0] || "other", events: count });
+        closeSheet(); tab = "today"; todayMode = "schedule"; render();
+        toast(`Connected ${name}: ${count} upcoming events`, "calendar");
+      } else if ($("feedForm")) {
+        msg((state.feeds.find((x) => x.id === feed.id) || {}).error || "Couldn't connect.");
+        removeFeed(state, feed.id); save();
+        $("feedSubmit").disabled = false;
+      }
+    }
+
     // ---------- Sealed Profile (shown until someone logs in) ----------
     function sealedProfile(avatars, heroStats) {
       const perks = [["crown", "Pick your adventurer avatar"], ["sword", "Grow hero stats and earn badges"], ["trophy", "Unlock achievements and keep streaks"],
@@ -2729,6 +2856,15 @@
             break;
           case "delete-reward": state.rewards = state.rewards.filter((r) => r.id !== id); break;
           case "import-ics": $("icsFile").click(); return;
+          case "feed-add": openFeedForm(); return;
+          case "feed-refresh": refreshFeed(btn.dataset.id); return;
+          case "feed-remove": {
+            const x = state.feeds.find((y) => y.id === btn.dataset.id);
+            if (!x || !confirm(`Disconnect ${x.name}? Its events will be removed from DailyQuest (your real calendar isn't touched).`)) return;
+            removeFeed(state, x.id);
+            track("calendar_feed_removed");
+            break;
+          }
           case "import-holidays": importHolidays(btn); return;
           case "clear-events":
             if (!confirm("Remove all calendar events from the schedule?")) return;
@@ -2751,6 +2887,7 @@
       document.addEventListener("submit", (e) => {
         e.preventDefault();
         if (e.target.id === "authForm") { submitAuth(); return; }
+        if (e.target.id === "feedForm") { submitFeed(); return; }
         const today = getToday();
         lastCompletion = null;
         if (e.target.id === "captureForm") {
@@ -2874,7 +3011,8 @@
       window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; if (tab === "profile") render(); });
       window.addEventListener("appinstalled", () => { installPrompt = null; track("app_installed"); });
       if (isInstalled()) track("opened_as_app");
-      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refreshFromCloud(); });
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { refreshFromCloud(); refreshDueFeeds(FEED_OPEN_AGE); } });
+      setInterval(() => refreshDueFeeds(FEED_BACKGROUND_AGE), 15 * 60 * 1000);
       window.addEventListener("online", () => { if (account.user && readMeta().pending) pushNow(); });
     }
   </script>
