@@ -1543,10 +1543,10 @@
     }
     // Checks the login form before anything is sent. Returns an error message, or "" when it's fine.
     function authProblem(mode, email, password) {
-      if (mode !== "newpass" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || "")) return "Enter a valid email address.";
+      if (mode !== "newpass" && mode !== "change" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || "")) return "Enter a valid email address.";
       if (mode === "reset") return "";
       if (!password) return "Enter your password.";
-      if ((mode === "signup" || mode === "newpass") && password.length < 8) return "Use at least 8 characters for your password.";
+      if ((mode === "signup" || mode === "newpass" || mode === "change") && password.length < 8) return "Use at least 8 characters for your password.";
       return "";
     }
     // Turns Supabase's error messages into plain words.
@@ -2265,11 +2265,12 @@
 
     function openAuth(mode, note, ok) {
       authMode = mode;
-      const titles = { login: "Log in", signup: "Create your account", reset: "Reset your password", newpass: "Choose a new password" };
-      const submit = { login: "Log in", signup: "Create account", reset: "Send reset link", newpass: "Save new password" };
+      const titles = { login: "Log in", signup: "Create your account", reset: "Reset your password", newpass: "Choose a new password", change: "Change password" };
+      const submit = { login: "Log in", signup: "Create account", reset: "Send reset link", newpass: "Save new password", change: "Change password" };
       const intro = {
         reset: "We'll email you a link to choose a new password.",
         newpass: "Pick a password with at least 8 characters.",
+        change: "Enter your current password, then a new one with at least 8 characters.",
       }[mode] || "Save your quests to your account and open them on your phone or laptop.";
       const link = (m, label) => `<button type="button" class="textlink" data-action="auth-mode" data-mode="${m}">${label}</button>`;
       const links = {
@@ -2277,19 +2278,21 @@
         signup: link("login", "Already have an account? Log in"),
         reset: link("login", "Back to log in"),
         newpass: "",
+        change: `<button type="button" class="textlink" data-action="forgot-current">Forgot your current password?</button>`,
       }[mode];
-      const emailField = mode !== "newpass";
-      const passwordField = mode === "login" || mode === "signup" || mode === "newpass";
+      const emailField = mode !== "newpass" && mode !== "change";
+      const passwordField = mode === "login" || mode === "signup" || mode === "newpass" || mode === "change";
       openSheet(`<form id="authForm" class="auth" novalidate>
         <h2>${titles[mode]}</h2>
         <p class="muted" style="margin:0">${intro}</p>
         ${emailField ? `<label class="field">Email<input id="authEmail" type="email" autocomplete="email" maxlength="200" required value="${esc(authEmailSent)}" /></label>` : ""}
-        ${passwordField ? `<label class="field">${mode === "newpass" ? "New password" : "Password"}<input id="authPassword" type="password" autocomplete="${mode === "login" ? "current-password" : "new-password"}" maxlength="200" required /></label>` : ""}
+        ${mode === "change" ? '<label class="field">Current password<input id="authCurrent" type="password" autocomplete="current-password" maxlength="200" required /></label>' : ""}
+        ${passwordField ? `<label class="field">${mode === "newpass" || mode === "change" ? "New password" : "Password"}<input id="authPassword" type="password" autocomplete="${mode === "login" ? "current-password" : "new-password"}" maxlength="200" required /></label>` : ""}
         <p class="auth-msg ${ok ? "ok" : ""}" id="authMsg" role="status">${esc(note || "")}</p>
         <button class="btn" type="submit" id="authSubmit">${submit[mode]}</button>
         <div class="auth-links">${links}</div>
       </form>`);
-      const first = $("authEmail") && !$("authEmail").value ? $("authEmail") : $("authPassword") || $("authEmail");
+      const first = $("authCurrent") || ($("authEmail") && !$("authEmail").value ? $("authEmail") : $("authPassword") || $("authEmail"));
       if (first) first.focus();
     }
     function authMessage(text, ok) {
@@ -2322,6 +2325,19 @@
           const { error } = await auth.resetPasswordForEmail(email, { redirectTo: appUrl() });
           if (error) throw error;
           return authMessage("If that email has an account, a reset link is on its way.", true);
+        } else if (authMode === "change") {
+          const current = $("authCurrent").value;
+          if (!current) return authMessage("Enter your current password.");
+          if (current === password) return authMessage("Your new password must be different from the current one.");
+          const email = account.user && account.user.email;
+          const check = await auth.signInWithPassword({ email, password: current });   // proves it's really you
+          if (check.error) return authMessage(/invalid login credentials/i.test(check.error.message) ? "Your current password isn't right." : friendlyAuthError(check.error));
+          const { error } = await auth.updateUser({ password });
+          if (error) throw error;
+          authMode = "login";
+          track("password_changed");
+          closeSheet();
+          toast("Password changed", "check");
         } else if (authMode === "newpass") {
           const { error } = await auth.updateUser({ password });
           if (error) throw error;
@@ -2571,7 +2587,7 @@
         <div class="toolbar" style="margin:0"><button class="btn" data-action="auth-open" data-mode="login">Log in</button><button class="btn soft" data-action="auth-open" data-mode="signup">Create account</button></div></div>`;
       return head + `<p style="margin:-4px 0 6px">Signed in as <b>${esc(account.user.email || "your account")}</b></p>
         <p class="sync-line" id="syncLine">${syncText()}</p>
-        <button class="btn soft" data-action="logout">Log out</button></div>`;
+        <div class="toolbar" style="margin:0"><button class="btn soft" data-action="auth-open" data-mode="change">Change password</button><button class="btn soft" data-action="logout">Log out</button></div></div>`;
     }
 
     function finishQuest(btn, result, leaves, today, note) {
@@ -2805,6 +2821,10 @@
           case "accept-suggestion": acceptSuggestion(); return;
           case "auth-open": case "auth-mode": openAuth(btn.dataset.mode); return;
           case "logout": logout(); return;
+          case "forgot-current":
+            if (account.client && account.user) account.client.auth.resetPasswordForEmail(account.user.email, { redirectTo: appUrl() })
+              .then(({ error }) => authMessage(error ? friendlyAuthError(error) : "We emailed you a link to set a new password.", !error));
+            return;
           case "install-help": openInstallHelp(); return;
           case "push-on": pushOn(); return;
           case "push-off": pushOff(); return;
