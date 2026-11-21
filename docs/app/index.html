@@ -314,6 +314,14 @@
     .textlink { background: none; border: 0; padding: 6px 0; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
     .install-steps { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; }
     .install-steps svg { vertical-align: -3px; }
+    .install-sheet { text-align: left; }
+    .install-sheet .app-icon { display: block; width: 72px; height: 72px; margin: 0 auto 8px; border-radius: 16px; box-shadow: var(--shadow-sm); }
+    .install-sheet h2 { text-align: center; }
+    .install-sheet h3 { margin: 16px 0 6px; font-size: 15px; }
+    .install-sheet details { margin-top: 12px; font-size: 14px; }
+    .install-sheet summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+    .install-link { display: flex; gap: 6px; margin-top: 6px; }
+    .install-link input { font-size: 13px; }
     .sync-line { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 13px; color: var(--muted); }
     .info > svg { width: 72px; height: 72px; display: block; margin: 4px auto 10px; }
     .info.locked > svg { filter: grayscale(1); opacity: .5; }
@@ -2269,14 +2277,36 @@
     function isInstalled() { return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; }
     function isIphone() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); }
     const SHARE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 11v9h14v-9"/></svg>';
+    function isAndroid() { return /Android/i.test(navigator.userAgent); }
+    const LIVE_APP_URL = "https://building-with-ai-f26.github.io/tyt223-dailytask/app/";
+    // Profile panel: shown to everyone until DailyQuest is already running as an installed app.
     function installPanel() {
-      if (isInstalled() || !/^https?:$/.test(location.protocol)) return "";
-      const head = '<div class="panel"><h3>Get the app</h3>';
-      if (isIphone()) return head + `<p class="muted" style="margin:-4px 0 8px">Put DailyQuest on your home screen. It opens full-screen and works offline.</p>
-        <ol class="install-steps"><li>Open this page in <b>Safari</b></li><li>Tap <b>Share</b> ${SHARE_ICON}</li><li>Choose <b>Add to Home Screen</b>, then <b>Add</b></li></ol>
-        <p class="muted" style="margin:8px 0 0">The home-screen app keeps its own data, so log in to see the same quests in both.</p></div>`;
-      if (installPrompt) return head + '<p class="muted" style="margin:-4px 0 10px">Install DailyQuest so it opens like an app and works offline.</p><button class="btn" data-action="install-app">Install app</button></div>';
-      return "";
+      if (isInstalled()) return "";
+      return `<div class="panel"><h3>Get the app</h3>
+        <p class="muted" style="margin:-4px 0 10px">Add DailyQuest to your phone's home screen. It opens full-screen like an app and works offline.</p>
+        <button class="btn" data-action="install-help">${px("scroll", 16)} Add to Home Screen</button></div>`;
+    }
+    // The pop-up: steps for the device in hand first, the other phones folded underneath.
+    function openInstallHelp() {
+      const iphone = `<ol class="install-steps"><li>Open this page in <b>Safari</b></li><li>Tap the <b>Share</b> button ${SHARE_ICON} (at the bottom, or next to the address)</li><li>Scroll down and tap <b>Add to Home Screen</b></li><li>Tap <b>Add</b>. DailyQuest appears on your home screen</li></ol>`;
+      const android = `<ol class="install-steps"><li>Open this page in <b>Chrome</b></li><li>Tap the <b>⋮</b> menu (top right)</li><li>Tap <b>Add to Home screen</b> or <b>Install app</b></li><li>Tap <b>Install</b> or <b>Add</b></li></ol>`;
+      const link = `<div class="install-link"><input id="installUrl" readonly value="${esc(LIVE_APP_URL)}" aria-label="DailyQuest link" /><button type="button" class="btn soft" data-action="copy-app-link">Copy</button></div>`;
+      const nativeBtn = installPrompt ? '<button class="btn" style="width:100%;margin-top:12px" data-action="install-app">Install now</button>' : "";
+      let main, others;
+      if (isIphone()) { main = "<h3>On your iPhone</h3>" + iphone; others = "<summary>Using an Android phone?</summary>" + android; }
+      else if (isAndroid()) { main = "<h3>On your Android phone</h3>" + nativeBtn + android; others = "<summary>Using an iPhone?</summary>" + iphone; }
+      else { main = "<h3>1. Open DailyQuest on your phone</h3><p class=\"muted\" style=\"margin:0\">Send yourself this link, or type it into your phone's browser:</p>" + link +
+        "<h3>2. Then on iPhone (Safari)</h3>" + iphone + "<h3>Or on Android (Chrome)</h3>" + android; others = installPrompt ? "<summary>Install on this computer instead</summary>" + nativeBtn : ""; }
+      track("install_help_opened", { device: isIphone() ? "iphone" : isAndroid() ? "android" : "desktop" });
+      openSheet(`<div class="install-sheet">
+        <img class="app-icon" src="icons/apple-touch-icon.png" alt="" />
+        <h2>Add DailyQuest to your home screen</h2>
+        <p class="muted" style="margin:0;text-align:center">Takes 10 seconds. It opens full-screen like an app and works offline.</p>
+        ${main}
+        ${others ? "<details>" + others + "</details>" : ""}
+        <p class="muted" style="margin:14px 0 0;font-size:13px">Tip: the home-screen app keeps its own copy of your quests. Log in on the Profile tab to see the same quests everywhere.</p>
+        <div class="sheet-actions"><button class="btn soft" style="width:100%" data-action="close-sheet">Got it</button></div>
+      </div>`);
     }
 
     // The Profile tab's account panel.
@@ -2523,6 +2553,14 @@
           case "accept-suggestion": acceptSuggestion(); return;
           case "auth-open": case "auth-mode": openAuth(btn.dataset.mode); return;
           case "logout": logout(); return;
+          case "install-help": openInstallHelp(); return;
+          case "copy-app-link": {
+            const box = $("installUrl");
+            const done = () => toast("Link copied", "check");
+            if (navigator.clipboard) navigator.clipboard.writeText(LIVE_APP_URL).then(done, () => { box.select(); document.execCommand("copy"); done(); });
+            else { box.select(); document.execCommand("copy"); done(); }
+            return;
+          }
           case "install-app":
             if (installPrompt) { installPrompt.prompt(); installPrompt.userChoice.then((c) => { track("app_install_prompt", { outcome: c.outcome }); installPrompt = null; render(); }); }
             return;
