@@ -363,6 +363,30 @@
     .feed-toggle { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
     .feed-toggle input { width: auto; margin: 0; accent-color: var(--accent); }
     .pill.auto { background: #EAF0EC; color: var(--accent); }
+    /* Weekly boss */
+    .boss-card { display: flex; gap: 16px; align-items: center; }
+    .boss-art { position: relative; flex: none; width: 104px; height: 104px; display: grid; place-items: center; border-radius: 12px;
+      background: radial-gradient(circle at 50% 60%, rgba(191, 90, 75, .18), transparent 70%); }
+    .boss-art svg { width: 88px; height: 88px; animation: boss-bob 2.4s ease-in-out infinite; }
+    .boss-card.defeated .boss-art svg { animation: none; filter: grayscale(1) opacity(.45); transform: rotate(-8deg) translateY(10px); }
+    .boss-card.defeated .boss-art::after { content: "DEFEATED"; position: absolute; transform: rotate(-14deg); padding: 3px 8px; border: 2px solid rgba(138, 100, 36, .9);
+      color: rgba(138, 100, 36, .95); font-family: var(--serif); font-size: 13px; letter-spacing: .12em; background: rgba(255, 248, 236, .75); }
+    .boss-info { flex: 1; min-width: 0; }
+    .boss-name { font-family: var(--serif); font-size: 21px; line-height: 1.15; }
+    .boss-sub { font-size: 12px; color: var(--muted); margin: 2px 0 8px; }
+    .hp { height: 12px; border-radius: 3px; background: #E9DCC5; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .18); overflow: hidden; }
+    .hp div { height: 100%; background: linear-gradient(180deg, #D46A55, #A8402F); transition: width .5s cubic-bezier(.2, .9, .3, 1);
+      background-image: repeating-linear-gradient(90deg, transparent 0 9px, rgba(255, 255, 255, .18) 9px 10px), linear-gradient(180deg, #D46A55, #A8402F); }
+    .hp-text { display: flex; justify-content: space-between; font-size: 12px; margin-top: 4px; color: var(--muted); }
+    .hp-text b { font-family: "Jersey 10", var(--sans, sans-serif); font-size: 16px; color: var(--danger); font-weight: 400; }
+    .boss-strip { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 10px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--card); color: var(--ink); font-size: 13px; font-weight: 600; text-align: left; }
+    .boss-strip svg { width: 28px; height: 28px; flex: none; }
+    .boss-strip .hp { flex: 1; height: 8px; }
+    .boss-strip.hit, .boss-card.hit .boss-art { animation: boss-hit .5s ease; }
+    @keyframes boss-bob { 50% { transform: translateY(-4px); } }
+    @keyframes boss-hit { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); filter: brightness(1.6); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    @media (prefers-reduced-motion: reduce) { .boss-art svg, .boss-strip.hit, .boss-card.hit .boss-art { animation: none; } }
     .install-steps { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; }
     .install-steps svg { vertical-align: -3px; }
     .install-sheet { text-align: left; }
@@ -871,6 +895,11 @@
     const STREAK_BONUS = 5;        // Placeholder: paid on the day's first quest, from day 2 of a streak.
     const WEEKLY_GOAL_BONUS = 25;  // Placeholder: paid when a weekly goal is finished.
     const XP_PER_LEVEL = 100;      // Placeholder: the PRD doesn't set a level curve.
+    const BOSS_DAMAGE = { Easy: 1, Medium: 2, Hard: 3 };   // each finished quest hits the weekly boss
+    const BOSS_HP_SHARE = 0.7;     // boss HP = 70% of the damage your planned week could deal...
+    const BOSS_MIN_HP = 8;         // ...but at least this...
+    const BOSS_MAX_HP = 40;        // ...and at most this
+    const BOSS_LOOT = 40;          // coins for defeating it before the week ends
     // ---------- Pixel icons: each letter is one pixel, "." is transparent ----------
     const ICON_PALETTE = {
       K: "#3a2f26", W: "#fffaf0", S: "#c9c0b2", Y: "#e3b95c", O: "#d98a4a", R: "#bf5a4b", P: "#e2a0aa", F: "#e7b98f", M: "#5b6170",
@@ -970,6 +999,7 @@
       { id: "goal-getter", icon: "medal", name: "Goal Getter", desc: "Finish a weekly goal.", test: (s) => s.weeklyGoalsDone >= 1 },
       { id: "unstoppable", icon: "trophy", name: "Unstoppable", desc: "Clear every quest on 3 different days.", test: (s) => s.daysCleared >= 3 },
       { id: "on-fire", icon: "flame", name: "On Fire", desc: "Keep a 7-day streak.", test: (s) => s.bestStreak >= 7 },
+      { id: "boss-slayer", icon: "sword", name: "Boss Slayer", desc: "Defeat a weekly boss before Sunday ends.", test: (s) => (s.bossesDefeated || 0) >= 1 },
       { id: "treat-yourself", icon: "gift", name: "Treat Yourself", desc: "Claim your first reward from the shop.", test: (s) => s.claims.some((c) => !c.powerup) },
     ];
     const THEMES = [
@@ -994,6 +1024,43 @@
     // ---------- Avatar: each letter is one pixel, "." is transparent ----------
     const PALETTE = { K: "#3a2f26", Y: "#e3b95c", R: "#bf5a4b", P: "#e2a0aa", G: "#8fcf96" };
     const MASCOT = ["...Y..Y..Y...", "...YYYYYYY...", "...YRYYYRY...", "...KKKKKKK...", "..KGGGGGGGK..", ".KGGGGGGGGGK.", ".KGKGGGGGKGK.", ".KGKGGGGGKGK.", ".KPGGKKKGGPK.", ".KGGGGGGGGGK.", "KGGGGGGGGGGGK", ".KKKKKKKKKKK."];
+    const BOSSES = [
+      { id: "wyrm", name: "The Midterm Wyrm", sprite: ["..K.......K..", ".KGK.....KGK.", ".KGGKKKKKGGK.", "..KGGGGGGGK..", ".KGGYGGGYGGK.", ".KGGKGGGKGGK.", "KGGGGGGGGGGGK", "KGGTGGGGGTGGK", "KGGGWKWKWGGGK", ".KGGGGGGGGGK.", "..KTGTGTGTK..", "...KKKKKKK...", "............."] },
+      { id: "kraken", name: "The Case-Study Kraken", sprite: ["....KKKKK....", "...KLLLLLK...", "..KLLLLLLLK..", "..KLWKLWKLK..", "..KLLLLLLLK..", "..KLLRRRLLK..", "...KLLLLLK...", ".KLKLKLKLKLK.", "KLK.KLKLK.KLK", "KK..KLKLK..KK", "...KLK.KLK...", "...KK...KK...", "............."] },
+      { id: "hydra", name: "The Recruiting Hydra", sprite: [".KK...K...KK.", "KBBK.KBK.KBBK", "KWBK.KWK.KBWK", "KBBK.KBK.KBBK", ".KBK.KBK.KBK.", "..KBKKBKKBK..", "..KBBBBBBBK..", ".KBBDBBBDBBK.", ".KBBBBBBBBBK.", ".KBDBBBBBDBK.", "..KBBBBBBBK..", "...KK...KK...", "............."] },
+      { id: "golem", name: "The Deadline Golem", sprite: ["...KKKKKKK...", "..KSSSSSSSK..", "..KSOOSOOSK..", "..KSSSSSSSK..", "..KSMMMMMSK..", "KKKKSSSSSKKKK", "KSSKSSSSSKSSK", "KSSKSMSMSKSSK", "KSSKSSSSSKSSK", "KKKKSSSSSKKKK", "...KSSKSSK...", "...KSSKSSK...", "...KKKKKKK..."] },
+    ];
+    function bossInfo(id) { return BOSSES.find((b) => b.id === id) || BOSSES[0]; }
+    // How much damage the planned week could deal: this week's quests, routine days and weekly-goal check-ins.
+    function plannedDamage(state, today) {
+      const week = weekDays(today);
+      let dmg = state.quests.filter((q) => q.day >= week[0] && q.day <= week[6]).reduce((n, q) => n + (BOSS_DAMAGE[q.difficulty] || 1), 0);
+      for (const g of state.goals) {
+        const per = BOSS_DAMAGE[g.difficulty] || 1;
+        dmg += g.days ? week.filter((d) => g.days.includes(parseDate(d).getDay())).length * per : g.target * per;
+      }
+      return dmg;
+    }
+    // Makes sure this week has a boss; a new one appears each Monday (the old one simply leaves, no penalty).
+    function ensureBoss(state, today) {
+      const monday = weekDays(today)[0];
+      if (state.boss && state.boss.week === monday) return state.boss;
+      const index = Math.floor(parseDate(monday).getTime() / (7 * 86400000)) % BOSSES.length;
+      const hp = Math.max(BOSS_MIN_HP, Math.min(BOSS_MAX_HP, Math.round(plannedDamage(state, today) * BOSS_HP_SHARE)));
+      state.boss = { week: monday, id: BOSSES[(index + BOSSES.length) % BOSSES.length].id, maxHp: hp, hp, defeated: false };
+      return state.boss;
+    }
+    // One finished quest strikes the boss. Returns { damage, hp, defeated, loot } or null if it's already beaten.
+    function hitBoss(state, difficulty, today) {
+      const boss = ensureBoss(state, today);
+      if (boss.defeated) return null;
+      const damage = BOSS_DAMAGE[difficulty] || 1;
+      boss.hp = Math.max(0, boss.hp - damage);
+      let loot = 0;
+      if (boss.hp === 0) { boss.defeated = true; loot = BOSS_LOOT; state.spendableXp += loot; state.bossesDefeated = (state.bossesDefeated || 0) + 1; }
+      return { damage, hp: boss.hp, defeated: boss.defeated, loot, name: bossInfo(boss.id).name };
+    }
+
     function spriteSvg(rows) {
       let rects = "";
       rows.forEach((row, y) => [...row].forEach((c, x) => {
@@ -1404,7 +1471,7 @@
       return {
         quests: [], goals: [], rewards: [], claims: [], events: [], templates: [], feeds: [], nextId: 1,
         lifetimeXp: 0, spendableXp: 0,
-        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0,
+        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0, boss: null, bossesDefeated: 0,
         theme: "classic", dayOffset: 0,
         avatar: "mint", shields: 0, chestOn: null, achievements: {}, weeklyGoalsDone: 0,
         catXp: { Class: 0, Recruiting: 0, Events: 0, Personal: 0 },
@@ -1503,6 +1570,7 @@
       q.done = true;
       q.completedOn = today;
       q.xpEarned = result.xp;
+      result.boss = hitBoss(state, q.difficulty, today);
       return result;
     }
     function goalWeekCount(goal, today) {
@@ -1520,6 +1588,7 @@
       const result = award(state, questXp(g) + (finishesWeek ? WEEKLY_GOAL_BONUS : 0), today, g.category);
       if (finishesWeek) state.weeklyGoalsDone += 1;
       g.log.push({ date: today, xp: result.xp });
+      result.boss = hitBoss(state, g.difficulty, today);
       return Object.assign(result, { finishesWeek });
     }
     function openToday(state, today) {
@@ -1832,9 +1901,30 @@
       return `<div class="board-head">
           <h2>Today's Quests${todayMode === "quests" ? ` (${total})` : ""}</h2>
         </div>
-        ${pageTabs(todayMode)}<div class="page tabbed">${todayMode === "quests" ? renderTodayList(today) : renderSchedule(today)}</div>
+        ${pageTabs(todayMode)}<div class="page tabbed">${todayMode === "quests" ? bossStrip(today) + renderTodayList(today) : renderSchedule(today)}</div>
         <p class="muted" style="text-align:center;margin-top:18px">This demo records visits, clicks and session replays with PostHog to improve DailyQuest. The text you type is hidden from recordings.</p>`;
     }
+    let bossHitAt = 0;
+    function bossCard(today) {
+      const b = ensureBoss(state, today), info = bossInfo(b.id), hit = Date.now() - bossHitAt < 1200 ? " hit" : "";
+      const daysLeft = 7 - ((parseDate(today).getDay() + 6) % 7) - 1;
+      return `<div class="panel boss-card ${b.defeated ? "defeated" : ""}${hit}" style="margin-top:0">
+        <div class="boss-art">${spriteSvg(info.sprite)}</div>
+        <div class="boss-info">
+          <div class="boss-name">${esc(info.name)}</div>
+          <div class="boss-sub">${b.defeated ? `Defeated! You earned ${BOSS_LOOT} coins of loot.` : `Weekly boss · flees ${daysLeft ? "in " + daysLeft + " day" + (daysLeft === 1 ? "" : "s") : "tonight"}`}</div>
+          <div class="hp" role="progressbar" aria-label="Boss health" aria-valuemin="0" aria-valuemax="${b.maxHp}" aria-valuenow="${b.hp}"><div style="width:${(b.hp / b.maxHp) * 100}%"></div></div>
+          <div class="hp-text"><span>Easy hits 1 · Medium 2 · Hard 3</span><span><b>${b.hp}</b> / ${b.maxHp} HP</span></div>
+          ${b.defeated ? "" : `<div class="muted" style="font-size:12px;margin-top:6px">Defeat it by Sunday for a loot chest of ${BOSS_LOOT} coins.</div>`}
+        </div></div>`;
+    }
+    function bossStrip(today) {
+      const b = ensureBoss(state, today), info = bossInfo(b.id), hit = Date.now() - bossHitAt < 1200 ? " hit" : "";
+      return `<button class="boss-strip${hit}" data-action="goto-week" aria-label="${esc(info.name)}: ${b.hp} of ${b.maxHp} health left. Open Week.">
+        ${spriteSvg(info.sprite)}<span>${b.defeated ? "Boss defeated!" : esc(info.name.replace(/^The /, ""))}</span>
+        <span class="hp"><div style="width:${(b.hp / b.maxHp) * 100}%"></div></span><span>${b.hp}/${b.maxHp}</span></button>`;
+    }
+
     function renderWeek(today) {
       const weekly = state.goals.filter((g) => !g.days);
       const routines = state.goals.filter((g) => g.days);
@@ -1849,6 +1939,7 @@
         return `<tr class="${d === today ? "today" : ""}"><td>${short(d)}</td><td>${planned}</td><td>${s.completed}</td><td>${s.xp}</td><td>${s.claimed}</td></tr>`;
       }).join("");
       return `<div class="board-head"><h2>Weekly Adventure</h2></div><div class="page">
+        ${bossCard(today)}
         ${weekly.length ? `<h3>Weekly goals</h3>${weekly.map((g) => goalCard(g, today)).join("")}` : '<div class="empty">Type <b>exercise 3 times a week</b> to add a weekly goal.</div>'}
         ${routines.length ? `<h3 style="margin-top:14px">Repeating quests</h3>${routines.map((g) => goalCard(g, today)).join("")}` : ""}
         ${upcoming.length ? `<h3 style="margin-top:14px">Coming up</h3>${upcoming.map((q) => `<div class="muted">${relative(q.day, today)}</div>${questCard(q, today)}`).join("")}` : ""}
@@ -2187,6 +2278,11 @@
             (newAvatars.length ? "<br>New avatar: <b>" + newAvatars.map((a) => esc(a.name)).join(", ") + "</b>. Pick it in Profile." : "") +
             (themes.length ? "<br>New theme: <b>" + themes.map((t) => esc(t.name)).join(", ") + "</b>" : ""),
         });
+      }
+      if (result.boss && result.boss.defeated) {
+        track("boss_defeated", { boss: state.boss.id });
+        moments.push({ art: `<div class="boss-art" style="margin:0 auto">${spriteSvg(bossInfo(state.boss.id).sprite)}</div>`, title: "Boss defeated!",
+          body: `<b>${esc(result.boss.name)}</b> is vanquished. Loot chest: ${px("coin", 18)}<b>+${result.boss.loot} coins</b>. A new boss appears Monday.`, button: "Claim loot" });
       }
       if (checkDayCleared(state, today)) {
         track("day_cleared");
@@ -2847,6 +2943,13 @@
       if (result.chest) { notes.push(`Daily chest: +${result.chest} coins`); track("daily_chest", { coins: result.chest }); }
       if (result.shieldUsed) { notes.push("Your streak shield saved your streak"); track("shield_used"); }
       if (result.bonus) notes.push("Streak bonus included");
+      if (result.boss) {
+        bossHitAt = Date.now();
+        notes.push(result.boss.defeated ? "Boss defeated!" : `Hit ${result.boss.name.replace(/^The /, "")} for ${result.boss.damage}`);
+        track("boss_hit", { damage: result.boss.damage, defeated: result.boss.defeated });
+        const strip = document.querySelector(".boss-strip");
+        if (strip) { strip.querySelector(".hp div").style.width = (result.boss.hp / state.boss.maxHp) * 100 + "%"; strip.classList.remove("hit"); void strip.offsetWidth; strip.classList.add("hit"); }
+      }
       if (note) notes.push(note);
       toast(notes.length ? notes.join(" · ") : "Quest complete!", result.chest ? "chest" : result.shieldUsed ? "shield" : note ? "trophy" : result.bonus ? "flame" : "check",
         { id: "undo-complete", label: "Undo" });
@@ -3072,6 +3175,7 @@
               .then(({ error }) => authMessage(error ? friendlyAuthError(error) : "We emailed you a link to set a new password.", !error));
             return;
           case "install-help": openInstallHelp(); return;
+          case "goto-week": tab = "week"; render(); window.scrollTo(0, 0); return;
           case "push-on": pushOn(); return;
           case "push-off": pushOff(); return;
           case "push-test": pushTest(); return;
