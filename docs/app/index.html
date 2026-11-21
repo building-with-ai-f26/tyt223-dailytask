@@ -1741,7 +1741,6 @@
       return `<div class="board-head"><h2>Hero Profile</h2></div>
         ${acct}
         ${installPanel()}
-        ${remindersPanel()}
         <div class="panel" ${acct ? "" : 'style="margin-top:0"'}><h3>Your avatar</h3><p class="muted" style="margin:-4px 0 10px">Each level badge unlocks a new one.</p><div class="avatars">${avatars}</div></div>
         <div class="panel"><h3>Hero stats</h3><div class="hero-stats">${heroStats}</div></div>
         <div class="panel"><h3>Stats</h3><div class="stats">${stats.map(([k, v]) => `<div class="stat"><b>${v}</b>${k}</div>`).join("")}</div></div>
@@ -2327,7 +2326,9 @@
     const LIVE_APP_URL = "https://building-with-ai-f26.github.io/tyt223-dailytask/app/";
     // Profile panel: shown to everyone until DailyQuest is already running as an installed app.
     function installPanel() {
-      if (isInstalled()) return "";
+      if (isInstalled()) return `<div class="panel"><h3>App & reminders</h3>
+        <p class="sync-line" style="margin:-4px 0 10px">${px("check", 14)}DailyQuest is on your home screen</p>
+        ${reminderControls()}</div>`;
       return `<div class="panel"><h3>Get the app</h3>
         <p class="muted" style="margin:-4px 0 8px">Add DailyQuest to your phone's home screen. It opens full-screen like an app and works offline.</p>
         <p class="sync-line" style="margin:0 0 12px">${px("clock", 14)}Once it's on your home screen, you can turn on reminders: a summary at 8:00 AM and a nudge 30 minutes before quests with a time.</p>
@@ -2378,19 +2379,18 @@
       pushInfo.checked = true;
       if (tab === "profile" && $("sheetOverlay").hidden) render();
     }
-    function remindersPanel() {
+    // Reminder controls, shown inside the app panel once DailyQuest runs from the home screen.
+    function reminderControls() {
       if (account.status === "off") return "";
-      const head = '<div class="panel"><h3>Reminders</h3>';
-      const what = "A morning summary at 8:00 AM, and a nudge 30 minutes before quests with a time.";
-      if (!pushSupported() || (isIphone() && !isInstalled()))
-        return head + `<p class="muted" style="margin:-4px 0 10px">${what} ${isIphone() ? "On iPhone, add DailyQuest to your home screen first, then open it from there." : "This browser can't show notifications."}</p>${isIphone() ? '<button class="btn soft" data-action="install-help">How to add it</button>' : ""}</div>`;
-      if (!account.user) return head + `<p class="muted" style="margin:-4px 0 0">${what} Log in first, so reminders know your quests.</p></div>`;
+      const what = "Reminders: a morning summary at 8:00 AM, and a nudge 30 minutes before quests with a time.";
+      if (!pushSupported()) return `<p class="muted" style="margin:0">This device can't show notifications.</p>`;
+      if (!account.user) return `<p class="muted" style="margin:0">${what} Log in to turn them on.</p>`;
       if (Notification.permission === "denied")
-        return head + `<p class="muted" style="margin:-4px 0 0">Notifications are blocked for DailyQuest. Turn them on in your phone's Settings → Notifications → DailyQuest, then come back.</p></div>`;
-      if (!pushInfo.checked) { checkPush(); return head + '<p class="muted" style="margin:0">Checking…</p></div>'; }
-      if (pushInfo.on) return head + `<p class="sync-line">${px("check", 14)}Reminders are on for this device</p><p class="muted" style="margin:-4px 0 10px">${what}</p>
-        <div class="toolbar" style="margin:0"><button class="btn soft" data-action="push-test" ${pushInfo.busy ? "disabled" : ""}>Send a test</button><button class="btn soft" data-action="push-off" ${pushInfo.busy ? "disabled" : ""}>Turn off</button></div></div>`;
-      return head + `<p class="muted" style="margin:-4px 0 10px">${what}</p><button class="btn" data-action="push-on" ${pushInfo.busy ? "disabled" : ""}>${px("clock", 16)} Turn on reminders</button></div>`;
+        return `<p class="muted" style="margin:0">Notifications are blocked for DailyQuest. Turn them on in your phone's Settings → Notifications → DailyQuest, then come back.</p>`;
+      if (!pushInfo.checked) { checkPush(); return '<p class="muted" style="margin:0">Checking reminders…</p>'; }
+      if (pushInfo.on) return `<p class="sync-line">${px("clock", 14)}Reminders are on for this device</p><p class="muted" style="margin:-4px 0 10px">${what.replace("Reminders: a", "A")}</p>
+        <div class="toolbar" style="margin:0"><button class="btn soft" data-action="push-test" ${pushInfo.busy ? "disabled" : ""}>Send a test</button><button class="btn soft" data-action="push-off" ${pushInfo.busy ? "disabled" : ""}>Turn off</button></div>`;
+      return `<p class="muted" style="margin:0 0 10px">${what}</p><button class="btn" data-action="push-on" ${pushInfo.busy ? "disabled" : ""}>${px("clock", 16)} Turn on reminders</button>`;
     }
     async function pushOn() {
       pushInfo.busy = true; render();
