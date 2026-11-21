@@ -296,6 +296,14 @@
     .daypick input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
     .sheet-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
     .info { text-align: center; }
+    /* Accounts: login sheet and sync status */
+    .auth h2 { margin-bottom: 4px; }
+    .auth .btn { width: 100%; margin-top: 14px; }
+    .auth-msg { min-height: 1.2em; margin: 10px 0 0; font-size: 13px; color: var(--danger); }
+    .auth-msg.ok { color: var(--accent); }
+    .auth-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; margin-top: 10px; }
+    .textlink { background: none; border: 0; padding: 6px 0; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+    .sync-line { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 13px; color: var(--muted); }
     .info > svg { width: 72px; height: 72px; display: block; margin: 4px auto 10px; }
     .info.locked > svg { filter: grayscale(1); opacity: .5; }
     .info p { margin: 8px 0; color: var(--ink); }
@@ -1440,6 +1448,43 @@
       return Array.from(new Set(items.concat(templates.map((t) => t.text))));
     }
 
+    // ---------- Accounts: decisions that don't touch the page ----------
+    // At login, decides between this browser's quests and the account's saved copy.
+    // cloud: the account's row ({ data, updated_at }) or null. meta: what this browser last synced ({ user, syncedAt, pending }).
+    // Returns "upload" (save this browser's quests to the account), "download" (use the account's),
+    // "none" (already in step) or "ask" (both changed, so the player chooses; nothing is overwritten silently).
+    function syncPlan(cloud, meta, userId) {
+      if (!cloud) return "upload";
+      if (meta.user === userId) {
+        const cloudChanged = cloud.updated_at !== meta.syncedAt;
+        if (!meta.pending) return cloudChanged ? "download" : "none";
+        return cloudChanged ? "ask" : "upload";
+      }
+      if (meta.user) return "download";            // left over from a different account
+      return meta.pending ? "ask" : "download";     // guest data: only ask if they used the app in this browser
+    }
+    // Checks the login form before anything is sent. Returns an error message, or "" when it's fine.
+    function authProblem(mode, email, password) {
+      if (mode === "verify") return /^\d{6,10}$/.test(password || "") ? "" : "Enter the 6-digit passcode from the email.";
+      if (mode !== "newpass" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || "")) return "Enter a valid email address.";
+      if (mode === "reset" || mode === "code") return "";
+      if (!password) return "Enter your password.";
+      if ((mode === "signup" || mode === "newpass") && password.length < 8) return "Use at least 8 characters for your password.";
+      return "";
+    }
+    // Turns Supabase's error messages into plain words.
+    function friendlyAuthError(err) {
+      const m = String((err && err.message) || err || "").toLowerCase();
+      if (m.includes("invalid login credentials")) return "That email and password don't match.";
+      if (m.includes("token") && (m.includes("expired") || m.includes("invalid"))) return "That passcode is wrong or has expired. Ask for a new one.";
+      if (m.includes("email not confirmed")) return "Please confirm your email first. Check your inbox for the link.";
+      if (m.includes("already registered") || m.includes("already been registered")) return "That email already has an account. Try logging in.";
+      if (m.includes("rate limit") || m.includes("too many") || m.includes("for security purposes")) return "Too many tries. Please wait a few minutes and try again.";
+      if (m.includes("password") && (m.includes("weak") || m.includes("at least"))) return "Please choose a longer, harder-to-guess password.";
+      if (m.includes("fetch") || m.includes("network")) return "Can't reach the server. Check your connection.";
+      return (err && err.message) || "Something went wrong. Please try again.";
+    }
+
     // ---------- Page code ----------
     function load() {
       try {
@@ -1450,7 +1495,10 @@
       return sampleState(dateStr(new Date()));
     }
     function save() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); return true; } catch (e) { return false; }
+      let ok = true;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { ok = false; }
+      markChanged();
+      return ok;
     }
     const $ = (id) => document.getElementById(id);
     function esc(s) {
@@ -1649,15 +1697,17 @@
       const badges = BADGES.map((b) => `<button class="badge ${level >= b.level ? "" : "locked"}" data-action="badge-info" data-level="${b.level}"><span>${px(b.icon, 40)}</span>${level >= b.level ? esc(b.name) : "Level " + b.level}</button>`).join("");
       const earnedCount = ACHIEVEMENTS.filter((a) => state.achievements[a.id]).length;
       const achievements = ACHIEVEMENTS.map((a) => `<button class="badge ${state.achievements[a.id] ? "" : "locked"}" data-action="ach-info" data-ach="${a.id}"><span>${px(a.icon, 36)}</span>${esc(a.name)}</button>`).join("");
+      const acct = accountPanel();
       return `<div class="board-head"><h2>Hero Profile</h2></div>
-        <div class="panel" style="margin-top:0"><h3>Your avatar</h3><p class="muted" style="margin:-4px 0 10px">Each level badge unlocks a new one.</p><div class="avatars">${avatars}</div></div>
+        ${acct}
+        <div class="panel" ${acct ? "" : 'style="margin-top:0"'}><h3>Your avatar</h3><p class="muted" style="margin:-4px 0 10px">Each level badge unlocks a new one.</p><div class="avatars">${avatars}</div></div>
         <div class="panel"><h3>Hero stats</h3><div class="hero-stats">${heroStats}</div></div>
         <div class="panel"><h3>Stats</h3><div class="stats">${stats.map(([k, v]) => `<div class="stat"><b>${v}</b>${k}</div>`).join("")}</div></div>
         <div class="panel"><h3>Badges</h3><p class="muted" style="margin:-4px 0 10px">Tap a badge to see what it means.</p><div class="badges">${badges}</div></div>
         <div class="panel"><h3>Achievements · ${earnedCount} of ${ACHIEVEMENTS.length}</h3><p class="muted" style="margin:-4px 0 10px">Each one pays ${ACHIEVEMENT_COINS} coins. Tap to see how to earn it.</p><div class="badges">${achievements}</div></div>
         <div class="panel"><label class="field" style="margin-top:0">Theme<select id="themeSelect">${themes}</select></label></div>
         <div class="panel"><h3>Your data</h3>
-          <p class="muted" style="margin:-4px 0 10px">Clear the sample quests and start with your own. This deletes everything saved in this browser.</p>
+          <p class="muted" style="margin:-4px 0 10px">Clear the sample quests and start with your own. This deletes everything saved in this browser${account.user ? " and in your account" : ""}.</p>
           <button class="btn danger" data-action="reset-empty">Start fresh</button>
         </div>
         <div class="panel"><h3>Demo tools</h3>
@@ -1963,15 +2013,273 @@
         <div class="sheet-actions" style="justify-content:center"><button class="btn soft" data-action="close-sheet">Close</button></div></div>`);
     }
     function openWelcome() {
-      openSheet(`<div class="info">${mascotSvg("mint")}
+      openSheet(`<div class="info" id="welcomeSheet">${mascotSvg("mint")}
         <h2>Welcome to DailyQuest</h2>
         <p>Plan your week once, then open the app each day to see exactly what to do, and earn rewards for finishing it.</p>
         <div class="sheet-actions" style="flex-direction:column">
           <button class="btn" data-action="welcome-sample">Explore with sample quests</button>
           <button class="btn soft" data-action="welcome-fresh">Start fresh with my own quests</button>
+          ${account.status !== "off" ? '<button class="textlink" data-action="auth-open" data-mode="login">I already have an account: log in</button>' : ""}
         </div>
         <p class="muted" style="margin-top:10px">You can start fresh any time from Profile.</p></div>`);
     }
+    // ---------- Accounts (optional, Supabase: email + password, or an emailed passcode) ----------
+    // The project URL and publishable ("anon") key are meant to be public. Row Level Security (supabase/schema.sql)
+    // lets each signed-in user read and write only their own save. Never put the secret / service_role key here.
+    // Leave both empty to turn accounts off; the app then works exactly as before, saved in this browser only.
+    const SUPABASE_URL = "https://vewmdwohvtruavpcsrow.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_5MQhp8jnhpGdcqwYnwyxSA_3z3YRx8a";   // public by design; safe because of Row Level Security
+    const SUPABASE_JS = { src: "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js", integrity: "sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" };
+    const SYNC_KEY = "dailyquest.sync";   // this browser's sync bookkeeping, kept apart from the game save
+    const account = { client: null, user: null, status: SUPABASE_URL && SUPABASE_KEY ? "loading" : "off", sync: "saved", pushing: false, again: false, timer: null, cloudRow: null };
+    let authMode = "login", authEmailSent = "";   // the email typed last, reused across login screens
+
+    function readMeta() {
+      const blank = { user: null, syncedAt: null, pending: false };
+      try { return Object.assign(blank, JSON.parse(localStorage.getItem(SYNC_KEY))); } catch (e) { return blank; }
+    }
+    function writeMeta(m) { try { localStorage.setItem(SYNC_KEY, JSON.stringify(m)); } catch (e) { /* storage full or blocked */ } }
+    function appUrl() { return location.origin + location.pathname; }
+
+    // Loads Supabase only when accounts are set up, without slowing the first paint.
+    function initAccounts() {
+      if (account.status === "off") return;
+      const el = document.createElement("script");
+      el.src = SUPABASE_JS.src;
+      el.integrity = SUPABASE_JS.integrity;
+      el.crossOrigin = "anonymous";
+      el.onload = () => {
+        try {
+          account.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: "pkce" } });
+        } catch (e) { account.status = "unavailable"; refreshAccountUi(); return; }
+        account.status = "out";
+        // Supabase advises not to call it from inside this callback directly, hence the setTimeout.
+        account.client.auth.onAuthStateChange((event, session) => setTimeout(() => onAuthChange(event, session), 0));
+        refreshAccountUi();
+      };
+      el.onerror = () => { account.status = "unavailable"; refreshAccountUi(); };
+      document.head.appendChild(el);
+    }
+    function refreshAccountUi() {
+      if (tab === "profile" && $("sheetOverlay").hidden) render();
+      const line = $("syncLine");
+      if (line) line.innerHTML = syncText();
+    }
+    function syncText() {
+      const t = { saving: ["repeat", "Saving to your account…"], saved: ["check", "All quests saved to your account"], offline: ["repeat", "Offline: changes will sync when you're back online"], error: ["repeat", "Couldn't reach your account; will retry"] }[account.sync] || ["check", "Saved"];
+      return px(t[0], 14) + esc(t[1]);
+    }
+
+    async function onAuthChange(event, session) {
+      if (event === "PASSWORD_RECOVERY") openAuth("newpass");
+      const user = session && session.user;
+      if (!user) {
+        const wasIn = Boolean(account.user);
+        account.user = null;
+        account.status = "out";
+        if (wasIn || event === "SIGNED_OUT") clearAfterLogout();
+        refreshAccountUi();
+        return;
+      }
+      if (account.user && account.user.id === user.id) { account.user = user; return; }   // token refresh, same person
+      account.user = user;
+      account.status = "in";
+      if (event === "SIGNED_IN") track("login", { method: (user.app_metadata && user.app_metadata.provider) || "email" });
+      if (!$("authForm") || authMode !== "newpass") closeSheetIfAuth();
+      await loginSync();
+      refreshAccountUi();
+    }
+    function closeSheetIfAuth() { if ($("authForm") || $("welcomeSheet")) closeSheet(); }
+
+    async function fetchCloud() {
+      const { data, error } = await account.client.from("saves").select("data, updated_at").eq("user_id", account.user.id).maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+    async function loginSync() {
+      let cloud;
+      try { cloud = await fetchCloud(); } catch (e) { account.sync = navigator.onLine === false ? "offline" : "error"; return; }
+      const plan = syncPlan(cloud, readMeta(), account.user.id);
+      if (plan === "upload") await pushNow();
+      else if (plan === "download") applyCloud(cloud, "Loaded your quests from your account");
+      else if (plan === "ask") openSyncChoice(cloud);
+      else account.sync = "saved";
+    }
+    // Replaces this browser's quests with the account's copy.
+    function applyCloud(row, message) {
+      state = Object.assign(newState(), row.data);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* still usable this visit */ }
+      writeMeta({ user: account.user.id, syncedAt: row.updated_at, pending: false });
+      account.sync = "saved";
+      render();
+      if (message) toast(message, "scroll");
+    }
+    // Called by save(): remembers there is something new, and sends it to the account shortly after.
+    function markChanged() {
+      if (account.status === "off") return;
+      const meta = readMeta();
+      writeMeta(Object.assign(meta, { pending: true }));
+      if (account.user) {
+        clearTimeout(account.timer);
+        account.timer = setTimeout(pushNow, 1200);
+      }
+    }
+    async function pushNow() {
+      if (!account.user) return;
+      if (account.pushing) { account.again = true; return; }
+      account.pushing = true;
+      account.sync = "saving";
+      refreshAccountUi();
+      const userId = account.user.id;
+      writeMeta(Object.assign(readMeta(), { user: userId, pending: false }));   // edits made during the upload set it back to true
+      const { data, error } = await account.client.from("saves")
+        .upsert({ user_id: userId, data: state, updated_at: new Date().toISOString() })
+        .select("updated_at").single();
+      account.pushing = false;
+      if (error) {
+        writeMeta(Object.assign(readMeta(), { pending: true }));
+        account.sync = navigator.onLine === false ? "offline" : "error";
+      } else {
+        writeMeta(Object.assign(readMeta(), { user: userId, syncedAt: data.updated_at }));
+        account.sync = "saved";
+        if (account.again || readMeta().pending) { account.again = false; clearTimeout(account.timer); account.timer = setTimeout(pushNow, 300); }
+      }
+      refreshAccountUi();
+    }
+    // When the player comes back to the tab, pick up changes made on another device.
+    async function refreshFromCloud() {
+      if (!account.user || account.pushing || modalOpen()) return;
+      const meta = readMeta();
+      if (meta.pending) return pushNow();
+      try {
+        const cloud = await fetchCloud();
+        if (cloud && cloud.updated_at !== meta.syncedAt && !readMeta().pending) applyCloud(cloud, "Updated from your other device");
+      } catch (e) { /* offline: try again next time */ }
+    }
+    function openSyncChoice(cloud) {
+      account.cloudRow = cloud;
+      openSheet(`<div class="info">${px("scroll", 40)}
+        <h2>Which quests should we keep?</h2>
+        <p>Your account already has saved quests, and this browser has quests too. Pick one; the other is replaced.</p>
+        <div class="sheet-actions" style="flex-direction:column">
+          <button class="btn" data-action="sync-cloud">Use my account's quests</button>
+          <button class="btn soft" data-action="sync-local">Keep this browser's quests</button>
+        </div></div>`);
+    }
+    function clearAfterLogout() {
+      const stay = tab;   // stay where the player was (usually Profile) so they see they're logged out
+      resetTo(newState());
+      tab = stay;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* nothing to keep */ }
+      writeMeta({ user: null, syncedAt: null, pending: false });
+      render();
+    }
+    async function logout() {
+      if (readMeta().pending) await pushNow();   // don't lose the last few seconds of changes
+      track("logout");
+      await account.client.auth.signOut();
+      toast("Logged out. Your quests are safe in your account.", "check");
+    }
+
+    function openAuth(mode, note, ok) {
+      authMode = mode;
+      const titles = { login: "Log in", signup: "Create your account", reset: "Reset your password", newpass: "Choose a new password", code: "Log in with a passcode", verify: "Enter your passcode" };
+      const submit = { login: "Log in", signup: "Create account", reset: "Send reset link", newpass: "Save new password", code: "Email me a passcode", verify: "Log in" };
+      const intro = {
+        reset: "We'll email you a link to choose a new password.",
+        newpass: "Pick a password with at least 8 characters.",
+        code: "No password needed: we'll email you a 6-digit passcode.",
+        verify: `We sent a passcode to ${esc(authEmailSent)}. It expires soon.`,
+      }[mode] || "Save your quests to your account and open them on your phone or laptop.";
+      const link = (m, label) => `<button type="button" class="textlink" data-action="auth-mode" data-mode="${m}">${label}</button>`;
+      const links = {
+        login: link("reset", "Forgot password?") + link("code", "Email me a passcode instead") + link("signup", "New here? Create an account"),
+        signup: link("login", "Already have an account? Log in"),
+        reset: link("login", "Back to log in"),
+        code: link("login", "Log in with a password instead"),
+        verify: link("code", "Send a new passcode") + link("login", "Use a password instead"),
+        newpass: "",
+      }[mode];
+      const emailField = mode !== "newpass" && mode !== "verify";
+      const passwordField = mode === "login" || mode === "signup" || mode === "newpass";
+      openSheet(`<form id="authForm" class="auth" novalidate>
+        <h2>${titles[mode]}</h2>
+        <p class="muted" style="margin:0">${intro}</p>
+        ${emailField ? `<label class="field">Email<input id="authEmail" type="email" autocomplete="email" maxlength="200" required value="${esc(authEmailSent)}" /></label>` : ""}
+        ${passwordField ? `<label class="field">${mode === "newpass" ? "New password" : "Password"}<input id="authPassword" type="password" autocomplete="${mode === "login" ? "current-password" : "new-password"}" maxlength="200" required /></label>` : ""}
+        ${mode === "verify" ? '<label class="field">Passcode<input id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required /></label>' : ""}
+        <p class="auth-msg ${ok ? "ok" : ""}" id="authMsg" role="status">${esc(note || "")}</p>
+        <button class="btn" type="submit" id="authSubmit">${submit[mode]}</button>
+        <div class="auth-links">${links}</div>
+      </form>`);
+      const first = $("authCode") || ($("authEmail") && !$("authEmail").value ? $("authEmail") : $("authPassword") || $("authEmail"));
+      if (first) first.focus();
+    }
+    function authMessage(text, ok) {
+      const el = $("authMsg");
+      if (!el) return;
+      el.textContent = text;
+      el.classList.toggle("ok", Boolean(ok));
+    }
+    async function submitAuth() {
+      const email = $("authEmail") ? $("authEmail").value.trim() : "";
+      const password = $("authPassword") ? $("authPassword").value : $("authCode") ? $("authCode").value.replace(/\s/g, "") : "";
+      const problem = authProblem(authMode, email, password);
+      if (problem) return authMessage(problem);
+      if (email) authEmailSent = email;
+      if (!account.client) return authMessage("Accounts aren't available right now. Check your connection and try again.");
+      const button = $("authSubmit");
+      button.disabled = true;
+      authMessage("");
+      try {
+        const auth = account.client.auth;
+        if (authMode === "login") {
+          const { error } = await auth.signInWithPassword({ email, password });
+          if (error) throw error;
+        } else if (authMode === "signup") {
+          const { data, error } = await auth.signUp({ email, password, options: { emailRedirectTo: appUrl() } });
+          if (error) throw error;
+          track("signup", { method: "email" });
+          if (!data.session) return openAuth("login", "Almost there: check your email and tap the link to confirm, then log in.", true);
+        } else if (authMode === "code") {
+          const { error } = await auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+          if (error) throw error;
+          authEmailSent = email;
+          track("login_start", { method: "passcode" });
+          return openAuth("verify", "Check your inbox (and spam folder).", true);
+        } else if (authMode === "verify") {
+          const { error } = await auth.verifyOtp({ email: authEmailSent, token: password, type: "email" });
+          if (error) throw error;
+        } else if (authMode === "reset") {
+          const { error } = await auth.resetPasswordForEmail(email, { redirectTo: appUrl() });
+          if (error) throw error;
+          return authMessage("If that email has an account, a reset link is on its way.", true);
+        } else if (authMode === "newpass") {
+          const { error } = await auth.updateUser({ password });
+          if (error) throw error;
+          authMode = "login";
+          closeSheet();
+          toast("Password updated", "check");
+        }
+      } catch (err) {
+        authMessage(friendlyAuthError(err));
+      } finally {
+        if ($("authSubmit")) $("authSubmit").disabled = false;
+      }
+    }
+    // The Profile tab's account panel.
+    function accountPanel() {
+      if (account.status === "off") return "";
+      const head = '<div class="panel" style="margin-top:0"><h3>Your account</h3>';
+      if (account.status === "loading") return head + '<p class="muted" style="margin:0">Connecting…</p></div>';
+      if (account.status === "unavailable") return head + '<p class="muted" style="margin:0">Login is unavailable right now (are you offline?). Your quests are still saved in this browser.</p></div>';
+      if (!account.user) return head + `<p class="muted" style="margin:-4px 0 10px">Log in to save your quests to your account and open them on your phone and laptop. Without an account, they stay in this browser only.</p>
+        <div class="toolbar" style="margin:0"><button class="btn" data-action="auth-open" data-mode="login">Log in</button><button class="btn soft" data-action="auth-open" data-mode="signup">Create account</button></div></div>`;
+      return head + `<p style="margin:-4px 0 6px">Signed in as <b>${esc(account.user.email || "your account")}</b></p>
+        <p class="sync-line" id="syncLine">${syncText()}</p>
+        <button class="btn soft" data-action="logout">Log out</button></div>`;
+    }
+
     function finishQuest(btn, result, leaves, today, note) {
       const card = btn.closest(".qcard");
       floatText(btn, "+" + result.xp + " XP");
@@ -2201,6 +2509,10 @@
             break;
           case "moment-next": nextMoment(); return;
           case "accept-suggestion": acceptSuggestion(); return;
+          case "auth-open": case "auth-mode": openAuth(btn.dataset.mode); return;
+          case "logout": logout(); return;
+          case "sync-cloud": closeSheet(); track("sync_choice", { choice: "account" }); applyCloud(account.cloudRow, "Loaded your quests from your account"); return;
+          case "sync-local": closeSheet(); track("sync_choice", { choice: "browser" }); pushNow().then(() => toast("Saved this browser's quests to your account", "check")); return;
           case "use-template": {
             const t = allTemplates()[Number(btn.dataset.index)];
             if (t.text.includes("___")) { openTemplate(t); return; }
@@ -2257,6 +2569,7 @@
 
       document.addEventListener("submit", (e) => {
         e.preventDefault();
+        if (e.target.id === "authForm") { submitAuth(); return; }
         const today = getToday();
         lastCompletion = null;
         if (e.target.id === "captureForm") {
@@ -2370,7 +2683,11 @@
       }, { passive: false });
 
       render();
-      if (firstVisit) openWelcome();
+      const backFromLogin = /[?&](code|error_description)=|access_token=/.test(location.search + location.hash);
+      if (firstVisit && !backFromLogin) openWelcome();
+      initAccounts();
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refreshFromCloud(); });
+      window.addEventListener("online", () => { if (account.user && readMeta().pending) pushNow(); });
     }
   </script>
 </body>

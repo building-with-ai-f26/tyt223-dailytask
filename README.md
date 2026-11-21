@@ -28,6 +28,7 @@ People juggling busy lives end up managing them across too many apps. MBA studen
 - **Calendar import:** load a `.ics` file exported from Google Calendar. Events show as read-only and earn no XP.
 - **Public holidays:** one tap adds upcoming US (and New York) holidays to your schedule and week.
 - **Game extras:** a daily loot chest of bonus coins, a streak shield you can buy to protect one missed day, hero stats that grow with each category, achievements that pay coins, and pixel avatars unlocked by level badges. Tap any badge or achievement to see what it means.
+- **Optional account:** log in with email and password, or a 6-digit passcode sent to your email, to save your quests to your account and use them on your phone and laptop. Without an account, everything stays in your browser.
 - **Start fresh:** first-time visitors choose between sample quests and an empty board; Profile → **Start fresh** clears everything later.
 
 ### Things you can type
@@ -66,11 +67,11 @@ The app opens with sample quests, rewards, and calendar events. On the **Profile
 
 ## How it's built
 
-One HTML file with plain CSS and JavaScript and no packages. Your data stays in your browser's local storage, and `.ics` files are read in the browser without being uploaded. The app calls the free [Nager.Date](https://date.nager.at) public holidays API (no key) when you tap **Add US holidays**, loads Google Fonts (falling back to system fonts), and sends anonymous usage events and session replays to PostHog with all typed text hidden. Typed quests are understood by fixed rules, not AI. The optional [`server.js`](./server.js) (Node built-ins only, no packages) serves the app locally and adds AI typing suggestions from OpenAI; while it runs, the text you are typing and your recent quest names are sent to OpenAI.
+One HTML file with plain CSS and JavaScript and no packages. Your data stays in your browser's local storage unless you log in, in which case it's also saved to your own row in [Supabase](https://supabase.com) (free plan), protected so only you can read it (setup: [`supabase/README.md`](./supabase/README.md)), and `.ics` files are read in the browser without being uploaded. The app calls the free [Nager.Date](https://date.nager.at) public holidays API (no key) when you tap **Add US holidays**, loads Google Fonts (falling back to system fonts), and sends anonymous usage events and session replays to PostHog with all typed text hidden. Typed quests are understood by fixed rules, not AI. The optional [`server.js`](./server.js) (Node built-ins only, no packages) serves the app locally and adds AI typing suggestions from OpenAI; while it runs, the text you are typing and your recent quest names are sent to OpenAI.
 
 ## Current limits
 
-- Data stays in one browser on one computer.
+- Without an account, data stays in one browser. With one, the last device to save wins if two are edited at the same moment.
 - Unusual phrasing becomes a plain task for today.
 - No live Google Calendar sync yet; that's planned for a later build.
 - `.ics` repeats like "2nd Tuesday of the month" only show their first date.
@@ -81,6 +82,7 @@ One HTML file with plain CSS and JavaScript and no packages. Your data stays in 
 | --- | --- |
 | [`docs/app/index.html`](./docs/app/index.html) | The DailyQuest prototype, published by GitHub Pages |
 | [`docs/index.html`](./docs/index.html) | Public product page, living PRD, and weekly build log |
+| [`supabase/`](./supabase/) | Database table with privacy rules, and the account setup guide |
 | [`server.js`](./server.js) | Optional local server: serves the app and adds AI typing suggestions with your key from `.env` |
 | [`AGENTS.md`](./AGENTS.md) | Run commands, project context, and rules for coding agents |
 | [`Intent.md`](./Intent.md), [`Plan.md`](./Plan.md), [`journal/`](./journal/) | Optional drafting notes |

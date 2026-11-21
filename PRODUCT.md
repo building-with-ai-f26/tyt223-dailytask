@@ -49,6 +49,7 @@ MBA-specific templates (recruiting follow-ups, thank-you notes, class prep) supp
 - Reward shop, badges, themes, level-up and "Day cleared!" moments.
 - Bottom tabs: Today, Week, Shop, Profile.
 - PostHog analytics and session replay, with all text masked in the app.
+- Optional accounts (Supabase: email + password, or an emailed 6-digit passcode) that sync the save across devices; guests keep using the app without one.
 
 **Terminology:** quests; categories Class, Recruiting, Events, Personal; difficulty Easy / Medium / Hard; XP and lifetime XP (levels); coins (spendable XP); streak; weekly goals; repeating quests; reward shop; Day cleared.
 
@@ -56,7 +57,7 @@ MBA-specific templates (recruiting follow-ups, thank-you notes, class prep) supp
 - **Free hosting ($0).** Static hosting on GitHub Pages; no paid servers. AI is optional and off on the public site: it only runs through the local `server.js` with the builder's own key and a daily cap (updated Nov 20, 2026).
 
 **Current state, not commitments** (the builder did not mark these firm):
-- No sign-up or login.
+- Login is optional, never required to use the app.
 - Data stays in the user's browser (`localStorage`), so it does not sync across devices.
 
 **Out of scope for v1:** live Google Calendar sync (`.ics` import only; planned later), automatic imports from Brightspace, Gmail, LinkedIn or Slack, and social or team features.
