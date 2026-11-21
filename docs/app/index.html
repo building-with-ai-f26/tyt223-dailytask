@@ -390,6 +390,8 @@
     .advmap .mark { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 1px; width: 84px; text-align: center; font-size: 10px; font-weight: 600; line-height: 1.15; color: var(--muted); }
     .advmap .mark .medal { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #FFF8EC; border: 2px solid #CDB48F; }
     .advmap .mark.done { color: var(--ink); }
+    .advmap .mark-reward { display: block; font-size: 9.5px; font-weight: 600; color: var(--gold-ink, #8A6424); }
+    .advmap { margin-bottom: 18px; }
     .advmap .mark.done .medal { border-color: #A9802F; background: #FBEFD3; }
     .advmap .mark:not(.done) svg { filter: grayscale(1) opacity(.5); }
     .advmap .hero { position: absolute; z-index: 2; width: 38px; height: 38px; transform: translate(-50%, -78%); animation: boss-bob 2.4s ease-in-out infinite; filter: drop-shadow(0 2px 1px rgba(0, 0, 0, .3)); }
@@ -1072,12 +1074,13 @@
       { id: "diligent", slot: "title", name: "the Diligent", price: 60 },
       { id: "bold", slot: "title", name: "the Bold", price: 60 },
       { id: "networker", slot: "title", name: "Master Networker", price: 150 },
+      { id: "dragonslayer", slot: "title", name: "Dragonslayer", price: null, exclusive: "Reach Dragon's Lair on the adventure map" },   // not sold
     ];
     function gearOf(state) { return Object.assign({ owned: [], pet: null, frame: null, title: null }, state.gear || {}); }
     // Buys an item (and puts it on). Returns false if it's already owned or the player can't afford it.
     function buyGear(state, id) {
       const item = GEAR.find((g) => g.id === id), gear = gearOf(state);
-      if (!item || gear.owned.includes(id) || state.spendableXp < item.price) return false;
+      if (!item || !item.price || gear.owned.includes(id) || state.spendableXp < item.price) return false;
       state.spendableXp -= item.price;
       gear.owned.push(id);
       gear[item.slot] = id;
@@ -1095,9 +1098,42 @@
 
     // Adventure map: each cleared day (every quest done) is one step; a landmark every 5 steps.
     const MAP_LANDMARKS = [
-      { at: 0, name: "Village", icon: "house" }, { at: 5, name: "Whispering Forest", icon: "sprout" }, { at: 10, name: "Moonlit River", icon: "moon" },
-      { at: 15, name: "Castle Gate", icon: "crown" }, { at: 20, name: "Frost Peaks", icon: "sword" }, { at: 25, name: "Dragon's Lair", icon: "flame" }, { at: 30, name: "Treasure Vault", icon: "chest" },
+      { at: 0, name: "Village", icon: "house" },
+      { at: 5, name: "Whispering Forest", icon: "sprout", reward: { gear: "slime" } },
+      { at: 10, name: "Moonlit River", icon: "moon", reward: { coins: 50 } },
+      { at: 15, name: "Castle Gate", icon: "crown", reward: { gear: "silver" } },
+      { at: 20, name: "Frost Peaks", icon: "sword", reward: { coins: 100 } },
+      { at: 25, name: "Dragon's Lair", icon: "flame", reward: { gear: "dragonslayer" } },
+      { at: 30, name: "Treasure Vault", icon: "chest", reward: { coins: 200 } },
     ];
+    const LANDMARK_OWNED_COINS = 50;   // a gear reward you already own pays this many coins instead
+    function rewardLabel(r) {
+      if (!r) return "";
+      if (r.coins) return r.coins + " coins";
+      const g = GEAR.find((x) => x.id === r.gear);
+      return g.slot === "title" ? `Title "${g.name}"` : g.name;
+    }
+    // Pays every landmark reached so far that hasn't been paid yet (each journey pays again).
+    // Returns [{ name, label }] for the celebration.
+    function claimLandmarks(state) {
+      const claimed = new Set(state.landmarksClaimed || []), paid = [];
+      for (let total = 1; total <= (state.daysCleared || 0); total++) {
+        const at = total % MAP_STEPS === 0 ? MAP_STEPS : total % MAP_STEPS;
+        const mark = MAP_LANDMARKS.find((l) => l.at === at && l.reward);
+        if (!mark || claimed.has(total)) continue;
+        claimed.add(total);
+        let label = rewardLabel(mark.reward);
+        if (mark.reward.coins) state.spendableXp += mark.reward.coins;
+        else {
+          const gear = gearOf(state);
+          if (gear.owned.includes(mark.reward.gear)) { state.spendableXp += LANDMARK_OWNED_COINS; label = LANDMARK_OWNED_COINS + " coins (you already own " + rewardLabel(mark.reward) + ")"; }
+          else { gear.owned.push(mark.reward.gear); state.gear = gear; }
+        }
+        paid.push({ name: mark.name, icon: mark.icon, label });
+      }
+      state.landmarksClaimed = [...claimed];
+      return paid;
+    }
     const MAP_STEPS = 30;
     function mapProgress(daysCleared) {
       const lap = Math.floor(daysCleared / MAP_STEPS) + 1, step = daysCleared % MAP_STEPS;
@@ -1547,7 +1583,7 @@
       return {
         quests: [], goals: [], rewards: [], claims: [], events: [], templates: [], feeds: [], nextId: 1,
         lifetimeXp: 0, spendableXp: 0,
-        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0, boss: null, bossesDefeated: 0, gear: { owned: [], pet: null, frame: null, title: null },
+        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0, boss: null, bossesDefeated: 0, gear: { owned: [], pet: null, frame: null, title: null }, landmarksClaimed: [],
         theme: "classic", dayOffset: 0,
         avatar: "mint", shields: 0, chestOn: null, achievements: {}, weeklyGoalsDone: 0,
         catXp: { Class: 0, Recruiting: 0, Events: 0, Personal: 0 },
@@ -1969,6 +2005,10 @@
         ${anytime || '<div class="muted">No untimed quests left today.</div>'}`;
     }
     // Chapter tabs that sit on top of the journal page.
+    function profileTabs(active) {
+      const t = (id, label, icon) => `<button class="ptab ${active === id ? "on" : ""}" data-action="pmode" data-mode="${id}" aria-pressed="${active === id}">${px(icon, 16)}${label}</button>`;
+      return `<div class="pagetabs" role="group" aria-label="Profile chapters">${t("journey", "Journey", "compass")}${t("hero", "Hero", "sword")}${t("settings", "Settings", "book")}</div>`;
+    }
     function pageTabs(active) {
       const t = (id, label, icon, attrs) => `<button class="ptab ${active === id ? "on" : ""}" ${attrs} aria-pressed="${active === id}">${px(icon, 16)}${label}</button>`;
       return `<div class="pagetabs" role="group" aria-label="Journal sections">${t("quests", "Quests", "scroll", 'data-action="mode" data-mode="quests"')}${t("schedule", "Schedule", "compass", 'data-action="mode" data-mode="schedule"')}</div>`;
@@ -2031,6 +2071,7 @@
         const owned = gear.owned.includes(g.id), on = gear[g.slot] === g.id, short2 = g.price - state.spendableXp;
         const art = g.slot === "pet" ? spriteSvg(g.sprite) : g.slot === "frame" ? `<span class="frame-demo ${g.id}">${mascotSvg(state.avatar)}</span>` : `<span class="title-demo">${esc(g.name)}</span>`;
         const label = g.slot === "title" ? "Title" : g.slot === "frame" ? g.name : g.name;
+        if (g.exclusive && !owned) return `<div class="item locked"><div class="gear-art"><span class="title-demo">${esc(g.name)}</span></div><div class="title">Journey reward</div><div class="muted item-note">${esc(g.exclusive)}</div><button class="btn" disabled>${px("lock", 14)} Not for sale</button></div>`;
         const button = owned ? `<button class="btn ${on ? "soft" : ""}" data-action="equip-gear" data-gear="${g.id}">${on ? "Take off" : "Equip"}</button>`
           : `<button class="btn" data-action="buy-gear" data-gear="${g.id}" ${short2 > 0 ? "disabled" : ""}>${short2 > 0 ? px("lock", 14) + short2 + " more" : "Buy"}</button>`;
         return `<div class="item ${!owned && short2 > 0 ? "locked" : ""} ${on ? "equipped" : ""}">
@@ -2101,16 +2142,15 @@
       const achievements = ACHIEVEMENTS.map((a) => `<button class="badge ${state.achievements[a.id] ? "" : "locked"}" data-action="ach-info" data-ach="${a.id}"><span>${px(a.icon, 36)}</span>${esc(a.name)}</button>`).join("");
       if (account.status !== "off" && !account.user) return sealedProfile(avatars, heroStats);
       const acct = accountPanel();
-      return `<div class="board-head"><h2>Hero Profile</h2></div>
-        ${acct}
-        ${installPanel()}
-        <div class="panel" ${acct ? "" : 'style="margin-top:0"'}><h3>Your avatar</h3><p class="muted" style="margin:-4px 0 10px">Each level badge unlocks a new one.</p><div class="avatars">${avatars}</div></div>
+      const head = `<div class="board-head"><h2>Hero Profile</h2></div>${profileTabs(profileMode)}<div class="page tabbed">`;
+      if (profileMode === "hero") return head + `
+        <div class="panel" style="margin-top:0"><h3>Your avatar</h3><p class="muted" style="margin:-4px 0 10px">Each level badge unlocks a new one.</p><div class="avatars">${avatars}</div></div>
         <div class="panel"><h3>Hero stats</h3><div class="hero-stats">${heroStats}</div></div>
-        ${adventureMap()}
-        <div class="panel"><h3>Stats</h3><div class="stats">${stats.map(([k, v]) => `<div class="stat"><b>${v}</b>${k}</div>`).join("")}</div></div>
-        <div class="panel"><h3>Badges</h3><p class="muted" style="margin:-4px 0 10px">Tap a badge to see what it means.</p><div class="badges">${badges}</div></div>
-        <div class="panel"><h3>Achievements · ${earnedCount} of ${ACHIEVEMENTS.length}</h3><p class="muted" style="margin:-4px 0 10px">Each one pays ${ACHIEVEMENT_COINS} coins. Tap to see how to earn it.</p><div class="badges">${achievements}</div></div>
-        <div class="panel"><label class="field" style="margin-top:0">Theme<select id="themeSelect">${themes}</select></label></div>
+        <div class="panel"><h3>Stats</h3><div class="stats">${stats.map(([k, v]) => `<div class="stat"><b>${v}</b>${k}</div>`).join("")}</div></div></div>`;
+      if (profileMode === "settings") return head + `
+        ${acct || ""}
+        ${installPanel()}
+        <div class="panel" ${acct ? "" : 'style="margin-top:0"'}><label class="field" style="margin-top:0">Theme<select id="themeSelect">${themes}</select></label></div>
         <div class="panel"><h3>Your data</h3>
           <p class="muted" style="margin:-4px 0 10px">Clear the sample quests and start with your own. This deletes everything saved in this browser${account.user ? " and in your account" : ""}.</p>
           <button class="btn danger" data-action="reset-empty">Start fresh</button>
@@ -2120,7 +2160,11 @@
             <button class="btn soft" data-action="next-day">Simulate next day</button>
             <button class="btn soft" data-action="reset-sample">Reload sample data</button>
           </div>
-        </div>`;
+        </div></div>`;
+      return head + `
+        ${adventureMap().replace('<div class="panel">', '<div class="panel" style="margin-top:0">')}
+        <div class="panel"><h3>Badges</h3><p class="muted" style="margin:-4px 0 10px">Tap a badge to see what it means.</p><div class="badges">${badges}</div></div>
+        <div class="panel"><h3>Achievements · ${earnedCount} of ${ACHIEVEMENTS.length}</h3><p class="muted" style="margin:-4px 0 10px">Each one pays ${ACHIEVEMENT_COINS} coins. Tap to see how to earn it.</p><div class="badges">${achievements}</div></div></div>`;
     }
     function allTemplates() { return BUILT_IN_TEMPLATES.concat(state.templates); }
     function renderChips() {
@@ -2239,7 +2283,7 @@
       document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
       $("quickAdd").hidden = tab !== "today";
       renderChips();
-      $("view").innerHTML = tab === "today" ? renderToday(today) : tab === "week" ? renderWeek(today) : `<div class="page">${tab === "shop" ? renderShop() : renderProfile(today)}</div>`;
+      $("view").innerHTML = tab === "today" ? renderToday(today) : tab === "week" ? renderWeek(today) : tab === "shop" ? `<div class="page">${renderShop()}</div>` : renderProfile(today);
       focusCapture();
       if (tab === "today") maybeSwipeHint();
     }
@@ -2385,6 +2429,10 @@
       if (checkDayCleared(state, today)) {
         track("day_cleared");
         moments.push({ art: px("trophy", 96), title: "Day cleared!", body: "Every quest for today is done. Go enjoy your evening.", button: "Victory" });
+        for (const l of claimLandmarks(state)) {
+          track("landmark_reached", { landmark: l.name });
+          moments.push({ art: px(l.icon, 96), title: "You reached " + l.name + "!", body: "Journey reward: <b>" + esc(l.label) + "</b>." + (/coins/.test(l.label) ? "" : " Equip it in the Shop."), button: "Onward" });
+        }
       }
       queueAchievements(today);
     }
@@ -2799,6 +2847,7 @@
     }
 
     // ---------- Adventure map ----------
+    function claimedAt(at, p) { return (state.landmarksClaimed || []).includes((p.lap - 1) * MAP_STEPS + at); }
     function adventureMap() {
       const p = mapProgress(state.daysCleared || 0);
       const perRow = 6, rowH = 56, top = 24;
@@ -2809,10 +2858,10 @@
       const doneD = pts.slice(0, p.step + 1).map((q, i) => (i ? "L" : "M") + q.x + " " + q.y).join(" ");
       const marks = new Set(MAP_LANDMARKS.map((l) => l.at));
       const nodes = pts.map((q, i) => marks.has(i) ? "" : `<span class="node ${i <= p.step ? "done" : ""}" style="left:${q.x}%;top:${q.y}px"></span>`).join("");
-      const landmarks = MAP_LANDMARKS.map((l) => { const q = pts[l.at]; return `<span class="mark ${l.at <= p.step ? "done" : ""}" style="left:${q.x}%;top:${q.y + 8}px;transform:translate(${q.x > 80 ? -80 : q.x < 20 ? -20 : -50}%,-50%)"><span class="medal">${px(l.icon, 20)}</span>${esc(l.name)}</span>`; }).join("");
+      const landmarks = MAP_LANDMARKS.map((l) => { const q = pts[l.at]; return `<span class="mark ${l.at <= p.step ? "done" : ""}" style="left:${q.x}%;top:${q.y + 8}px;transform:translate(${q.x > 80 ? -80 : q.x < 20 ? -20 : -50}%,-50%)"><span class="medal">${px(l.icon, 20)}</span>${esc(l.name)}${l.reward ? `<span class="mark-reward">${l.at <= p.step && p.lap === 1 || claimedAt(l.at, p) ? "✓ " : ""}${esc(rewardLabel(l.reward))}</span>` : ""}</span>`; }).join("");
       const hero = pts[p.step];
       return `<div class="panel"><h3>Adventure map${p.lap > 1 ? " · journey " + p.lap : ""}</h3>
-        <p class="muted" style="margin:-4px 0 4px">Each day you clear every quest moves you one step. You're at <b>${esc(p.reached.name)}</b>; ${p.toNext} more cleared day${p.toNext === 1 ? "" : "s"} to <b>${esc(p.next.name)}</b>.</p>
+        <p class="muted" style="margin:-4px 0 4px">Each day you clear every quest moves you one step, and each landmark pays a reward. You're at <b>${esc(p.reached.name)}</b>; ${p.toNext} more cleared day${p.toNext === 1 ? "" : "s"} to <b>${esc(p.next.name)}</b>${p.next.reward ? " (" + esc(rewardLabel(p.next.reward)) + ")" : ""}.</p>
         <div class="advmap" style="height:${height}px" aria-label="Adventure map: step ${p.step} of ${MAP_STEPS}">
           <svg class="trail" viewBox="0 0 100 ${height}" preserveAspectRatio="none" aria-hidden="true">
             <path d="${pathD}" fill="none" stroke="#CDB48F" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
@@ -2830,7 +2879,7 @@
       const action = account.status === "loading" ? '<p class="muted" style="margin:0">Opening the journal…</p>'
         : account.status === "unavailable" ? '<p class="muted" style="margin:0">Can\'t reach the login server right now. Check your connection and try again.</p>'
         : '<div class="toolbar"><button class="btn" data-action="auth-open" data-mode="login">Log in</button><button class="btn soft" data-action="auth-open" data-mode="signup">Create free account</button></div>';
-      return `<div class="board-head"><h2>Hero Profile</h2></div>
+      return `<div class="page"><div class="board-head"><h2>Hero Profile</h2></div>
         <div class="panel sealed" style="margin-top:0">
           <div class="seal-wrap" aria-hidden="true"><div class="wax-seal">${px("crown", 38)}</div></div>
           <h3>Your hero journal is sealed</h3>
@@ -2842,7 +2891,7 @@
         <div class="sealed-preview" aria-hidden="true" inert>
           <div class="panel" style="margin-top:0"><h3>Your avatar</h3><div class="avatars">${avatars}</div></div>
           <div class="panel"><h3>Hero stats</h3><div class="hero-stats">${heroStats}</div></div>
-        </div>`;
+        </div></div>`;
     }
 
     // ---------- Home-screen app ----------
@@ -3178,7 +3227,7 @@
       $("confirmLine").hidden = true;
     }
 
-    let state, tab = "today", todayMode = "quests", lastAdded = null, activeTemplate = null, editing = null, firstVisit = false;
+    let state, tab = "today", todayMode = "quests", profileMode = "journey", lastAdded = null, activeTemplate = null, editing = null, firstVisit = false;
     let pvOverrides = {}, reschedFor = null, lastCompletion = null, completionToken = 0;
     // Smart compose: the suggestion on screen, and the optional AI helper (only when served by server.js on this computer).
     let suggestion = null, aiReady = false, aiTimer = null, aiAbort = null, lastShown = "";
@@ -3357,6 +3406,7 @@
             closeSheet();
             break;
           case "mode": todayMode = btn.dataset.mode; tab = "today"; break;
+          case "pmode": profileMode = btn.dataset.mode; tab = "profile"; break;
           case "undo-add":
             if (lastAdded) {
               if (lastAdded.kind === "goal") state.goals = state.goals.filter((g) => g.id !== lastAdded.id);
