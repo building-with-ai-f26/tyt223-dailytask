@@ -1465,9 +1465,8 @@
     }
     // Checks the login form before anything is sent. Returns an error message, or "" when it's fine.
     function authProblem(mode, email, password) {
-      if (mode === "verify") return /^\d{6,10}$/.test(password || "") ? "" : "Enter the 6-digit passcode from the email.";
       if (mode !== "newpass" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || "")) return "Enter a valid email address.";
-      if (mode === "reset" || mode === "code") return "";
+      if (mode === "reset") return "";
       if (!password) return "Enter your password.";
       if ((mode === "signup" || mode === "newpass") && password.length < 8) return "Use at least 8 characters for your password.";
       return "";
@@ -1476,7 +1475,7 @@
     function friendlyAuthError(err) {
       const m = String((err && err.message) || err || "").toLowerCase();
       if (m.includes("invalid login credentials")) return "That email and password don't match.";
-      if (m.includes("token") && (m.includes("expired") || m.includes("invalid"))) return "That passcode is wrong or has expired. Ask for a new one.";
+      if (m.includes("token") && (m.includes("expired") || m.includes("invalid"))) return "That email link has expired. Please ask for a new one.";
       if (m.includes("email not confirmed")) return "Please confirm your email first. Check your inbox for the link.";
       if (m.includes("already registered") || m.includes("already been registered")) return "That email already has an account. Try logging in.";
       if (m.includes("rate limit") || m.includes("too many") || m.includes("for security purposes")) return "Too many tries. Please wait a few minutes and try again.";
@@ -2023,7 +2022,7 @@
         </div>
         <p class="muted" style="margin-top:10px">You can start fresh any time from Profile.</p></div>`);
     }
-    // ---------- Accounts (optional, Supabase: email + password, or an emailed passcode) ----------
+    // ---------- Accounts (optional, Supabase: email + password) ----------
     // The project URL and publishable ("anon") key are meant to be public. Row Level Security (supabase/schema.sql)
     // lets each signed-in user read and write only their own save. Never put the secret / service_role key here.
     // Leave both empty to turn accounts off; the app then works exactly as before, saved in this browser only.
@@ -2183,36 +2182,31 @@
 
     function openAuth(mode, note, ok) {
       authMode = mode;
-      const titles = { login: "Log in", signup: "Create your account", reset: "Reset your password", newpass: "Choose a new password", code: "Log in with a passcode", verify: "Enter your passcode" };
-      const submit = { login: "Log in", signup: "Create account", reset: "Send reset link", newpass: "Save new password", code: "Email me a passcode", verify: "Log in" };
+      const titles = { login: "Log in", signup: "Create your account", reset: "Reset your password", newpass: "Choose a new password" };
+      const submit = { login: "Log in", signup: "Create account", reset: "Send reset link", newpass: "Save new password" };
       const intro = {
         reset: "We'll email you a link to choose a new password.",
         newpass: "Pick a password with at least 8 characters.",
-        code: "No password needed: we'll email you a 6-digit passcode.",
-        verify: `We sent a passcode to ${esc(authEmailSent)}. It expires soon.`,
       }[mode] || "Save your quests to your account and open them on your phone or laptop.";
       const link = (m, label) => `<button type="button" class="textlink" data-action="auth-mode" data-mode="${m}">${label}</button>`;
       const links = {
-        login: link("reset", "Forgot password?") + link("code", "Email me a passcode instead") + link("signup", "New here? Create an account"),
+        login: link("reset", "Forgot password?") + link("signup", "New here? Create an account"),
         signup: link("login", "Already have an account? Log in"),
         reset: link("login", "Back to log in"),
-        code: link("login", "Log in with a password instead"),
-        verify: link("code", "Send a new passcode") + link("login", "Use a password instead"),
         newpass: "",
       }[mode];
-      const emailField = mode !== "newpass" && mode !== "verify";
+      const emailField = mode !== "newpass";
       const passwordField = mode === "login" || mode === "signup" || mode === "newpass";
       openSheet(`<form id="authForm" class="auth" novalidate>
         <h2>${titles[mode]}</h2>
         <p class="muted" style="margin:0">${intro}</p>
         ${emailField ? `<label class="field">Email<input id="authEmail" type="email" autocomplete="email" maxlength="200" required value="${esc(authEmailSent)}" /></label>` : ""}
         ${passwordField ? `<label class="field">${mode === "newpass" ? "New password" : "Password"}<input id="authPassword" type="password" autocomplete="${mode === "login" ? "current-password" : "new-password"}" maxlength="200" required /></label>` : ""}
-        ${mode === "verify" ? '<label class="field">Passcode<input id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required /></label>' : ""}
         <p class="auth-msg ${ok ? "ok" : ""}" id="authMsg" role="status">${esc(note || "")}</p>
         <button class="btn" type="submit" id="authSubmit">${submit[mode]}</button>
         <div class="auth-links">${links}</div>
       </form>`);
-      const first = $("authCode") || ($("authEmail") && !$("authEmail").value ? $("authEmail") : $("authPassword") || $("authEmail"));
+      const first = $("authEmail") && !$("authEmail").value ? $("authEmail") : $("authPassword") || $("authEmail");
       if (first) first.focus();
     }
     function authMessage(text, ok) {
@@ -2223,7 +2217,7 @@
     }
     async function submitAuth() {
       const email = $("authEmail") ? $("authEmail").value.trim() : "";
-      const password = $("authPassword") ? $("authPassword").value : $("authCode") ? $("authCode").value.replace(/\s/g, "") : "";
+      const password = $("authPassword") ? $("authPassword").value : "";
       const problem = authProblem(authMode, email, password);
       if (problem) return authMessage(problem);
       if (email) authEmailSent = email;
@@ -2241,15 +2235,6 @@
           if (error) throw error;
           track("signup", { method: "email" });
           if (!data.session) return openAuth("login", "Almost there: check your email and tap the link to confirm, then log in.", true);
-        } else if (authMode === "code") {
-          const { error } = await auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
-          if (error) throw error;
-          authEmailSent = email;
-          track("login_start", { method: "passcode" });
-          return openAuth("verify", "Check your inbox (and spam folder).", true);
-        } else if (authMode === "verify") {
-          const { error } = await auth.verifyOtp({ email: authEmailSent, token: password, type: "email" });
-          if (error) throw error;
         } else if (authMode === "reset") {
           const { error } = await auth.resetPasswordForEmail(email, { redirectTo: appUrl() });
           if (error) throw error;

@@ -49,7 +49,7 @@ MBA-specific templates (recruiting follow-ups, thank-you notes, class prep) supp
 - Reward shop, badges, themes, level-up and "Day cleared!" moments.
 - Bottom tabs: Today, Week, Shop, Profile.
 - PostHog analytics and session replay, with all text masked in the app.
-- Optional accounts (Supabase: email + password, or an emailed 6-digit passcode) that sync the save across devices; guests keep using the app without one.
+- Optional accounts (Supabase: email + password) that sync the save across devices; guests keep using the app without one.
 
 **Terminology:** quests; categories Class, Recruiting, Events, Personal; difficulty Easy / Medium / Hard; XP and lifetime XP (levels); coins (spendable XP); streak; weekly goals; repeating quests; reward shop; Day cleared.
 

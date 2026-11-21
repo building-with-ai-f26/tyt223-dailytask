@@ -28,7 +28,7 @@ People juggling busy lives end up managing them across too many apps. MBA studen
 - **Calendar import:** load a `.ics` file exported from Google Calendar. Events show as read-only and earn no XP.
 - **Public holidays:** one tap adds upcoming US (and New York) holidays to your schedule and week.
 - **Game extras:** a daily loot chest of bonus coins, a streak shield you can buy to protect one missed day, hero stats that grow with each category, achievements that pay coins, and pixel avatars unlocked by level badges. Tap any badge or achievement to see what it means.
-- **Optional account:** log in with email and password, or a 6-digit passcode sent to your email, to save your quests to your account and use them on your phone and laptop. Without an account, everything stays in your browser.
+- **Optional account:** log in with email and password to save your quests to your account and use them on your phone and laptop. Without an account, everything stays in your browser.
 - **Start fresh:** first-time visitors choose between sample quests and an empty board; Profile → **Start fresh** clears everything later.
 
 ### Things you can type

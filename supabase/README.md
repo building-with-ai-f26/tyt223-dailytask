@@ -1,14 +1,12 @@
-# Accounts with Supabase (email + password, or an emailed passcode)
+# Accounts with Supabase (email + password)
 
 Logging in is optional. Without it, DailyQuest works as before and saves in one browser. With it, your quests are saved to your account and follow you between your phone and laptop.
 
-People can log in two ways:
-- **Email + password,** with "Forgot password?" for resets.
-- **Email me a passcode:** a 6-digit code arrives by email and you type it in, so there's no password to remember. This also creates the account the first time.
+People sign up with an email and password, confirm their email once, and can reset a forgotten password by email. Supabase's default emails are used, so no email service (SMTP) needs setting up.
 
 ```
 DailyQuest page (GitHub Pages)  →  Supabase Auth (log in)  →  Supabase database: one "saves" row per user
-       publishable key only        password or passcode         Row Level Security: you can only reach your own row
+       publishable key only          email + password           Row Level Security: you can only reach your own row
 ```
 
 ## Which keys go where
@@ -45,22 +43,9 @@ Open **Authentication** → **Sign In / Providers** → **Email**:
 - Make sure it's **enabled** and **Confirm email** is on.
 - Set the minimum password length to **8** to match the app.
 
-### 5. Put the passcode in the emails
-By default Supabase emails a link, not a code. Open **Authentication** → **Emails** → **Templates** and add the code to two templates:
-- **Magic Link** (sent to existing users)
-- **Confirm signup** (sent the first time someone uses a passcode)
+Supabase's built-in email sender only sends a few emails per hour and its templates can't be edited. That's fine for testing and a class demo. For a real launch you'd connect your own email service (**Authentication** → **Emails** → **SMTP Settings**).
 
-In each one, add this line to the message body and save:
-
-```html
-<p>Your DailyQuest passcode: <strong>{{ .Token }}</strong></p>
-```
-
-You can keep or delete the link that's already there.
-
-Supabase's built-in email sender only sends a few emails per hour, which is fine for testing and a class demo. For a real launch you'd connect your own email service (**Authentication** → **Emails** → **SMTP Settings**).
-
-### 6. Connect the app
+### 5. Connect the app
 Put the Project URL and publishable key in `docs/app/index.html`:
 
 ```js
@@ -76,7 +61,7 @@ Then commit and push. Leaving both empty turns accounts off.
 2. Go to **Profile** → **Create account**, enter your email and a password, and tap the link in the confirmation email. Then **Log in**.
 3. Check **Supabase** → **Table Editor** → `saves`: there's one row with your user id.
 4. Add a quest, wait two seconds, and refresh the table. `updated_at` changes.
-5. Log out, then use **Log in** → **Email me a passcode instead**. Type the 6-digit code from the email, and your quests come back.
+5. Log out and log back in. Your quests come back. Try **Forgot password?** too.
 6. Open the app in a different browser or on your phone and log in. Your quests appear.
 7. **Privacy check:** in the browser, press F12 → **Network**, then add a quest. Requests go to `xxxx.supabase.co/rest/v1/saves` and carry only the publishable key and your own login token, never a secret key.
 
