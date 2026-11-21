@@ -50,6 +50,7 @@ MBA-specific templates (recruiting follow-ups, thank-you notes, class prep) supp
 - Bottom tabs: Today, Week, Shop, Profile.
 - PostHog analytics and session replay, with all text masked in the app.
 - Installable home-screen app (PWA) with the Sprout icon; works offline. No App Store listing (that would cost $99/year).
+- Reminder notifications for logged-in users of the home-screen app: 8:00 AM summary and 30 minutes before timed quests, sent by a free Supabase Edge Function every 15 minutes.
 - Optional accounts (Supabase: email + password) that sync the save across devices; guests keep using the app without one.
 
 **Terminology:** quests; categories Class, Recruiting, Events, Personal; difficulty Easy / Medium / Hard; XP and lifetime XP (levels); coins (spendable XP); streak; weekly goals; repeating quests; reward shop; Day cleared.

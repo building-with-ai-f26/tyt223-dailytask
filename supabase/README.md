@@ -65,6 +65,22 @@ Then commit and push. Leaving both empty turns accounts off.
 6. Open the app in a different browser or on your phone and log in. Your quests appear.
 7. **Privacy check:** in the browser, press F12 → **Network**, then add a quest. Requests go to `xxxx.supabase.co/rest/v1/saves` and carry only the publishable key and your own login token, never a secret key.
 
+## Reminders (push notifications)
+
+Logged-in users of the home-screen app can turn on **Profile → Reminders**: a summary at 8:00 AM in their own time zone, and a nudge 30 minutes before quests with a time.
+
+```
+pg_cron (every 15 min) → send-reminders Edge Function → reads saves + push_subscriptions → push_log (send once) → Apple/Google push → phone
+```
+
+Setup, already done for this project:
+1. Run [`reminders.sql`](./reminders.sql) in the SQL Editor (tables, privacy rules and grants).
+2. Add three secrets in **Edge Functions → Secrets**: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`. Values come from your git-ignored `.env`; the public key must match `PUSH_PUBLIC_KEY` in `docs/app/index.html`.
+3. Deploy [`functions/send-reminders`](./functions/send-reminders/) (keep **Verify JWT** on).
+4. Run [`reminders-schedule.sql`](./reminders-schedule.sql) to call it every 15 minutes.
+
+To test it, open DailyQuest from the home screen, log in, and tap **Turn on reminders** → allow → **Send a test**. Errors show in Supabase → Edge Functions → `send-reminders` → Logs.
+
 ## How syncing works
 - **At login:** if the account has no save yet, this browser's quests are uploaded. If the browser is untouched, the account's quests are loaded. If both have changes, the app asks which to keep, and nothing is overwritten silently.
 - **While logged in:** each change is saved to the account about a second later. Offline changes are kept and sent when you're back online.
