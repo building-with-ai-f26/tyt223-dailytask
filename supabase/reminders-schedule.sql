@@ -3,7 +3,7 @@
 -- The key in the header is the project's public anon key (the same kind that's in the app), not a secret.
 -- Calling the function more often is harmless: push_log makes sure each reminder is sent only once.
 create extension if not exists pg_cron;
-create extension if not exists pg_net;
+create extension if not exists pg_net schema extensions;   -- not public (Supabase advisor 0014)
 
 select cron.unschedule('dailyquest-send-reminders') where exists (select 1 from cron.job where jobname = 'dailyquest-send-reminders');
 select cron.schedule(

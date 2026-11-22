@@ -60,7 +60,7 @@ There is no `package.json`; the app uses no npm packages. Its one browser librar
 
 **Supabase security advisor:**
 - `push_log` has RLS with no policy (INFO): intentional, server-only.
-- `pg_net` extension installed in the `public` schema (WARN): created there when setting up the reminder schedule. See *Remaining issues*.
+- `pg_net` extension installed in the `public` schema (WARN): created there when setting up the reminder schedule. **Fixed** (see below).
 - Leaked-password protection is off (WARN). See *Remaining issues*.
 
 ## What I fixed
@@ -68,10 +68,10 @@ There is no `package.json`; the app uses no npm packages. Its one browser librar
 2. Removed user counts from the scheduled reminder run's reply.
 3. Made a manual database backup and git-ignored the `backups/` folder.
 4. Added the Shipping section, the "Ask me first" list and rules from real agent mistakes to AGENTS.md.
-5. Earlier in Build 3 (found while building): granted logged-in users and the server exactly the table access they need. New Supabase projects grant none, and anonymous access stays at zero.
+5. Moved the `pg_net` extension from `public` to the `extensions` schema, after confirming the backup was current. I then fired the reminder job's request once to confirm the schedule still works (200 `{"ok":true}`); the advisor warning is gone.
+6. Earlier in Build 3 (found while building): granted logged-in users and the server exactly the table access they need. New Supabase projects grant none, and anonymous access stays at zero.
 
 ## Remaining issues
-- **`pg_net` in the `public` schema** (advisor warning). Fixing it means dropping and re-creating the extension in the `extensions` schema and re-creating the 15-minute job, which is a production database change. It's on the "Ask me first" list and waiting for the owner's OK.
 - **Leaked-password protection** (blocks passwords found in data breaches) is a Supabase Auth setting that may need a paid plan; the minimum password length is 8.
 - **No Content-Security-Policy header:** GitHub Pages can't set response headers, and the app uses inline scripts, so a CSP would need `unsafe-inline`. Mitigated by escaping all user text (tested above). Supabase stores the login session in `localStorage`, so an XSS bug would expose it, which is why escaping is tested.
 - **The scheduled run can be triggered by anyone with the public key.** It's harmless (no duplicate sends, no data returned) but uses free-tier function invocations; a shared secret could restrict it later.
