@@ -136,4 +136,4 @@ Logged in on the live site (any account), in the browser console. This makes 31 
 })();
 ```
 
-Expected: calls 1–30 return 200 and **call 31 returns 429**. Without a login every call returns 401. Observed: _to be filled in from the screenshot._
+Expected: calls 1–30 return 200 and **call 31 returns 429**. Without a login every call returns 401. Observed on the live site (Nov 22): **matched the expected results** (calls 1–30 succeeded, call 31 was refused with 429).
