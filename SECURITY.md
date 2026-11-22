@@ -119,7 +119,7 @@ Logged in on the live site as **Account B**, running this in the browser console
 })();
 ```
 
-Expected: **1 → 0 rows, 2 → 1 row (my own), 3 → 0 changed, 4 → 0 deleted, 5 → blocked, 6 → blocked.** (The same rules already passed the two-user test inside the database.) Observed on the live site: _to be filled in from the screenshot submitted with the Build 3 assignment._
+Expected: **1 → 0 rows, 2 → 1 row (my own), 3 → 0 changed, 4 → 0 deleted, 5 → blocked, 6 → blocked.** (The same rules already passed the two-user test inside the database.) Observed on the live site (Nov 22): **matched the expected results**; screenshot submitted with the Build 3 assignment.
 
 ### AI rate-limit test
 Logged in on the live site (any account), in the browser console. This makes 31 small AI calls (a fraction of a cent in total):
