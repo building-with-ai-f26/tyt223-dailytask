@@ -20,7 +20,7 @@ People juggling busy lives end up managing them across too many apps. MBA studen
 - **Quick templates:** tap a chip like "Send thank-you note to ___", fill in the blank, and press Enter. You can save your own.
 - **Today's Quests:** only what's due today, with overdue quests on top in red. Tap a circle to finish one, and tap **Undo** in the message if you didn't mean to (XP and rewards are taken back).
 - **Edit and reschedule:** tap a quest to edit its title, dates, time, category, difficulty or repeat. The calendar button moves it to Today, Tomorrow, Next week or any date.
-- **Smart compose:** like Gmail, a faint ending appears as you type, taken from your own past quests and templates. Press **Tab** or **→** to accept it (on a phone, tap the suggestion). With the optional AI helper running, it suggests endings for new tasks too.
+- **Smart compose:** like Gmail, a faint ending appears as you type, taken from your own past quests and templates. Press **Tab** or **→** to accept it (on a phone, tap the suggestion). When you're logged in, a small AI model suggests endings for new tasks too (capped per user and per day).
 - **Smart preview:** while you type, the fields DailyQuest understood appear below the box so you can fix them; Enter saves right away.
 - **Rewards:** earn XP, levels, badges, and streaks, then spend coins on real-life rewards you choose.
 - **Week view:** weekly goals, repeating quests, what's coming up, and a summary of the week.
@@ -59,9 +59,9 @@ cd tyt223-dailytask
 
 Double-click [`docs/app/index.html`](./docs/app/index.html) to open it in your browser, or run `start docs/app/index.html` (Windows) or `open docs/app/index.html` (Mac) from the repo folder.
 
-### Optional: AI suggestions (on your own computer)
+### AI suggestions
 
-The public app never calls AI. To try AI typing suggestions locally with your own OpenAI key:
+On the live site, logged-in users get AI typing suggestions from a Supabase Edge Function (`supabase/functions/suggest`) that keeps the OpenAI key secret and limits each user to 30 suggestions an hour. To try AI typing suggestions locally with your own OpenAI key instead:
 
 1. Copy `.env.example` to `.env` (`copy .env.example .env` on Windows) and put your key after `OPENAI_API_KEY=`. `.env` is git-ignored, so the key is never committed.
 2. Run `node server.js --models` and copy a fast, low-cost model name (often "mini" or "nano") into `OPENAI_MODEL=`.

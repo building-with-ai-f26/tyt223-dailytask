@@ -57,7 +57,7 @@ MBA-specific templates (recruiting follow-ups, thank-you notes, class prep) supp
 **Terminology:** quests; categories Class, Recruiting, Events, Personal; difficulty Easy / Medium / Hard; XP and lifetime XP (levels); coins (spendable XP); streak; weekly goals; repeating quests; reward shop; Day cleared.
 
 **Firm constraints:**
-- **Free hosting ($0).** Static hosting on GitHub Pages; no paid servers. AI is optional and off on the public site: it only runs through the local `server.js` with the builder's own key and a daily cap (updated Nov 20, 2026).
+- **Free hosting ($0).** Static hosting on GitHub Pages plus Supabase's free plan; no paid servers. AI typing suggestions are optional and capped: signed-in users only, 30 per hour each, a daily total cap and an OpenAI monthly budget, with free suggestions from the user's own past quests otherwise (updated Nov 21, 2026).
 
 **Current state, not commitments** (the builder did not mark these firm):
 - Login is optional, never required to use the app.
@@ -86,4 +86,4 @@ MBA-specific templates (recruiting follow-ups, thank-you notes, class prep) supp
 2. **Capture in seconds.** Adding a task should never take more than a sentence or a couple of taps.
 3. **Progress you can feel.** Every completion should visibly pay off, and rewards should be the user's own.
 4. **One place.** Prefer bringing a user's scattered tasks and events together over adding new places to check.
-5. **Free and simple to run.** New features must work within static hosting at $0; AI extras must be optional, capped, and degrade to the free version.
+5. **Free and simple to run.** New features must work within static hosting at $0; AI extras must be optional, capped, limited to signed-in users, and degrade to the free version.

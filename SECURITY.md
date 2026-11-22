@@ -4,7 +4,7 @@
 
 ## What kind of app this is
 
-**An app with sign-in.** DailyQuest is a static site on GitHub Pages. Guests keep their quests in their own browser. Signed-in users (Supabase Auth, email + password with email confirmation) also sync one save per user to a Supabase Postgres database. Two Supabase Edge Functions run on the server: `fetch-calendar` (downloads a user's calendar subscription link) and `send-reminders` (push notifications, run every 15 minutes by `pg_cron`). There is **no AI on the live site** and no paid API. The optional OpenAI helper (`server.js`) only runs on the builder's own computer.
+**An app with sign-in (and AI).** DailyQuest is a static site on GitHub Pages. Guests keep their quests in their own browser. Signed-in users (Supabase Auth, email + password with email confirmation) also sync one save per user to a Supabase Postgres database. Three Supabase Edge Functions run on the server: `suggest` (AI typing suggestions from a small OpenAI model, signed-in users only), `fetch-calendar` (downloads a user's calendar subscription link) and `send-reminders` (push notifications, run every 15 minutes by `pg_cron`). The OpenAI key lives only in Supabase's Edge Function secrets. The local helper `server.js` offers the same AI on the builder's computer with the key in a git-ignored `.env`.
 
 | Piece | Where | Who can reach it |
 | --- | --- | --- |
@@ -12,8 +12,8 @@
 | `saves` (each user's quests, settings, calendar links) | Supabase Postgres, RLS on | The signed-in owner only |
 | `push_subscriptions` (devices with reminders on) | Supabase Postgres, RLS on | The signed-in owner only |
 | `push_log` (reminders sent, rate-limit records) | Supabase Postgres, RLS on, no policies | Server functions only (`service_role`) |
-| `fetch-calendar`, `send-reminders` | Supabase Edge Functions, JWT required | Signed-in users (the scheduled run uses the public key) |
-| Secrets (`VAPID_PRIVATE_KEY`, service role key) | Supabase Edge Function secrets / provided by Supabase | Server only |
+| `suggest`, `fetch-calendar`, `send-reminders` | Supabase Edge Functions, JWT required | Signed-in users (the scheduled reminder run uses the public key) |
+| Secrets (`OPENAI_API_KEY`, `VAPID_PRIVATE_KEY`, service role key) | Supabase Edge Function secrets / provided by Supabase | Server only |
 
 ## What I checked and what I found
 
@@ -38,7 +38,7 @@ No storage buckets exist (`storage.buckets` is empty). DailyQuest stores no file
 - During this audit the agent's own attempt to read `.env` values into a temp file to compare them was **blocked by Claude Code's safety classifier**; the search was redone using key patterns only. That became a rule in AGENTS.md.
 
 ### 5. Spending caps and rate limits
-- **No paid API runs on the live site.** The optional local OpenAI helper has a daily cap (`AI_DAILY_LIMIT`) and a per-minute cap in `server.js`. **Action for the owner:** set a hard monthly budget in the OpenAI dashboard anyway.
+- **The one paid API is OpenAI**, called only by the `suggest` function for signed-in users: **30 suggestions per hour per user** (429 `slow_down`) and **`AI_DAILY_LIMIT` (default 300) per day for everyone** (429 `daily_limit`); the app stops asking for the rest of the session after a 429. The local helper `server.js` has its own per-minute and daily caps. **Owner action:** a hard monthly budget in the OpenAI dashboard.
 - **Added in this audit:** per-user rate limits on both server routes:
   - `fetch-calendar`: **30 fetches per hour per user**, so it can't be used as a general downloader or hammered. Returns 429 `slow_down`, shown as "Too many refreshes in the last hour."
   - `send-reminders` test notifications: **5 per hour per user**. Returns 429, shown as "You've sent several tests already."
@@ -52,7 +52,9 @@ There is no `package.json`; the app uses no npm packages. Its one browser librar
 | --- | --- |
 | Script injection (`<img onerror>`, `<svg onload>`) in quest, routine, template, reward and reward-emoji names, calendar event titles and locations, calendar names and calendar error text, then render every tab, Profile chapter, the edit sheet and the typing suggestion | **Blocked:** 0 injected elements, 0 scripts ran; everything rendered as text (`esc()` on all user text, `toast()` escapes) |
 | Read / insert / delete every table with only the public key | **Blocked:** `permission denied` on all 3 tables |
-| Call `fetch-calendar` and `send-reminders` without a login, and ask `fetch-calendar` for an internal cloud address | **Blocked:** 401 (`login_required`) |
+| Call `suggest`, `fetch-calendar` and `send-reminders` without a login, and ask `fetch-calendar` for an internal cloud address | **Blocked:** 401 (`login_required`) |
+| Spend the owner's OpenAI credits: call `suggest` more than 30 times in an hour | **Blocked:** call 31 returns 429 (`slow_down`); see the AI rate-limit test below |
+| Prompt injection through the typed text or recent quest names | Low impact: the reply is only a suggestion, cut to 60 characters, escaped before display, and never acted on |
 | Calendar fetcher as an open downloader (other sites, `http://`, `user:pass@`, odd ports, look-alike hosts such as `calendar.google.com.evil.example`) | **Blocked** by an allow-list of calendar sites, checked again after redirects (40 unit checks) |
 | Anyone triggering the scheduled reminder run with the public key | **Allowed but harmless:** each reminder is claimed once in `push_log`, so no duplicates are sent. **Fixed:** the reply no longer reveals how many users have reminders on |
 
@@ -62,7 +64,7 @@ There is no `package.json`; the app uses no npm packages. Its one browser librar
 - Leaked-password protection is off (WARN). See *Remaining issues*.
 
 ## What I fixed
-1. Added per-user rate limits to `fetch-calendar` (30/hour) and test notifications (5/hour), with friendly messages in the app.
+1. Added per-user rate limits to `fetch-calendar` (30/hour) and test notifications (5/hour), with friendly messages in the app; built the AI `suggest` function with a login requirement, 30/hour per user and a daily cap from the start.
 2. Removed user counts from the scheduled reminder run's reply.
 3. Made a manual database backup and git-ignored the `backups/` folder.
 4. Added the Shipping section, the "Ask me first" list and rules from real agent mistakes to AGENTS.md.
@@ -99,3 +101,20 @@ Logged in on the live site as **Account B**, running this in the browser console
 ```
 
 Expected: **1 → 0 rows, 2 → 1 row (my own), 3 → 0 changed, 4 → 0 deleted, 5 → blocked, 6 → blocked.** (The same rules already passed the two-user test inside the database.) Observed on the live site: _to be filled in from the screenshot submitted with the Build 3 assignment._
+
+### AI rate-limit test
+Logged in on the live site (any account), in the browser console. This makes 31 small AI calls (a fraction of a cent in total):
+
+```js
+(async () => {
+  const codes = [];
+  for (let i = 1; i <= 31; i++) {
+    const { error } = await account.client.functions.invoke("suggest", { body: { text: "coffee chat with " + i, recent: [] } });
+    codes.push(error && error.context ? error.context.status : 200);
+  }
+  console.log("status codes:", codes.join(" "));
+  console.log("first 429 at call", codes.indexOf(429) + 1);
+})();
+```
+
+Expected: calls 1–30 return 200 and **call 31 returns 429**. Without a login every call returns 401. Observed: _to be filled in from the screenshot._

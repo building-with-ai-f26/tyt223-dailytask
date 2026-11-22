@@ -2278,12 +2278,30 @@
       if (fromHistory) return showSuggestion({ base: value, text: fromHistory, source: "history" });
       if (aiCache.has(value)) return showSuggestion({ base: value, text: aiCache.get(value), source: "ai" });
       showSuggestion(null);
-      if (!aiReady || value.trim().length < 3 || /\s{2}$/.test(value)) return;
+      if (!(aiReady || cloudAiReady()) || value.trim().length < 3 || /\s{2}$/.test(value)) return;
       aiTimer = setTimeout(() => askAi(value), AI_PAUSE_MS);
+    }
+    // On the live site, signed-in players get AI suggestions from the `suggest` Supabase function
+    // (it holds the OpenAI key and enforces the limits). Guests keep suggestions from their own past quests.
+    let cloudAiOff = false;
+    function cloudAiReady() { return !aiReady && !cloudAiOff && Boolean(account.client && account.user); }
+    async function askCloudAi(value, recent) {
+      const { data, error } = await account.client.functions.invoke("suggest", { body: { text: value, recent } });
+      const status = error && error.context ? error.context.status : 200;
+      if (status === 429 || status === 503) {   // over the limit or AI switched off: stop asking for this session
+        let code = ""; try { code = (await error.context.json()).error; } catch (e) { /* no body */ }
+        if (code === "daily_limit" || code === "ai_off" || code === "slow_down") cloudAiOff = true;
+        return;
+      }
+      if (error || !data) return;
+      const text = data.completion || "";
+      aiCache.set(value, text);
+      if (input().value === value) showSuggestion({ base: value, text, source: "ai" });
     }
     async function askAi(value) {
       aiAbort = new AbortController();
       const recent = state.quests.concat(state.goals).slice().sort((a, b) => b.id - a.id).slice(0, 15).map((x) => x.name);
+      if (cloudAiReady()) { try { await askCloudAi(value, recent); } catch (e) { /* offline: history still works */ } return; }
       try {
         const res = await fetch("/api/suggest", { method: "POST", signal: aiAbort.signal, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: value, recent }) });
         const data = await res.json();
