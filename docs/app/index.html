@@ -424,6 +424,22 @@
     .map-legend .rw svg { flex: none; width: 13px; height: 13px; }
     .map-legend li.got .rw { color: #8A6424; font-weight: 600; }
     .advmap .hero svg { width: 100%; height: 100%; }
+    /* AI tools: paste sheet and weekly chronicle */
+    .chip.ai-chip { border-style: dashed; color: var(--accent); font-weight: 600; }
+    .paste-sheet textarea { width: 100%; margin-top: 3px; padding: 9px 11px; border: 1.5px solid var(--border); border-radius: 10px; font: inherit; font-size: 14px; resize: vertical; background: #fff; color: var(--ink); }
+    .paste-list { max-height: 52vh; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+    .paste-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 1px dashed var(--border); }
+    .paste-row input[type=checkbox] { width: 18px; height: 18px; margin-top: 8px; accent-color: var(--accent); flex: none; }
+    .paste-fields { flex: 1; min-width: 0; display: grid; gap: 6px; }
+    .paste-fields > input { font-family: var(--hand); font-size: 19px; padding: 4px 8px; }
+    .paste-meta { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 6px; }
+    .paste-meta input, .paste-meta select { padding: 6px; font-size: 13px; }
+    .paste-note { font-size: 12px; }
+    .chronicle .chron-page { position: relative; margin: 2px 0 10px; padding: 14px 16px 12px; border-radius: 4px; background: repeating-linear-gradient(transparent 0 25px, rgba(150, 120, 80, .14) 25px 26px), #FFFBF2; box-shadow: inset 0 0 14px rgba(150, 110, 60, .12); }
+    .chronicle .chron-entry { font-family: var(--hand); font-size: 18.5px; line-height: 26px; color: #4A3A2C; margin: 0; }
+    .chronicle .chron-focus { display: flex; gap: 6px; align-items: baseline; margin: 10px 0 0; font-size: 13px; color: #6B5442; }
+    .chronicle .chron-seal { float: right; margin: -4px -4px 6px 10px; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 47% 53% 50% 46% / 52% 46% 54% 48%;
+      background: radial-gradient(circle at 34% 30%, #C9654D, #9B3527 50%, #6F2219); color: #F6DCC9; font-family: var(--serif); font-size: 10px; text-align: center; line-height: 1.05; box-shadow: inset 0 0 0 3px rgba(60, 14, 8, .25), 0 2px 3px rgba(60, 20, 10, .3); transform: rotate(-8deg); }
     /* Weekly boss */
     .boss-card { display: flex; gap: 16px; align-items: center; }
     .boss-art { position: relative; flex: none; width: 104px; height: 104px; display: grid; place-items: center; border-radius: 12px;
@@ -1640,7 +1656,7 @@
       return {
         quests: [], goals: [], rewards: [], claims: [], events: [], templates: [], feeds: [], nextId: 1,
         lifetimeXp: 0, spendableXp: 0,
-        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0, boss: null, bossesDefeated: 0, gear: { owned: [], pet: null, frame: null, title: null }, landmarksClaimed: [],
+        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0, boss: null, bossesDefeated: 0, gear: { owned: [], pet: null, frame: null, title: null }, landmarksClaimed: [], chronicles: {},
         theme: "classic", dayOffset: 0,
         avatar: "mint", shields: 0, chestOn: null, achievements: {}, weeklyGoalsDone: 0,
         catXp: { Class: 0, Recruiting: 0, Events: 0, Personal: 0 },
@@ -2114,6 +2130,7 @@
       }).join("");
       return `<div class="board-head"><h2>Weekly Adventure</h2></div><div class="page">
         ${bossCard(today)}
+        ${chroniclePanel(today)}
         ${weekly.length ? `<h3>Weekly goals</h3>${weekly.map((g) => goalCard(g, today)).join("")}` : '<div class="empty">Type <b>exercise 3 times a week</b> to add a weekly goal.</div>'}
         ${routines.length ? `<h3 style="margin-top:14px">Repeating quests</h3>${routines.map((g) => goalCard(g, today)).join("")}` : ""}
         ${upcoming.length ? `<h3 style="margin-top:14px">Coming up</h3>${upcoming.map((q) => `<div class="muted">${relative(q.day, today)}</div>${questCard(q, today)}`).join("")}` : ""}
@@ -2227,7 +2244,8 @@
     function renderChips() {
       $("chips").innerHTML = allTemplates().map((t, i) =>
         `<button class="chip ${catClass(t.category)}" data-action="use-template" data-index="${i}">${px(CATEGORY[t.category].icon, 14)}${esc(t.text)}</button>`
-      ).join("") + '<button class="chip new" data-action="manage-templates">+ My template</button>';
+      ).join("") + (account.status !== "off" ? '<button class="chip ai-chip" data-action="paste-open" title="Paste an email, announcement or notes and let AI find the quests">✦ Paste notes</button>' : "") +
+        '<button class="chip new" data-action="manage-templates">+ My template</button>';
     }
     // The preview shows how DailyQuest read the typed text, as fields the user can correct before saving.
     function previewHtml(p, today) {
@@ -3063,6 +3081,132 @@
         <p class="lm-status ${reached ? "on" : ""}">${status}</p>
         <div class="sheet-actions" style="justify-content:center"><button class="btn soft" data-action="close-sheet">Close</button></div></div>`);
     }
+    // ---------- AI tools: Paste anything -> quests, and the Weekly chronicle ----------
+    // Both call the `ai-tools` Edge Function (OpenAI key in Supabase, signed-in users only, daily limits).
+    // The AI only suggests: pasted quests are reviewed before anything is added.
+    let pasteDraft = { text: "", quests: [] };
+    function aiErrorText(status, code) {
+      if (status === 429) return code === "daily_limit" ? "The AI has reached today's limit for everyone. Try again tomorrow." : "You've reached today's limit for this. Try again tomorrow.";
+      if (status === 503) return "AI is switched off right now.";
+      if (status === 401) return "Please log in again.";
+      return "Couldn't reach the AI. Check your connection and try again.";
+    }
+    async function callAiTools(body) {
+      const { data, error } = await account.client.functions.invoke("ai-tools", { body });
+      if (!error) return { data };
+      const status = error.context ? error.context.status : 0;
+      let code = ""; try { code = (await error.context.json()).error; } catch (e) { /* no body */ }
+      return { error: aiErrorText(status, code) };
+    }
+    function openPaste(text) {
+      openSheet(`<form id="pasteForm" class="auth paste-sheet" novalidate>
+        <h2>Paste anything</h2>
+        <p class="muted" style="margin:0">Paste an email, a Brightspace announcement, a Slack message or your notes. AI finds the tasks; you choose which to add.</p>
+        <label class="field">Text<textarea id="pasteText" maxlength="4000" rows="7" placeholder="e.g. Reminder: Problem Set 3 is due Friday at 11:59pm. Coffee chat with Priya (Bain) moved to Tuesday 3pm…">${esc(text || "")}</textarea></label>
+        <p class="muted" style="margin:6px 0 0;font-size:12px">Sent to OpenAI to find tasks; not saved anywhere. Don't paste passwords or sensitive personal details.</p>
+        <p class="auth-msg" id="pasteMsg" role="status"></p>
+        <button class="btn" type="submit" id="pasteSubmit">✦ Find quests</button>
+      </form>`);
+      $("pasteText").focus();
+    }
+    async function findPastedQuests() {
+      const text = $("pasteText").value.trim(), msg = (t) => { $("pasteMsg").textContent = t; };
+      if (text.length < 10) return msg("Paste a little more text (at least a sentence).");
+      $("pasteSubmit").disabled = true; msg("Reading your text…");
+      const res = await callAiTools({ action: "paste", text: text.slice(0, 4000), today: getToday() });
+      if (!$("pasteForm")) return;   // closed meanwhile
+      if (res.error) { $("pasteSubmit").disabled = false; return msg(res.error); }
+      pasteDraft = { text, quests: res.data.quests || [] };
+      track("paste_quests_found", { count: pasteDraft.quests.length });
+      if (!pasteDraft.quests.length) { $("pasteSubmit").disabled = false; return msg("No tasks found in that text."); }
+      openPasteReview();
+    }
+    function openPasteReview() {
+      const today = getToday(), opt = (list, cur) => list.map((v) => `<option ${v === cur ? "selected" : ""}>${v}</option>`).join("");
+      const rows = pasteDraft.quests.map((q, i) => `<div class="paste-row">
+        <input type="checkbox" checked data-pq="on" data-i="${i}" aria-label="Add this quest" />
+        <div class="paste-fields">
+          <input data-pq="name" data-i="${i}" value="${esc(q.name)}" maxlength="80" aria-label="Quest name" />
+          <div class="paste-meta">
+            <input type="date" data-pq="date" data-i="${i}" value="${q.date || ""}" min="${today}" aria-label="Date" />
+            <select data-pq="category" data-i="${i}" aria-label="Type">${opt(Object.keys(CATEGORY), q.category)}</select>
+            <select data-pq="difficulty" data-i="${i}" aria-label="Difficulty">${opt(["Easy", "Medium", "Hard"], q.difficulty)}</select>
+          </div>
+          <span class="muted paste-note">${q.date ? (q.deadline ? "Due " : "On ") + short(q.date) + (q.time ? " at " + fmtTime(q.time) : "") : "No date: goes on Today"}</span>
+        </div></div>`).join("");
+      openSheet(`<div class="auth paste-sheet">
+        <h2>Found ${pasteDraft.quests.length} quest${pasteDraft.quests.length === 1 ? "" : "s"}</h2>
+        <p class="muted" style="margin:0 0 8px">Untick anything you don't want, fix names or dates, then add them.</p>
+        <div class="paste-list">${rows}</div>
+        <div class="sheet-actions"><button class="btn" data-action="paste-add">Add selected quests</button><button class="btn soft" data-action="paste-back">Back</button></div>
+      </div>`);
+    }
+    function addPastedQuests() {
+      const today = getToday(), val = (k, i) => { const el = document.querySelector(`[data-pq="${k}"][data-i="${i}"]`); return el ? el.value : ""; };
+      let added = 0;
+      pasteDraft.quests.forEach((q, i) => {
+        const box = document.querySelector(`[data-pq="on"][data-i="${i}"]`);
+        if (!box || !box.checked) return;
+        const name = val("name", i).trim().slice(0, 80);
+        if (!name) return;
+        const date = /^\d{4}-\d{2}-\d{2}$/.test(val("date", i)) ? val("date", i) : today;
+        addQuest(state, { name, category: CATEGORY[val("category", i)] ? val("category", i) : q.category, difficulty: ["Easy", "Medium", "Hard"].includes(val("difficulty", i)) ? val("difficulty", i) : q.difficulty,
+          date, dateType: q.deadline && val("date", i) ? "due" : "day", time: q.time }, today);
+        added++;
+      });
+      if (!added) return toast("Tick at least one quest to add");
+      track("paste_quests_added", { count: added, found: pasteDraft.quests.length });
+      pasteDraft = { text: "", quests: [] };
+      closeSheet(); save(); render();
+      toast(`Added ${added} quest${added === 1 ? "" : "s"} from your notes`, "scroll");
+    }
+
+    // This week's facts for the chronicle: counts, a few finished quest names, the boss, streak and goals.
+    function chronicleStats(today) {
+      const week = weekDays(today), inWeek = (d) => d && d >= week[0] && d <= week[6];
+      const done = state.quests.filter((q) => q.done && inWeek(q.completedOn));
+      const checkins = state.goals.flatMap((g) => g.log.filter((l) => inWeek(l.date)).map(() => g));
+      const byCategory = { Class: 0, Recruiting: 0, Events: 0, Personal: 0 };
+      done.concat(checkins).forEach((x) => { if (x.category in byCategory) byCategory[x.category]++; });
+      const boss = ensureBoss(state, today);
+      return {
+        weekOf: week[0], questsDone: done.length + checkins.length, byCategory, finished: done.slice(-8).map((q) => q.name),
+        stillOpen: state.quests.filter((q) => !q.done && q.day <= week[6]).length, streak: currentStreak(state, today),
+        daysCleared: week.filter((d) => d <= today && (state.quests.some((q) => q.completedOn === d) || state.goals.some((g) => g.log.some((l) => l.date === d)))).length,
+        level: levelOf(state.lifetimeXp), boss: { name: bossInfo(boss.id).name, defeated: boss.defeated, hpLeft: boss.hp, maxHp: boss.maxHp },
+        landmark: mapProgress(state.daysCleared || 0).reached.name,
+        weeklyGoals: state.goals.filter((g) => !g.days).map((g) => ({ name: g.name, done: goalWeekCount(g, today), target: g.target })),
+      };
+    }
+    let chronicleBusy = false;
+    async function writeChronicle() {
+      if (!account.user) return openAuth("login", "Log in to have your journal write a weekly chronicle.", true);
+      if (chronicleBusy) return;
+      chronicleBusy = true; render();
+      const today = getToday(), stats = chronicleStats(today);
+      const res = await callAiTools({ action: "chronicle", stats });
+      chronicleBusy = false;
+      if (res.error) { render(); return toast(res.error); }
+      state.chronicles = Object.assign({}, state.chronicles, { [stats.weekOf]: { entry: res.data.entry, focus: res.data.focus, at: Date.now() } });
+      track("chronicle_written", { quests: stats.questsDone });
+      save(); render();
+    }
+    function chroniclePanel(today) {
+      if (account.status === "off") return "";
+      const monday = weekDays(today)[0], all = state.chronicles || {}, mine = all[monday];
+      const older = Object.keys(all).filter((k) => k < monday).sort().reverse().slice(0, 6);
+      const seal = (k) => `<span class="chron-seal" aria-hidden="true">${new Date(k + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>`;
+      const page = (k, c) => `<div class="chron-page">${seal(k)}<p class="chron-entry">${esc(c.entry)}</p>${c.focus ? `<p class="chron-focus">${px("compass", 14)}<b>Next week:</b> ${esc(c.focus)}</p>` : ""}</div>`;
+      const action = !account.user ? '<p class="muted" style="margin:0">Log in and your journal will write a short chronicle of your week.</p>'
+        : chronicleBusy ? '<p class="muted" style="margin:0">The quill is writing…</p>'
+        : `<button class="${mine ? "linkbtn" : "btn soft"}" data-action="chronicle-write">${mine ? "Rewrite this week's chronicle" : "✦ Write this week's chronicle"}</button>`;
+      return `<div class="panel chronicle"><h3>Chronicle of the Week</h3>
+        ${mine ? page(monday, mine) : '<p class="muted" style="margin:-4px 0 10px">A short page from your quest journal about this week: what you conquered, and one gentle focus for the next. Best written on Sunday.</p>'}
+        ${action}
+        ${older.length ? `<details style="margin-top:10px"><summary>Earlier chronicles (${older.length})</summary>${older.map((k) => page(k, all[k])).join("")}</details>` : ""}
+      </div>`;
+    }
+
     // ---------- Sealed Profile (shown until someone logs in) ----------
     function sealedProfile(avatars, heroStats) {
       const perks = [["crown", "Pick your adventurer avatar"], ["sword", "Grow hero stats and earn badges"], ["trophy", "Unlock achievements and keep streaks"],
@@ -3541,6 +3685,10 @@
             return;
           case "install-help": openInstallHelp(); return;
           case "landmark-info": openLandmark(Number(btn.dataset.at)); return;
+          case "paste-open": if (!account.user) { openAuth("login", "Log in to paste notes and let AI find your quests.", true); return; } openPaste(); return;
+          case "paste-add": addPastedQuests(); return;
+          case "paste-back": openPaste(pasteDraft.text); return;
+          case "chronicle-write": writeChronicle(); return;
           case "buy-gear": {
             const g = GEAR.find((x) => x.id === btn.dataset.gear);
             if (!g || !buyGear(state, g.id)) return;
@@ -3642,6 +3790,7 @@
         e.preventDefault();
         if (e.target.id === "authForm") { submitAuth(); return; }
         if (e.target.id === "feedForm") { submitFeed(); return; }
+        if (e.target.id === "pasteForm") { findPastedQuests(); return; }
         const today = getToday();
         lastCompletion = null;
         if (e.target.id === "captureForm") {

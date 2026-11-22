@@ -4,7 +4,7 @@
 
 ## What kind of app this is
 
-**An app with sign-in (and AI).** DailyQuest is a static site on GitHub Pages. Guests keep their quests in their own browser. Signed-in users (Supabase Auth, email + password with email confirmation) also sync one save per user to a Supabase Postgres database. Three Supabase Edge Functions run on the server: `suggest` (AI typing suggestions from a small OpenAI model, signed-in users only), `fetch-calendar` (downloads a user's calendar subscription link) and `send-reminders` (push notifications, run every 15 minutes by `pg_cron`). The OpenAI key lives only in Supabase's Edge Function secrets. The local helper `server.js` offers the same AI on the builder's computer with the key in a git-ignored `.env`.
+**An app with sign-in (and AI).** DailyQuest is a static site on GitHub Pages. Guests keep their quests in their own browser. Signed-in users (Supabase Auth, email + password with email confirmation) also sync one save per user to a Supabase Postgres database. Four Supabase Edge Functions run on the server: `suggest` (AI typing suggestions from a small OpenAI model, signed-in users only), `ai-tools` (AI "paste anything → quests" and the weekly chronicle, signed-in users only), `fetch-calendar` (downloads a user's calendar subscription link) and `send-reminders` (push notifications, run every 15 minutes by `pg_cron`). The OpenAI key lives only in Supabase's Edge Function secrets. The local helper `server.js` offers the same AI on the builder's computer with the key in a git-ignored `.env`.
 
 | Piece | Where | Who can reach it |
 | --- | --- | --- |
@@ -12,7 +12,7 @@
 | `saves` (each user's quests, settings, calendar links) | Supabase Postgres, RLS on | The signed-in owner only |
 | `push_subscriptions` (devices with reminders on) | Supabase Postgres, RLS on | The signed-in owner only |
 | `push_log` (reminders sent, rate-limit records) | Supabase Postgres, RLS on, no policies | Server functions only (`service_role`) |
-| `suggest`, `fetch-calendar`, `send-reminders` | Supabase Edge Functions, JWT required | Signed-in users (the scheduled reminder run uses the public key) |
+| `suggest`, `ai-tools`, `fetch-calendar`, `send-reminders` | Supabase Edge Functions, JWT required | Signed-in users (the scheduled reminder run uses the public key) |
 | Secrets (`OPENAI_API_KEY`, `VAPID_PRIVATE_KEY`, service role key) | Supabase Edge Function secrets / provided by Supabase | Server only |
 
 ## What I checked and what I found
@@ -38,7 +38,7 @@ No storage buckets exist (`storage.buckets` is empty). DailyQuest stores no file
 - During this audit the agent's own attempt to read `.env` values into a temp file to compare them was **blocked by Claude Code's safety classifier**; the search was redone using key patterns only. That became a rule in AGENTS.md.
 
 ### 5. Spending caps and rate limits
-- **The one paid API is OpenAI**, called only by the `suggest` function for signed-in users: **30 suggestions per hour per user** (429 `slow_down`) and **`AI_DAILY_LIMIT` (default 300) per day for everyone** (429 `daily_limit`); the app stops asking for the rest of the session after a 429. The local helper `server.js` has its own per-minute and daily caps. **Owner action:** a hard monthly budget in the OpenAI dashboard.
+- **The one paid API is OpenAI**, called only by the `suggest` and `ai-tools` functions for signed-in users. `ai-tools` allows **20 pastes and 3 chronicles per day per user** (429 `slow_down`) and shares the daily total. `suggest` allows **30 suggestions per hour per user** (429 `slow_down`) and **`AI_DAILY_LIMIT` (default 300) per day for everyone** (429 `daily_limit`); the app stops asking for the rest of the session after a 429. The local helper `server.js` has its own per-minute and daily caps. **Owner action:** a hard monthly budget in the OpenAI dashboard.
 - **Added in this audit:** per-user rate limits on both server routes:
   - `fetch-calendar`: **30 fetches per hour per user**, so it can't be used as a general downloader or hammered. Returns 429 `slow_down`, shown as "Too many refreshes in the last hour."
   - `send-reminders` test notifications: **5 per hour per user**. Returns 429, shown as "You've sent several tests already."
@@ -53,6 +53,9 @@ There is no `package.json`; the app uses no npm packages. Its one browser librar
 | Script injection (`<img onerror>`, `<svg onload>`) in quest, routine, template, reward and reward-emoji names, calendar event titles and locations, calendar names and calendar error text, then render every tab, Profile chapter, the edit sheet and the typing suggestion | **Blocked:** 0 injected elements, 0 scripts ran; everything rendered as text (`esc()` on all user text, `toast()` escapes) |
 | Read / insert / delete every table with only the public key | **Blocked:** `permission denied` on all 3 tables |
 | Call `suggest`, `fetch-calendar` and `send-reminders` without a login, and ask `fetch-calendar` for an internal cloud address | **Blocked:** 401 (`login_required`) |
+| Call `ai-tools` without a login | **Blocked:** 401 (`login_required`) |
+| Make the AI return junk or harmful quests (bad JSON, invented dates, unknown categories, 40 items, HTML in names) | **Contained:** strict JSON schema, then `cleanPasteQuests` drops or repairs each field, caps at 15 items, and the app escapes names. Nothing is added until the player ticks and confirms (24 unit checks plus a browser test) |
+| Send a huge or tampered chronicle request | **Bounded:** `readChronicle` keeps only known fields, caps numbers and at most 8 quest names of 60 characters |
 | Spend the owner's OpenAI credits: call `suggest` more than 30 times in an hour | **Blocked:** call 31 returns 429 (`slow_down`); see the AI rate-limit test below |
 | Prompt injection through the typed text or recent quest names | Low impact: the reply is only a suggestion, cut to 60 characters, escaped before display, and never acted on |
 | Calendar fetcher as an open downloader (other sites, `http://`, `user:pass@`, odd ports, look-alike hosts such as `calendar.google.com.evil.example`) | **Blocked** by an allow-list of calendar sites, checked again after redirects (40 unit checks) |
@@ -70,6 +73,8 @@ There is no `package.json`; the app uses no npm packages. Its one browser librar
 4. Added the Shipping section, the "Ask me first" list and rules from real agent mistakes to AGENTS.md.
 5. Moved the `pg_net` extension from `public` to the `extensions` schema, after confirming the backup was current. I then fired the reminder job's request once to confirm the schedule still works (200 `{"ok":true}`); the advisor warning is gone.
 6. Earlier in Build 3 (found while building): granted logged-in users and the server exactly the table access they need. New Supabase projects grant none, and anonymous access stays at zero.
+
+**What text goes to OpenAI:** for typing suggestions, the start of the quest being typed and up to 15 recent quest names; for "paste anything", the pasted text (up to 4,000 characters; the app warns not to paste passwords or sensitive details); for the chronicle, this week's counts, up to 8 finished quest names, the boss, streak, landmark and weekly-goal progress. None of it is logged by DailyQuest's functions.
 
 ## Remaining issues
 - **Leaked-password protection** (blocks passwords found in data breaches) is a Supabase Auth setting that may need a paid plan; the minimum password length is 8.

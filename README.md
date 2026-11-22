@@ -20,6 +20,8 @@ People juggling busy lives end up managing them across too many apps. MBA studen
 - **Quick templates:** tap a chip like "Send thank-you note to ___", fill in the blank, and press Enter. You can save your own.
 - **Today's Quests:** only what's due today, with overdue quests on top in red. Tap a circle to finish one, and tap **Undo** in the message if you didn't mean to (XP and rewards are taken back).
 - **Edit and reschedule:** tap a quest to edit its title, dates, time, category, difficulty or repeat. The calendar button moves it to Today, Tomorrow, Next week or any date.
+- **Paste anything:** tap **✦ Paste notes**, paste an email, a Brightspace announcement or your notes, and AI finds the tasks with dates and categories. You review, fix and choose which to add (logged-in users).
+- **Weekly chronicle:** on the Week tab, your journal writes a short fantasy-style page about your week, what you finished, the boss you fought and your streak, plus one gentle focus for next week (logged-in users).
 - **Smart compose:** like Gmail, a faint ending appears as you type, taken from your own past quests and templates. Press **Tab** or **→** to accept it (on a phone, tap the suggestion). When you're logged in, a small AI model suggests endings for new tasks too (capped per user and per day).
 - **Smart preview:** while you type, the fields DailyQuest understood appear below the box so you can fix them; Enter saves right away.
 - **Rewards:** earn XP, levels, badges, and streaks, then spend coins on real-life rewards you choose.
