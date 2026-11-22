@@ -72,6 +72,7 @@
 8. **Never copy a secret into tool output or temp files.** An attempt to read `.env` values into a temp file to compare them was (rightly) blocked. Search for key *patterns* instead; ask the human to paste secrets into dashboards themselves.
 9. **Read the file before patching it.** Edits failed when text was copied from the unpushed `ai-worker` branch instead of `main`, and shell `sed` patches broke on escaped `\`` and `${`. Use the Edit tool on freshly read text; after two failed patch attempts, switch approach (rule 6).
 10. **Browser tests wait for a condition, not a fixed time.** A login test failed randomly after logout because it slept 300 ms; it now waits until the app's state changes.
+12. **Escape every value placed in HTML, including attributes and values from our own server.** A paste-review date went into `value="…"` unescaped and could run script. Use `esc()` everywhere, and keep the Content-Security-Policy `<meta>` in `docs/app/index.html` up to date: a new outside service must be added to `script-src` or `connect-src`, or the browser will block it. Re-run the CSP check (no `securitypolicyviolation` events) after changing it.
 11. **Check rendered output, not just code.** Duplicate SVG attributes (`fill="none" ... fill="#..."`) silently made drawings see-through, and map labels overlapped until measured in the browser. Screenshot UI changes and run the overlap check after moving map labels.
 
 ## 4. Shipping (the steps the agent follows to deploy)

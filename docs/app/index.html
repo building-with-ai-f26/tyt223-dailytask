@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <!-- Security: only these sites may run scripts or receive data from this page. Update it when adding a new outside service. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://us-assets.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://vewmdwohvtruavpcsrow.supabase.co https://us.i.posthog.com https://us-assets.i.posthog.com https://date.nager.at; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'" />
   <title>DailyQuest</title>
   <!-- Home-screen app: name, icon and colors when installed (iPhone: Share > Add to Home Screen) -->
   <link rel="manifest" href="manifest.webmanifest" />
@@ -1525,7 +1527,7 @@
     const FEED_SUFFIXES = [".icloud.com", ".brightspace.com", ".d2l.com"];
     function feedHostAllowed(host) {
       host = String(host || "").toLowerCase();
-      return FEED_HOSTS.includes(host) || FEED_SUFFIXES.some((x) => host.endsWith(x)) || host.split(".").includes("brightspace");
+      return FEED_HOSTS.includes(host) || FEED_SUFFIXES.some((x) => host.endsWith(x)) || (host.endsWith(".edu") && host.split(".").includes("brightspace"));   // school Brightspace, e.g. brightspace.nyu.edu
     }
     // A pasted link as a safe https URL, or "" if it isn't a supported calendar link (webcal:// becomes https://).
     function normalizeFeedUrl(raw) {
@@ -2257,8 +2259,8 @@
       return `<div class="pv-grid">
           <label class="pv pv-name"><span>Title</span><input data-pv="name" value="${esc(p.name)}" maxlength="160" /></label>
           ${p.kind === "quest" ? `<label class="pv"><span>When</span><select data-pv="dateType">${opt([["day", "Do on"], ["due", "Due by"]], p.dateType)}</select></label>
-          <label class="pv"><span>Date</span><input type="date" data-pv="date" value="${p.date}" min="${today}" /></label>` : ""}
-          <label class="pv"><span>Time</span><input type="time" data-pv="time" value="${p.time || ""}" /></label>
+          <label class="pv"><span>Date</span><input type="date" data-pv="date" value="${esc(p.date || "")}" min="${today}" /></label>` : ""}
+          <label class="pv"><span>Time</span><input type="time" data-pv="time" value="${esc(p.time || "")}" /></label>
           <label class="pv"><span>Type</span><select data-pv="category">${opt(Object.keys(CATEGORY).map((c) => [c, c]), p.category)}</select></label>
           <label class="pv"><span>Difficulty</span><select data-pv="difficulty">${opt(Object.keys(XP_BY_DIFFICULTY).map((d) => [d, d]), p.difficulty)}</select></label>
           <label class="pv"><span>Repeat</span><select data-pv="repeat">${opt(repeatOpts, rv)}</select></label>
@@ -3116,7 +3118,11 @@
       const res = await callAiTools({ action: "paste", text: text.slice(0, 4000), today: getToday() });
       if (!$("pasteForm")) return;   // closed meanwhile
       if (res.error) { $("pasteSubmit").disabled = false; return msg(res.error); }
-      pasteDraft = { text, quests: res.data.quests || [] };
+      // Don't trust even our own server: keep only well-formed fields (the server already checks them too).
+      const okDate = (d) => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null, okTime = (t) => typeof t === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(t) ? t : null;
+      pasteDraft = { text, quests: (Array.isArray(res.data.quests) ? res.data.quests : []).slice(0, 15).filter((q) => q && typeof q.name === "string").map((q) => ({
+        name: q.name.slice(0, 80), date: okDate(q.date), time: okTime(q.time),
+        category: CATEGORY[q.category] ? q.category : "Personal", difficulty: ["Easy", "Medium", "Hard"].includes(q.difficulty) ? q.difficulty : "Medium", deadline: q.deadline === true && !!okDate(q.date) })) };
       track("paste_quests_found", { count: pasteDraft.quests.length });
       if (!pasteDraft.quests.length) { $("pasteSubmit").disabled = false; return msg("No tasks found in that text."); }
       openPasteReview();
@@ -3128,7 +3134,7 @@
         <div class="paste-fields">
           <input data-pq="name" data-i="${i}" value="${esc(q.name)}" maxlength="80" aria-label="Quest name" />
           <div class="paste-meta">
-            <input type="date" data-pq="date" data-i="${i}" value="${q.date || ""}" min="${today}" aria-label="Date" />
+            <input type="date" data-pq="date" data-i="${i}" value="${esc(q.date || "")}" min="${today}" aria-label="Date" />
             <select data-pq="category" data-i="${i}" aria-label="Type">${opt(Object.keys(CATEGORY), q.category)}</select>
             <select data-pq="difficulty" data-i="${i}" aria-label="Difficulty">${opt(["Easy", "Medium", "Hard"], q.difficulty)}</select>
           </div>
@@ -3513,11 +3519,11 @@
             <label class="field">Difficulty<select id="eDifficulty">${optionsHtml(Object.keys(XP_BY_DIFFICULTY), item.difficulty)}</select></label>
           </div>
           ${kind === "quest" ? `<div class="twocol dates">
-            <label class="field">Day<input id="eDay" type="date" value="${item.day}" /></label>
-            <label class="field">Due date (optional)<input id="eDue" type="date" value="${item.dueDate || ""}" /></label>
+            <label class="field">Day<input id="eDay" type="date" value="${esc(item.day || "")}" /></label>
+            <label class="field">Due date (optional)<input id="eDue" type="date" value="${esc(item.dueDate || "")}" /></label>
           </div>` : ""}
-          ${weeklyGoal ? `<label class="field">Times per week<input id="eTarget" type="number" min="1" max="21" value="${item.target}" /></label>` : `
-          <label class="field">Start time (optional)<input id="eTime" type="time" value="${item.time || ""}" /></label>
+          ${weeklyGoal ? `<label class="field">Times per week<input id="eTarget" type="number" min="1" max="21" value="${esc(item.target)}" /></label>` : `
+          <label class="field">Start time (optional)<input id="eTime" type="time" value="${esc(item.time || "")}" /></label>
           <label class="field">Repeat<select id="eRepeat">
             <option value="none" ${repeat === "none" ? "selected" : ""}>Does not repeat</option>
             <option value="daily" ${repeat === "daily" ? "selected" : ""}>Every day</option>

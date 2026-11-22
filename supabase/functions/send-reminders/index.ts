@@ -11,6 +11,7 @@
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
 import { remindersFor } from "./reminders.ts";
+import { pushEndpointAllowed } from "./endpoints.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 webpush.setVapidDetails(Deno.env.get("VAPID_SUBJECT"), Deno.env.get("VAPID_PUBLIC_KEY"), Deno.env.get("VAPID_PRIVATE_KEY"));
@@ -21,6 +22,8 @@ const reply = (status, body) => new Response(JSON.stringify(body), { status, hea
 
 // Sends one notification to one device. Removes devices the push service says are gone.
 async function push(sub, note) {
+  // Only real browser push services; a fake address saved by a user is removed instead of contacted.
+  if (!pushEndpointAllowed(sub.endpoint)) { await db.from("push_subscriptions").delete().eq("id", sub.id); return false; }
   try {
     await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
       JSON.stringify({ title: note.title, body: note.body, tag: note.key, url: "./" }), { TTL: 3600 });

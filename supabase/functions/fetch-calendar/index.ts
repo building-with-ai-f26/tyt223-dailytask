@@ -6,7 +6,7 @@
 // Safety: signed-in users only, known calendar sites only (feeds.ts), https only, 10-second
 // timeout, 3 MB cap, and the reply must actually be a calendar. Links and contents are never logged.
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
-import { normalizeFeedUrl, feedHostAllowed } from "./feeds.ts";
+import { normalizeFeedUrl } from "./feeds.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 const MAX_BYTES = 3_000_000;
@@ -32,13 +32,21 @@ Deno.serve(async (req) => {
   if ((count || 0) >= FETCHES_PER_HOUR) return reply(429, { error: "slow_down" });
   await db.from("push_log").insert({ user_id: who.user.id, key: "cal:" + Date.now() + ":" + crypto.randomUUID().slice(0, 8) });
 
-  let res;
+  // Follow redirects ourselves, checking every hop BEFORE requesting it, so a calendar site can't
+  // bounce the server to another address (blind server-side request forgery).
+  let res, next = url;
   try {
-    res = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(10_000), headers: { Accept: "text/calendar, text/plain;q=0.9, */*;q=0.1" } });
+    for (let hop = 0; ; hop++) {
+      res = await fetch(next, { redirect: "manual", signal: AbortSignal.timeout(10_000), headers: { Accept: "text/calendar, text/plain;q=0.9, */*;q=0.1" } });
+      if (res.status < 300 || res.status >= 400) break;
+      const location = res.headers.get("location");
+      if (!location || hop >= 3) return reply(502, { error: "calendar_error" });
+      next = normalizeFeedUrl(new URL(location, next).href);
+      if (!next) return reply(400, { error: "unsupported_link" });   // redirected somewhere that isn't an allowed calendar site
+    }
   } catch (e) {
     return reply(504, { error: "unreachable" });
   }
-  if (!feedHostAllowed(new URL(res.url).hostname)) return reply(400, { error: "unsupported_link" });   // redirected somewhere else
   if (res.status === 404 || res.status === 410) return reply(404, { error: "not_found" });
   if (res.status === 401 || res.status === 403) return reply(403, { error: "private" });
   if (!res.ok) return reply(502, { error: "calendar_error" });

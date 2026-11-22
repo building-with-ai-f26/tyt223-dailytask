@@ -7,7 +7,8 @@ const HOST_SUFFIXES = [".icloud.com", ".brightspace.com", ".d2l.com"];
 
 export function feedHostAllowed(host) {
   host = String(host || "").toLowerCase();
-  return EXACT_HOSTS.includes(host) || HOST_SUFFIXES.some((s) => host.endsWith(s)) || host.split(".").includes("brightspace");
+  // School Brightspace sites look like brightspace.nyu.edu; only .edu hosts qualify, so brightspace.attacker.com doesn't.
+  return EXACT_HOSTS.includes(host) || HOST_SUFFIXES.some((s) => host.endsWith(s)) || (host.endsWith(".edu") && host.split(".").includes("brightspace"));
 }
 
 // Turns a pasted link into a safe https URL, or "" if it isn't a supported calendar link.

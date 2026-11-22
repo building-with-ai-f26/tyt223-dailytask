@@ -66,6 +66,18 @@ There is no `package.json`; the app uses no npm packages. Its one browser librar
 - `pg_net` extension installed in the `public` schema (WARN): created there when setting up the reminder schedule. **Fixed** (see below).
 - Leaked-password protection is off (WARN). See *Remaining issues*.
 
+### 8. Second round: attacks as a signed-in user (Nov 22)
+| # | Attack | Finding | Fix |
+| --- | --- | --- | --- |
+| F1 | Connect a calendar from `brightspace.attacker.com` | **Allowed:** the allow-list accepted any host with "brightspace" in its name, so the server would fetch an attacker's site | Only `.edu` school Brightspace hosts (e.g. `brightspace.nyu.edu`) or official `*.brightspace.com` / `*.d2l.com`; same rule in the app (35 checks) |
+| F2 | A calendar site redirects the server to another address | **Possible:** redirects were followed first and checked afterwards (blind server-side request forgery) | The fetcher follows redirects itself, at most 3, checking each destination **before** requesting it |
+| F3 | Save a fake "phone" push address (any URL) in `push_subscriptions`, then request a test notification | **Possible:** the reminder server would send a request to that URL | `send-reminders` only sends to real browser push services (Apple, Google, Mozilla, Microsoft) and deletes fake addresses (14 checks) |
+| F4 | A crafted date such as `\"><img onerror=…>` in the paste-review list | **Script ran** in the test: the date was placed in the page unescaped (the real server already rejects such dates, so it wasn't reachable in practice) | Escaped every value placed in HTML attributes (paste review, typing preview, edit sheet), and the app re-checks the server's dates and times; re-test: 0 scripts |
+| F5 | Any future script-injection bug could send the login session to another site | **No Content-Security-Policy** | Added a CSP `<meta>` tag: scripts only from the page, jsDelivr and PostHog; data only to Supabase, PostHog and the holidays API; no plugins, frames or `<base>` tricks. A real-browser run across every tab and pop-up showed **0 violations**, with Supabase, PostHog, fonts and the service worker all working |
+| F6 | A signed-in user uploads a huge save | **Possible:** no size limit on `saves.data` (affects only their own row, but could fill the free database) | Proposed: a database size limit. Waiting for the owner's OK ("Ask me first") |
+
+Re-checked as clean in this round: paste review, chronicle, landmark pop-up and settings with injected HTML (0 scripts); all four functions refuse callers who aren't logged in (401).
+
 ## What I fixed
 1. Added per-user rate limits to `fetch-calendar` (30/hour) and test notifications (5/hour), with friendly messages in the app; built the AI `suggest` function with a login requirement, 30/hour per user and a daily cap from the start.
 2. Removed user counts from the scheduled reminder run's reply.
@@ -76,9 +88,11 @@ There is no `package.json`; the app uses no npm packages. Its one browser librar
 
 **What text goes to OpenAI:** for typing suggestions, the start of the quest being typed and up to 15 recent quest names; for "paste anything", the pasted text (up to 4,000 characters; the app warns not to paste passwords or sensitive details); for the chronicle, this week's counts, up to 8 finished quest names, the boss, streak, landmark and weekly-goal progress. None of it is logged by DailyQuest's functions.
 
+7. Second-round fixes F1–F5 above (calendar allow-list, redirect checks, push-address check, attribute escaping, Content-Security-Policy).
+
 ## Remaining issues
 - **Leaked-password protection** (blocks passwords found in data breaches) is a Supabase Auth setting that may need a paid plan; the minimum password length is 8.
-- **No Content-Security-Policy header:** GitHub Pages can't set response headers, and the app uses inline scripts, so a CSP would need `unsafe-inline`. Mitigated by escaping all user text (tested above). Supabase stores the login session in `localStorage`, so an XSS bug would expose it, which is why escaping is tested.
+- **The CSP allows inline scripts** (`unsafe-inline`), because the app is one HTML file with inline code. It still blocks scripts from unknown sites and sending data anywhere except the app's own services. Escaping all user text remains the main defense (tested).
 - **The scheduled run can be triggered by anyone with the public key.** It's harmless (no duplicate sends, no data returned) but uses free-tier function invocations; a shared secret could restrict it later.
 - **Browser writes are limited by sign-in, RLS and app batching, not a server-side rate limit.** A signed-in user could write to their own row rapidly; this only affects their own data.
 
