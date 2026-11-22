@@ -28,3 +28,7 @@ build/
 out/
 .DS_Store
 *.log
+
+# Local database backups (contain user data and private calendar links; never commit)
+backups/*
+!backups/README.txt

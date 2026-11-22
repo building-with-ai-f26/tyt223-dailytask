@@ -5,7 +5,7 @@
 ## 1. Project Overview
 - **What this repo builds:** DailyQuest, a gamified task planner for busy MBA students. Users type tasks in plain English, see only today's quests, and earn XP, levels, streaks and real-life rewards for finishing them.
 - **Primary user & core workflow:** First-year NYU Stern MBA students checking in on their phones. Full PRD in `docs/index.html`; durable product facts in `PRODUCT.md`.
-- **Tech stack:** One static HTML file with plain CSS and JavaScript (no framework, no build step, no packages). Data in the browser's `localStorage`, plus optional accounts (Supabase Auth: email + password) that sync each user's save to a Supabase `saves` table protected by Row Level Security; `supabase-js` loads from jsDelivr (pinned version with an integrity hash) only when accounts are configured. Hosted free on GitHub Pages from the `docs/` folder. External calls from the browser: Nager.Date public holidays API (free, no key), PostHog analytics, Google Fonts. Optional local `server.js` (Node built-ins, no packages) serves the app and calls OpenAI for typing suggestions; the public site has no server and no AI.
+- **Tech stack:** One static HTML file with plain CSS and JavaScript (no framework, no build step, no packages). Data in the browser's `localStorage`, plus optional accounts (Supabase Auth: email + password) that sync each user's save to a Supabase `saves` table protected by Row Level Security; `supabase-js` loads from jsDelivr (pinned version with an integrity hash) only when accounts are configured. Hosted free on GitHub Pages from the `docs/` folder. External calls from the browser: Nager.Date public holidays API (free, no key), PostHog analytics, Google Fonts. Backend on Supabase's free plan: Auth, Postgres (RLS on every table), two Edge Functions (`fetch-calendar`, `send-reminders`) and a `pg_cron` job every 15 minutes. Optional local `server.js` (Node built-ins, no packages) serves the app and calls OpenAI for typing suggestions; the public site has no AI. Security audit: `SECURITY.md`.
 - **Live URLs:** Product Page https://building-with-ai-f26.github.io/tyt223-dailytask/ · App https://building-with-ai-f26.github.io/tyt223-dailytask/app/
 - **Firm constraint:** free hosting ($0); AI must stay optional, capped, and off on the public site. See `PRODUCT.md`.
 
@@ -19,6 +19,8 @@
 | `supabase/functions/send-reminders/` | Edge Function (Deno) that sends reminder notifications: `reminders.ts` holds the pure rules (8:00 AM summary in the user's time zone, 30 minutes before timed quests), `index.ts` reads subscriptions and saves as `service_role`, claims each reminder in `push_log` so it's sent once, and pushes with `web-push`. Secrets `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` live in Supabase → Edge Functions → Secrets |
 | `supabase/functions/fetch-calendar/` | Edge Function that downloads a calendar subscription link (Google "Secret address in iCal format", Outlook, iCloud, Brightspace) for logged-in users and returns the `.ics` text; `feeds.ts` holds the allowed-sites rule, mirrored in the app's `normalizeFeedUrl` |
 | `supabase/reminders.sql`, `supabase/reminders-schedule.sql` | Reminder tables (`push_subscriptions` with RLS, `push_log` server-only) and the pg_cron job that calls the function every 15 minutes |
+| `SECURITY.md` | Build 3 security audit: app type, checks, findings, fixes, remaining issues |
+| `backups/` | Git-ignored manual database exports (contain user data); `backups/README.txt` has the export query |
 | `supabase/schema.sql`, `supabase/README.md` | The `saves` table and its Row Level Security policies, and the click-by-click Supabase setup and test guide |
 | `docs/index.html` | Public Product Page: pitch, living PRD and weekly build log. Has its own PostHog snippet |
 | `docs/journal-desktop.png`, `docs/journal-phone.png` | Current screenshots (sample data) used on the Product Page and README |
@@ -61,3 +63,26 @@
 4. **Verify changes:** Run relevant checks. For a reproducible logic bug, use a failing test to demonstrate the fix when practical. Record manual checks and known limitations; follow the selected Build 4 evaluation track.
 5. **Zero secrets in code:** Never hardcode API keys, tokens, or credentials. Always read from environment variables (`.env`) and update `.env.example` when new variables are needed.
 6. **Stop when looping:** If a fix fails twice in a row, stop, summarize what failed, and ask the human before trying a third approach.
+
+### Rules learned from real mistakes in this project
+7. **New Supabase tables need explicit grants.** Newer projects give `anon`, `authenticated` and even `service_role` no table access by default. Sync and reminders both failed with "permission denied" until grants were added. Every new table gets: RLS on, `revoke all ... from anon, authenticated`, only the grants it needs, then a live check and `get_advisors`.
+8. **Never copy a secret into tool output or temp files.** An attempt to read `.env` values into a temp file to compare them was (rightly) blocked. Search for key *patterns* instead; ask the human to paste secrets into dashboards themselves.
+9. **Read the file before patching it.** Edits failed when text was copied from the unpushed `ai-worker` branch instead of `main`, and shell `sed` patches broke on escaped `\`` and `${`. Use the Edit tool on freshly read text; after two failed patch attempts, switch approach (rule 6).
+10. **Browser tests wait for a condition, not a fixed time.** A login test failed randomly after logout because it slept 300 ms; it now waits until the app's state changes.
+11. **Check rendered output, not just code.** Duplicate SVG attributes (`fill="none" ... fill="#..."`) silently made drawings see-through, and map labels overlapped until measured in the browser. Screenshot UI changes and run the overlap check after moving map labels.
+
+## 4. Shipping (the steps the agent follows to deploy)
+1. **Before changing anything in Supabase:** export a backup of every table to `backups/` (query in `backups/README.txt`; the folder is git-ignored).
+2. **Run checks:** the manual checklist in section 2, plus the key search below. It must find nothing except the `.env.example` placeholder and code comments:
+   `git grep -nIE 'sb_secret_[A-Za-z0-9]|sk-(or-v1|ant|proj)-[A-Za-z0-9]{8}|sk_live_|sk-[A-Za-z0-9]{32}|PRIVATE KEY-----|VAPID_PRIVATE_KEY=[A-Za-z0-9_-]{20}'`
+3. **Show the human what changed and get a "push"**, then commit with the attribution line and `git push origin main` (never force-push).
+4. **Verify the live site:** GitHub Pages republishes `docs/` in about a minute. Fetch `https://building-with-ai-f26.github.io/tyt223-dailytask/app/?v=<random>` and confirm a string unique to the change is present, then that PostHog still loads (`posthog.init` in the page).
+5. **Database changes** go in a `supabase/*.sql` file first, then `apply_migration` (Supabase MCP), then `get_advisors` (security) and a live permission check with the public key (reads and writes must return `permission denied`).
+6. **Edge Function changes:** edit `supabase/functions/<name>/`, deploy every file of that function with `deploy_edge_function` (`verify_jwt: true`), then call it without a login (expect 401) and as the scheduler (expect `{"ok":true}`).
+7. **Rollback:** `git revert <commit>` and push for the app; redeploy the previous function files from git for Edge Functions; restore rows from the latest `backups/` file for data.
+
+## 5. Ask me first (never do these without the human's explicit OK in this conversation)
+- **Deleting data or changing the database:** `DROP`, `ALTER`, `DELETE`, `TRUNCATE`, migrations, RLS policies, grants, extensions, cron jobs, restoring backups.
+- **Keys, secrets and permissions:** creating, rotating or reading keys; Supabase secrets; Auth settings; MCP or Claude Code permissions; git config.
+- **Anything that costs money:** paid plans, paid API calls (including real OpenAI requests), new hosted services.
+- **Hard-to-undo git actions:** force-push, rewriting history, deleting branches, deleting files outside the scratchpad.

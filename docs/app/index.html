@@ -2845,7 +2845,7 @@
     function feedErrorText(code) {
       return { unsupported_link: "That link isn't from a supported calendar (Google, Outlook, iCloud or Brightspace).", not_found: "Calendar not found. The link may have been reset; copy a fresh one.",
         private: "That calendar isn't shared. Use the secret iCal address.", not_a_calendar: "That link didn't return a calendar.", too_large: "That calendar is too big to load.",
-        unreachable: "Couldn't reach the calendar. Try again later.", login_required: "Log in again to update calendars." }[code] || "Couldn't update. Try again later.";
+        unreachable: "Couldn't reach the calendar. Try again later.", login_required: "Log in again to update calendars.", slow_down: "Too many refreshes in the last hour. Try again a bit later." }[code] || "Couldn't update. Try again later.";
     }
     // Downloads one calendar through the fetch-calendar function and replaces its events.
     async function refreshFeed(feedId) {
@@ -3178,6 +3178,7 @@
       pushInfo.busy = true; render();
       try {
         const { data, error } = await account.client.functions.invoke("send-reminders", { body: { test: true } });
+        if (error && error.context && error.context.status === 429) return toast("You've sent several tests already. Try again in an hour.", "clock");
         if (error) throw error;
         toast(data && data.sent ? "Test sent. Check your notifications" : "No device found. Try turning reminders off and on", "clock");
       } catch (e) { toast("Couldn't send a test right now"); }

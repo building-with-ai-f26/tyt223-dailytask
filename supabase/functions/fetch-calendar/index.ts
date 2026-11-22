@@ -10,6 +10,7 @@ import { normalizeFeedUrl, feedHostAllowed } from "./feeds.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 const MAX_BYTES = 3_000_000;
+const FETCHES_PER_HOUR = 30;   // per signed-in user; the app refreshes each calendar at most hourly
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const reply = (status, body) => new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
@@ -24,6 +25,12 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const url = normalizeFeedUrl(body.url);
   if (!url) return reply(400, { error: "unsupported_link" });
+
+  // Per-user rate limit: each fetch is recorded in the server-only push_log table (cleaned up after 3 days).
+  const since = new Date(Date.now() - 3600_000).toISOString();
+  const { count } = await db.from("push_log").select("key", { count: "exact", head: true }).eq("user_id", who.user.id).like("key", "cal:%").gte("sent_at", since);
+  if ((count || 0) >= FETCHES_PER_HOUR) return reply(429, { error: "slow_down" });
+  await db.from("push_log").insert({ user_id: who.user.id, key: "cal:" + Date.now() + ":" + crypto.randomUUID().slice(0, 8) });
 
   let res;
   try {

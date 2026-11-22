@@ -15,6 +15,7 @@ import { remindersFor } from "./reminders.ts";
 const db = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 webpush.setVapidDetails(Deno.env.get("VAPID_SUBJECT"), Deno.env.get("VAPID_PUBLIC_KEY"), Deno.env.get("VAPID_PRIVATE_KEY"));
 
+const TESTS_PER_HOUR = 5;   // test notifications per signed-in user
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const reply = (status, body) => new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
@@ -41,6 +42,11 @@ Deno.serve(async (req) => {
     const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
     const { data: who } = await db.auth.getUser(token);
     if (!who || !who.user) return reply(401, { error: "login_required" });
+    // Per-user rate limit on test notifications (recorded in the server-only push_log table).
+    const since = new Date(Date.now() - 3600_000).toISOString();
+    const { count } = await db.from("push_log").select("key", { count: "exact", head: true }).eq("user_id", who.user.id).like("key", "test:%").gte("sent_at", since);
+    if ((count || 0) >= TESTS_PER_HOUR) return reply(429, { error: "slow_down" });
+    await db.from("push_log").insert({ user_id: who.user.id, key: "test:" + Date.now() + ":" + crypto.randomUUID().slice(0, 8) });
     const { data: subs } = await db.from("push_subscriptions").select("*").eq("user_id", who.user.id);
     let sent = 0;
     for (const s of subs || []) if (await push(s, { key: "test", title: "Reminders are on", body: "DailyQuest will remind you at 8:00 AM and 30 minutes before timed quests." })) sent++;
@@ -51,7 +57,7 @@ Deno.serve(async (req) => {
   const { data: subs, error } = await db.from("push_subscriptions").select("*");
   if (error) return reply(500, { error: "subscriptions" });
   const userIds = [...new Set((subs || []).map((s) => s.user_id))];
-  if (!userIds.length) return reply(200, { users: 0, sent: 0 });
+  if (!userIds.length) return reply(200, { ok: true });
   const { data: saves } = await db.from("saves").select("user_id, data").in("user_id", userIds);
   const saveOf = new Map((saves || []).map((s) => [s.user_id, s.data]));
 
@@ -70,5 +76,5 @@ Deno.serve(async (req) => {
     }
   }
   await db.from("push_log").delete().lt("sent_at", new Date(now - 3 * 86400000).toISOString());   // keep the log small
-  return reply(200, { users: userIds.length, sent });
+  return reply(200, { ok: true });   // no counts: anyone with the public key can trigger a run, so don't reveal how many users there are
 });
