@@ -23,6 +23,7 @@
 | `supabase/reminders.sql`, `supabase/reminders-schedule.sql` | Reminder tables (`push_subscriptions` with RLS, `push_log` server-only) and the pg_cron job that calls the function every 15 minutes |
 | `SECURITY.md` | Build 3 security audit: app type, checks, findings, fixes, remaining issues |
 | `backups/` | Git-ignored manual database exports (contain user data); `backups/README.txt` has the export query |
+| `supabase/limits.sql` | Database safety rules: each save at most 1 MB, push addresses must be https |
 | `supabase/schema.sql`, `supabase/README.md` | The `saves` table and its Row Level Security policies, and the click-by-click Supabase setup and test guide |
 | `docs/index.html` | Public Product Page: pitch, living PRD and weekly build log. Has its own PostHog snippet |
 | `docs/journal-desktop.png`, `docs/journal-phone.png` | Current screenshots (sample data) used on the Product Page and README |

@@ -74,7 +74,7 @@ There is no `package.json`; the app uses no npm packages. Its one browser librar
 | F3 | Save a fake "phone" push address (any URL) in `push_subscriptions`, then request a test notification | **Possible:** the reminder server would send a request to that URL | `send-reminders` only sends to real browser push services (Apple, Google, Mozilla, Microsoft) and deletes fake addresses (14 checks) |
 | F4 | A crafted date such as `\"><img onerror=…>` in the paste-review list | **Script ran** in the test: the date was placed in the page unescaped (the real server already rejects such dates, so it wasn't reachable in practice) | Escaped every value placed in HTML attributes (paste review, typing preview, edit sheet), and the app re-checks the server's dates and times; re-test: 0 scripts |
 | F5 | Any future script-injection bug could send the login session to another site | **No Content-Security-Policy** | Added a CSP `<meta>` tag: scripts only from the page, jsDelivr and PostHog; data only to Supabase, PostHog and the holidays API; no plugins, frames or `<base>` tricks. A real-browser run across every tab and pop-up showed **0 violations**, with Supabase, PostHog, fonts and the service worker all working |
-| F6 | A signed-in user uploads a huge save | **Possible:** no size limit on `saves.data` (affects only their own row, but could fill the free database) | Proposed: a database size limit. Waiting for the owner's OK ("Ask me first") |
+| F6 | A signed-in user uploads a huge save | **Possible:** no size limit on `saves.data` (affects only their own row, but could fill the free database) | **Fixed:** database rules (`supabase/limits.sql`): a save over 1 MB is refused, and push addresses must be `https://` and under 1,000 characters. Backup taken first; tested in a rolled-back transaction (big save refused, `http://` address refused, both existing saves still valid); anonymous reads and writes still `permission denied` |
 
 Re-checked as clean in this round: paste review, chronicle, landmark pop-up and settings with injected HTML (0 scripts); all four functions refuse callers who aren't logged in (401).
 
@@ -88,7 +88,7 @@ Re-checked as clean in this round: paste review, chronicle, landmark pop-up and 
 
 **What text goes to OpenAI:** for typing suggestions, the start of the quest being typed and up to 15 recent quest names; for "paste anything", the pasted text (up to 4,000 characters; the app warns not to paste passwords or sensitive details); for the chronicle, this week's counts, up to 8 finished quest names, the boss, streak, landmark and weekly-goal progress. None of it is logged by DailyQuest's functions.
 
-7. Second-round fixes F1–F5 above (calendar allow-list, redirect checks, push-address check, attribute escaping, Content-Security-Policy).
+7. Second-round fixes F1–F6 above (calendar allow-list, redirect checks, push-address check, attribute escaping, Content-Security-Policy, database size and push-address rules).
 
 ## Remaining issues
 - **Leaked-password protection** (blocks passwords found in data breaches) is a Supabase Auth setting that may need a paid plan; the minimum password length is 8.
