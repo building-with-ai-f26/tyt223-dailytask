@@ -159,7 +159,8 @@ test("Feasts: the tavern picture invites friends, joining a feast swaps in the t
     const r = {}; const text = () => q("#view").textContent; const sheet = () => document.getElementById("sheetOverlay");
     window.confirm = () => true;   // "Cancel this feast?" would otherwise wait forever in a headless browser
     q('[data-tab="tavern"]').click();
-    r.tavernPicture = await until(() => !!q(".tav-hero .tav-art") && text().includes("Gather your friends"));
+    r.tavernPicture = await until(() => !!q(".tav-hero img.tav-art") && text().includes("Gather your friends"));
+    r.tavernImageLoaded = await until(() => q(".tav-hero img").complete && q(".tav-hero img").naturalWidth === 1200);
     r.guestBookKeepsCrown = text().includes("Guest book") && text().includes("Last week's Tavern Champion: Ana") && !!q(".lb-row .crown-tag");
     q(".tav-hero").click(); await w(80);
     r.invitationLetter = !sheet().hidden && sheet().textContent.includes("A Tavern Feast") && !!q(".por .ring") && !/winners or losers/i.test(sheet().textContent);

@@ -5,7 +5,8 @@ const path = require("node:path");
 const http = require("node:http");
 const os = require("node:os");
 const { execFile } = require("node:child_process");
-const { appHtml } = require("../helpers");
+const { appHtml, ROOT } = require("../helpers");
+const APP_DIR = path.join(ROOT, "docs", "app");
 
 const CANDIDATES = [
   process.env.BROWSER,
@@ -41,6 +42,11 @@ function runInBrowser(options) {
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
       if (req.url === "/fake-supabase.js") { res.writeHead(200, { "Content-Type": "text/javascript" }); return res.end(options.fake || ""); }
+      const file = req.url.split("?")[0].replace(/^\/app\//, "");
+      if (file && !file.includes("..") && fs.existsSync(path.join(APP_DIR, file))) {   // real files next to the page (images, icons)
+        res.writeHead(200, { "Content-Type": { ".jpg": "image/jpeg", ".png": "image/png", ".js": "text/javascript", ".webmanifest": "application/manifest+json" }[path.extname(file)] || "application/octet-stream" });
+        return res.end(fs.readFileSync(path.join(APP_DIR, file)));
+      }
       if (req.url.startsWith("/app/")) { res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }); return res.end(page); }
       res.writeHead(404); res.end();
     }).listen(0, "127.0.0.1", () => {
