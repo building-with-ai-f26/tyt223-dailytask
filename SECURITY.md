@@ -100,6 +100,14 @@ New tables `battles` and `battle_players` and two new hero-card columns (`last_w
 - **Tested in the database** (rolled-back transaction, both real accounts, 24 checks): strangers, an empty list and a fake date are refused; the creator can't accept their own battle; invitees can accept once; it starts the next day; reports before the start count nothing; 500 XP is counted as 150, future days and junk keys are ignored; 8-key reports are refused; claiming early is refused; prizes (50 coins + trophy for the winner, 5 for the other) are paid once; a player with battles off can't be challenged and nobody can switch it on for them; a 4th battle is refused; declined battles disappear; signed-out visitors get `permission denied`.
 - **Supabase advisor:** the same expected warning for signed-in users calling these functions.
 
+### 11. Battles become Tavern Feasts (Build 4, Nov 25)
+The builder replaced competitive battles with a cooperative **Tavern Feast** (friends fill one table together for 3 days). `supabase/feasts.sql` adds six functions (`start_feast`, `respond_feast`, `cancel_feast`, `report_feast_xp`, `my_feasts`, `claim_feast_reward`) on the same locked tables (still named `battles` / `battle_players` internally). Backup taken first, including a new account's save.
+
+- **One feast at a time** per person; only accepted friends with **Open to feast invites** on; only the host can cancel, and only before anyone says yes.
+- **Same XP limits** as before: days inside the window only, at most 150 per person per day. **Everyone gets the same reward** (full table 40 coins + badge, half 15, otherwise 5), paid once per person after the last day.
+- **Tested in the database** (rolled-back transaction, both real accounts, 19 checks): strangers refused; a second feast refused while in one; a guest can't cancel the host's feast; the host can cancel only before a yes; the goal grows with the party (180 then 360); 400 XP counts as 150; claiming early refused; both players get the same 15 coins for 250/360 and 40 for a full table, once each; signed-out visitors refused.
+- The old battle functions are removed after the app update goes live (`feasts.sql`, last lines).
+
 ## What I fixed
 1. Added per-user rate limits to `fetch-calendar` (30/hour) and test notifications (5/hour), with friendly messages in the app; built the AI `suggest` function with a login requirement, 30/hour per user and a daily cap from the start.
 2. Removed user counts from the scheduled reminder run's reply.

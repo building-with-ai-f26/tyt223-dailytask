@@ -370,37 +370,71 @@
     .lb-name small { display: inline-flex; align-items: center; gap: 3px; }
     .lb-xp { font-family: var(--display); font-size: 20px; white-space: nowrap; color: var(--gold-ink); }
     .btn.sm { padding: 6px 12px; font-size: 13px; }
-    /* Battles */
-    .battle-card { border: 1px solid var(--border); border-radius: 12px; background: var(--card); padding: 10px 12px; margin-bottom: 10px; }
-    .battle-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
-    .battle-head b { font-size: 14px; overflow-wrap: anywhere; }
-    .battle-head .muted { margin-left: auto; font-size: 12px; }
-    .duel { display: flex; justify-content: space-between; gap: 8px; }
-    .duel-side { display: flex; align-items: center; gap: 8px; min-width: 0; }
-    .duel-side > span { display: flex; flex-direction: column; min-width: 0; }
-    .duel-side b { font-size: 13px; overflow-wrap: anywhere; }
-    .duel-side.right { text-align: right; }
-    .duel-side.right > span { align-items: flex-end; }
-    .duel-bar { position: relative; height: 12px; margin: 12px 6px 4px; border-radius: 6px; background: linear-gradient(#DD8D79, var(--danger)); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15); }
-    .duel-bar > div { height: 100%; border-radius: 6px 0 0 6px; background: linear-gradient(#86BC90, var(--accent)); transition: width .4s ease; }
-    .duel-mark { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--card); box-shadow: 0 0 0 1px var(--gold), 0 1px 3px rgba(0, 0, 0, .2); }
-    .duel-note { margin: 8px 0 0; font-size: 12px; text-align: center; }
-    .battle-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
-    .battle-row .lb-name b { font-size: 13px; }
-    .battle-card > .btn { margin-top: 10px; width: 100%; }
-    .battle-waiting { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .battle-waiting .face { width: 26px; height: 26px; }
+    /* Tavern feasts */
+    .tav-hero { position: relative; display: block; width: 100%; padding: 6px 8px 12px; border: 1px solid var(--border); border-radius: 14px; background: linear-gradient(#FFF8EC, #F3E6CC); text-align: center; color: var(--ink); font: inherit; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+    .tav-hero:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .tav-hero:disabled { cursor: default; }
+    .tav-art { width: 100%; height: auto; display: block; }
+    .tav-name { display: block; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-ink); font-weight: 700; margin-top: 2px; }
+    .tav-hero b { font-family: var(--serif); font-weight: 400; font-size: 21px; display: block; margin: 2px 0 2px; }
+    .tav-hero > span { display: block; font-size: 13px; color: var(--muted); }
+    .tav-hero .hand { font-family: var(--hand); font-size: 19px; color: var(--gold-ink); margin-top: 4px; }
+    .feast { border: 1px solid var(--border); border-radius: 14px; background: var(--card); padding: 12px; }
+    .feast-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+    .feast-head b { font-family: var(--serif); font-weight: 400; font-size: 19px; overflow-wrap: anywhere; }
+    .feast-head .muted { font-size: 12px; white-space: nowrap; }
+    .guests { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 12px; margin-bottom: -6px; position: relative; z-index: 1; }
+    .guest { display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 600; max-width: 56px; overflow-wrap: anywhere; text-align: center; }
+    .guest .face { width: 40px; height: 40px; }
+    .guest.invited { opacity: .45; }
+    .feast-table { position: relative; min-height: 54px; border-radius: 10px 10px 4px 4px; background: linear-gradient(#C08A5E, #9C6A45); box-shadow: inset 0 -6px 0 rgba(0,0,0,.12), 0 3px 0 #6B4630; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-around; gap: 4px; padding: 10px 8px; }
+    .feast-table.bare { background: linear-gradient(#CDA27C, #B08561); }
+    .dish { width: 27px; height: 27px; flex: none; border-radius: 50%; display: grid; place-items: center; background: #FBF4E4; box-shadow: 0 0 0 2px #E4D3AE, 0 2px 0 rgba(0,0,0,.15); }
+    .dish.open { background: rgba(255,250,240,.22); box-shadow: 0 0 0 2px rgba(255,250,240,.55); }
+    .dish.open::after { content: ""; width: 12px; height: 12px; border-radius: 50%; border: 1.5px dashed rgba(255,250,240,.7); }
+    .feast-legs { display: flex; justify-content: space-between; padding: 0 26px; height: 12px; }
+    .feast-legs i { width: 8px; height: 12px; background: #6B4630; border-radius: 0 0 3px 3px; }
+    .feast-bar { margin: 10px 0 4px; height: 10px; border-radius: 6px; background: var(--gold-soft); box-shadow: inset 0 0 0 1px rgba(198,154,80,.5); overflow: hidden; }
+    .feast-bar div { height: 100%; background: linear-gradient(#E9C77A, var(--gold)); transition: width .5s ease; }
+    .feast-meta { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+    .feast-meta b { font-family: var(--display); font-weight: 400; font-size: 18px; color: var(--gold-ink); }
+    .feast-note { margin: 10px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
+    .thanks { margin: 8px 0 0; font-family: var(--hand); font-size: 18px; color: var(--muted); text-align: center; line-height: 1.2; }
+    .feast-actions { text-align: center; margin-top: 6px; }
+    .feast > .btn { margin-top: 12px; width: 100%; }
+    .feast-strip { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 10px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--card); color: var(--ink); font-size: 13px; font-weight: 600; text-align: left; }
+    .feast-strip .muted { margin-left: auto; font-weight: 500; }
+    /* the invitation letter */
+    .feast-invite h2 { font-family: var(--serif); font-weight: 400; font-size: 26px; margin: 4px 0 2px; text-align: center; }
+    .feast-invite .sub { text-align: center; color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+    .feast-invite .seal-top { width: 46px; height: 46px; margin: -4px auto 4px; display: grid; place-items: center; border-radius: 47% 53% 50% 46% / 52% 46% 54% 48%;
+      background: radial-gradient(circle at 34% 30%, #C9654D 0, #9B3527 45%, #6F2219 100%); box-shadow: inset 0 0 0 3px rgba(60,14,8,.28), 0 2px 4px rgba(60,20,10,.35); transform: rotate(-6deg); }
+    .feast-invite .letter { padding: 14px 14px 12px; border: 1px solid var(--gold); border-radius: 8px; background: linear-gradient(#FFFBF3, var(--gold-soft));
+      box-shadow: inset 0 0 0 3px #FFFBF3, inset 0 0 0 4px rgba(198,154,80,.4); transition: transform .35s ease, opacity .35s ease; }
+    .portraits { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px 6px; margin: 4px 0 12px; }
+    .por { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; position: relative; cursor: pointer; text-align: center; overflow-wrap: anywhere; }
+    .por input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .por .ring { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; background: var(--card); box-shadow: 0 0 0 2px var(--border); transition: box-shadow .15s; }
+    .por .ring svg { width: 40px; height: 40px; }
+    .por:has(input:checked) .ring { box-shadow: 0 0 0 3px var(--gold), 0 0 0 6px var(--gold-soft); background: #FFF6E2; }
+    .por:has(input:checked)::after { content: "✓"; position: absolute; top: -2px; right: calc(50% - 32px); width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; display: grid; place-items: center; }
+    .por:has(input:focus-visible) .ring { outline: 2px solid var(--accent); outline-offset: 4px; }
+    .por.off { opacity: .45; cursor: default; }
+    .por small { font-weight: 500; color: var(--muted); font-size: 10px; }
+    .feast-invite .facts { display: grid; gap: 6px; margin: 0 0 12px; font-size: 13px; }
+    .feast-invite .facts div { display: flex; align-items: center; gap: 8px; }
+    .feast-invite .feast-reward { padding: 8px 0 2px; border-top: 1px dashed var(--gold); font-size: 13px; color: var(--gold-ink); font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 6px; text-align: center; }
+    .feast-invite .send { margin-top: 14px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; padding: 11px; }
+    .feast-invite .dot { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, #C9654D, #8E2E22); box-shadow: inset 0 0 0 2px rgba(60,14,8,.3); flex: none; }
+    .feast-invite .note { text-align: center; font-family: var(--hand); font-size: 19px; color: var(--muted); margin: 10px 0 0; }
+    .feast-invite.sealing .dot { animation: seal-press .55s ease; }
+    .feast-invite.sealing .letter { transform: translateY(-14px) scale(.96); opacity: .6; }
+    @keyframes seal-press { 0% { transform: scale(1); } 40% { transform: scale(1.6) rotate(-12deg); } 100% { transform: scale(1) rotate(0); } }
+    @media (prefers-reduced-motion: reduce) { .feast-invite.sealing .dot { animation: none; } .feast-invite .letter, .tav-hero, .feast-bar div { transition: none; } }
+    .prize-line { font-family: var(--display); font-size: 26px; color: var(--gold-ink); margin: 6px 0 14px; }
     .crown-tag { display: inline-flex; vertical-align: -1px; margin-left: 4px; }
     .champion-note { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 13px; color: var(--gold-ink); font-weight: 600; }
-    .pick-list { display: grid; gap: 6px; margin: 10px 0; }
-    .pick-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); cursor: pointer; }
-    .pick-row input { width: auto; margin: 0; accent-color: var(--accent); }
-    .pick-row > span { display: flex; flex-direction: column; }
-    .pick-row.off { opacity: .55; cursor: default; }
-    .prize-line { font-family: var(--display); font-size: 26px; color: var(--gold-ink); margin: 6px 0 14px; }
-    .battle-strip { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 10px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 10px;
-      background: var(--card); color: var(--ink); font-size: 13px; font-weight: 600; text-align: left; }
-    .battle-strip .muted { margin-left: auto; font-weight: 500; }
     /* Accounts: login sheet and sync status */
     .auth h2 { margin-bottom: 4px; }
     .auth .btn { width: 100%; margin-top: 14px; }
@@ -1739,7 +1773,7 @@
       return {
         quests: [], goals: [], rewards: [], claims: [], events: [], templates: [], feeds: [], nextId: 1,
         lifetimeXp: 0, spendableXp: 0,
-        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0, boss: null, bossesDefeated: 0, gear: { owned: [], pet: null, frame: null, title: null }, landmarksClaimed: [], chronicles: {}, battleWins: 0,
+        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0, boss: null, bossesDefeated: 0, gear: { owned: [], pet: null, frame: null, title: null }, landmarksClaimed: [], chronicles: {}, feastBadges: 0,
         theme: "classic", dayOffset: 0,
         avatar: "mint", shields: 0, chestOn: null, achievements: {}, weeklyGoalsDone: 0,
         catXp: { Class: 0, Recruiting: 0, Events: 0, Personal: 0 },
@@ -2072,29 +2106,39 @@
         .sort((a, b) => b.xpNow - a.xpNow || (b.level || 0) - (a.level || 0) || String(a.name).localeCompare(String(b.name)));
     }
 
-    // ---------- Battles (pure) ----------
-    // The database (supabase/battles.sql) decides who wins and pays prizes; these mirror its rules for display.
-    const BATTLE_DAYS = 3, BATTLE_DAILY_CAP = 150, BATTLE_MAX_FRIENDS = 5, BATTLE_MAX_ACTIVE = 3, BATTLE_INVITE_DAYS = 2;
-    const BATTLE_PRIZES = { win: 50, second: 25, third: 10, finish: 5 };
+    // ---------- Tavern feasts (pure) ----------
+    // Friends fill one table together for 3 days. The database (supabase/feasts.sql) keeps the score and pays the
+    // rewards; these mirror its rules for display.
+    const FEAST_DAYS = 3, FEAST_DAILY_CAP = 150, FEAST_XP_PER_PERSON_DAY = 60, FEAST_MAX_FRIENDS = 5, FEAST_INVITE_DAYS = 2;
+    const FEAST_REWARDS = { full: 40, half: 15, base: 5 };
+    const FEAST_DISHES = ["pancake", "boba", "popcorn"];
     // XP earned on each of the given days, capped like the server: { "2026-11-26": 120, ... }.
-    function battleDayXp(state, dates) {
+    function feastDayXp(state, dates) {
       const out = {};
-      for (const d of dates) out[d] = Math.min(BATTLE_DAILY_CAP, xpBetween(state, d, d));
+      for (const d of dates) out[d] = Math.min(FEAST_DAILY_CAP, xpBetween(state, d, d));
       return out;
     }
-    // Where a battle stands today: waiting (invites out), expired, scheduled (starts tomorrow), active or over.
-    function battlePhase(b, today, nowMs = Date.now()) {
-      if (b.status === "waiting") return nowMs - Date.parse(b.created_at) > BATTLE_INVITE_DAYS * 86400000 ? "expired" : "waiting";
-      if (today < b.start_day) return "scheduled";
-      return today <= b.end_day ? "active" : "over";
+    // Where a feast stands today: waiting (invitations out), expired, scheduled (begins tomorrow), active or over.
+    function feastPhase(f, today, nowMs = Date.now()) {
+      if (f.status === "waiting") return nowMs - Date.parse(f.created_at) > FEAST_INVITE_DAYS * 86400000 ? "expired" : "waiting";
+      if (today < f.start_day) return "scheduled";
+      return today <= f.end_day ? "active" : "over";
     }
-    // Players who accepted, most XP first; ties share the better place.
-    function battleStandings(players) {
-      const inBattle = (players || []).filter((p) => p.status === "accepted").slice().sort((a, b) => b.xp - a.xp || String(a.name).localeCompare(String(b.name)));
-      return inBattle.map((p) => Object.assign({}, p, { place: 1 + inBattle.filter((q) => q.xp > p.xp).length }));
+    function feastDayNumber(f, today) { return Math.round((parseDate(today) - parseDate(f.start_day)) / 86400000) + 1; }
+    // The shared table: everyone who joined adds up; the goal is 60 XP per person per day.
+    function feastTable(players) {
+      const guests = (players || []).filter((p) => p.status === "accepted");
+      const total = guests.reduce((n, p) => n + (Number(p.xp) || 0), 0);
+      const goal = FEAST_DAYS * FEAST_XP_PER_PERSON_DAY * Math.max(1, guests.length);
+      const plates = guests.length <= 2 ? 6 : 9;
+      return { guests, total, goal, plates, dishes: Math.min(plates, Math.floor((total / goal) * plates)), full: total >= goal };
     }
-    function battleDayNumber(b, today) { return Math.round((parseDate(today) - parseDate(b.start_day)) / 86400000) + 1; }
-    function ordinal(n) { return n + (n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th"); }
+    function feastReward(total, goal) { return total >= goal ? FEAST_REWARDS.full : total * 2 >= goal ? FEAST_REWARDS.half : FEAST_REWARDS.base; }
+    // "Ana brought 140 XP · Jordan 95 · you 105"
+    function feastThanks(players) {
+      const guests = (players || []).filter((p) => p.status === "accepted").slice().sort((a, b) => b.xp - a.xp);
+      return guests.map((p, i) => (p.me ? (i === 0 ? "You" : "you") : p.name) + (i === 0 ? " brought " + p.xp + " XP" : " " + p.xp)).join(" · ");
+    }
     // Last week's Tavern Champion(s): the most XP last week (more than 0) among me and my friends.
     function tavernChampions(me, friends, lastMonday) {
       const all = [Object.assign({ isMe: true }, me)].concat(friends.filter((x) => x.status === "accepted"));
@@ -2241,7 +2285,7 @@
       return `<div class="board-head">
           <h2>Today's Quests${todayMode === "quests" ? ` (${total})` : ""}</h2>
         </div>
-        ${pageTabs(todayMode)}<div class="page tabbed">${todayMode === "quests" ? bossStrip(today) + battleStrip(today) + renderTodayList(today) : renderSchedule(today)}</div>
+        ${pageTabs(todayMode)}<div class="page tabbed">${todayMode === "quests" ? bossStrip(today) + feastStrip(today) + renderTodayList(today) : renderSchedule(today)}</div>
         <p class="muted" style="text-align:center;margin-top:18px">This demo records visits, clicks and session replays with PostHog to improve DailyQuest. The text you type is hidden from recordings.</p>`;
     }
     let bossHitAt = 0;
@@ -2850,7 +2894,7 @@
         writeMeta(Object.assign(readMeta(), { user: userId, syncedAt: data.updated_at }));
         account.sync = "saved";
         syncHeroCard();
-        reportBattleXp();
+        reportFeastXp();
         if (account.again || readMeta().pending) { account.again = false; clearTimeout(account.timer); account.timer = setTimeout(pushNow, 300); }
       }
       refreshAccountUi();
@@ -3372,16 +3416,16 @@
     // avatar, level, streak and XP this week. Every friend action goes through a database function that checks
     // who is asking; the app can read and change only its own hero card directly.
     const social = {};
-    function resetSocial() { Object.assign(social, { me: null, friends: [], battles: [], loaded: false, loading: null, loadedAt: 0, error: "", results: null, query: "", sentCard: "", sentBattle: "" }); }
+    function resetSocial() { Object.assign(social, { me: null, friends: [], feasts: [], loaded: false, loading: null, loadedAt: 0, error: "", results: null, query: "", sentCard: "", sentFeast: "" }); }
     resetSocial();
     function avatarId(a) { return AVATARS.some((x) => x.id === a) ? a : "mint"; }
     function face(avatar, big) { return `<span class="face${big ? " big" : ""}">${mascotSvg(avatarId(avatar))}</span>`; }
     function rerenderFriends() { updateTavernDot(); if (tab === "tavern" && $("sheetOverlay").hidden) render(); }
-    // A red dot on the Tavern tab while a friend request or battle invite waits, or a prize is ready to claim.
+    // A red dot on the Tavern tab while a friend request or feast invitation waits, or a feast reward is ready.
     function tavernNeedsYou() {
       const today = getToday();
       return (social.friends || []).some((x) => x.status === "pending" && x.incoming) ||
-        (social.battles || []).some((b) => { const p = battlePhase(b, today); return (b.my_status === "invited" && (p === "waiting" || p === "scheduled")) || (b.my_status === "accepted" && p === "over" && !b.claimed); });
+        (social.feasts || []).some((f) => { const p = feastPhase(f, today); return (f.my_status === "invited" && (p === "waiting" || p === "scheduled")) || (f.my_status === "accepted" && p === "over" && !f.claimed); });
     }
     function updateTavernDot() { const dot = $("tavernDot"); if (dot) dot.hidden = !tavernNeedsYou(); }
     function socialFail() { toast("Couldn't reach your account. Try again in a moment.", "scroll"); }
@@ -3394,19 +3438,19 @@
         try {
           const { data: me, error } = await account.client.from("profiles").select("*").eq("user_id", account.user.id).maybeSingle();
           if (error) throw error;
-          let friends = [], battles = social.battles || [];
+          let friends = [], feasts = social.feasts || [];
           if (me) {
             const res = await account.client.rpc("friend_list");
             if (res.error) throw res.error;
             friends = res.data || [];
-            const b = await account.client.rpc("my_battles");   // battles failing shouldn't hide friends
-            if (!b.error) battles = b.data || [];
+            const fe = await account.client.rpc("my_feasts");   // feasts failing shouldn't hide friends
+            if (!fe.error) feasts = fe.data || [];
           }
-          Object.assign(social, { me, friends, battles, loaded: true, loadedAt: Date.now(), error: "" });
+          Object.assign(social, { me, friends, feasts, loaded: true, loadedAt: Date.now(), error: "" });
         } catch (e) { social.error = "Couldn't open your friends list. Check your connection and try again."; }
         social.loading = null;
         rerenderFriends();
-        if (social.me) { syncHeroCard(); hideFromNameSearch(); reportBattleXp(); }
+        if (social.me) { syncHeroCard(); hideFromNameSearch(); reportFeastXp(); }
       })();
       return social.loading;
     }
@@ -3421,19 +3465,19 @@
       if (error) social.sentCard = ""; else Object.assign(social.me, stats);
     }
 
-    // Sends XP per day (last 4 days) for battles that are on now or ended yesterday, then refreshes the scores.
-    async function reportBattleXp(force) {
+    // Sends XP per day (last 4 days) for a feast that's on now or ended yesterday, then refreshes the table.
+    async function reportFeastXp(force) {
       if (!account.user || !social.me) return;
       const today = getToday();
-      const live = (social.battles || []).filter((b) => b.my_status === "accepted" && b.status === "active" && b.start_day <= today && b.end_day >= addDays(today, -1));
+      const live = (social.feasts || []).filter((f) => f.my_status === "accepted" && f.status === "active" && f.start_day <= today && f.end_day >= addDays(today, -1));
       if (!live.length) return;
-      const days = battleDayXp(state, [0, 1, 2, 3].map((n) => addDays(today, -n))), key = today + JSON.stringify(days);
-      if (!force && key === social.sentBattle) return;
-      social.sentBattle = key;
-      const { error } = await account.client.rpc("report_battle_xp", { p_today: today, p_days: days });
-      if (error) { social.sentBattle = ""; return; }
-      const res = await account.client.rpc("my_battles");
-      if (!res.error) { social.battles = res.data || []; rerenderFriends(); }
+      const days = feastDayXp(state, [0, 1, 2, 3].map((n) => addDays(today, -n))), key = today + JSON.stringify(days);
+      if (!force && key === social.sentFeast) return;
+      social.sentFeast = key;
+      const { error } = await account.client.rpc("report_feast_xp", { p_today: today, p_days: days });
+      if (error) { social.sentFeast = ""; return; }
+      const res = await account.client.rpc("my_feasts");
+      if (!res.error) { social.feasts = res.data || []; rerenderFriends(); }
     }
 
     // Friends are added only by friend code, and every request must be accepted. Cards made before name search
@@ -3500,8 +3544,10 @@
       const id = Number(btn.dataset.id);
       switch (action) {
         case "friend-close": closeSheet(); return;
-        case "battle-new": openBattlePicker(Number(btn.dataset.id) || null); return;
-        case "battle-accept": case "battle-decline": case "battle-claim": battleAction(action, id); return;
+        case "feast-new":
+          if (currentFeast(getToday())) { if (!$("sheetOverlay").hidden) closeSheet(); toast("You're already in a feast. One at a time!", "tankard"); return; }
+          openFeastInvite(Number(btn.dataset.id) || null); return;
+        case "feast-accept": case "feast-decline": case "feast-cancel": case "feast-claim": feastAction(action, id); return;
         case "friend-retry": social.error = ""; render(); loadSocial(); return;
         case "friend-share": shareCode(); return;
         case "friend-copy-code":
@@ -3535,8 +3581,8 @@
           const xp = x.week === weekDays(getToday())[0] ? Number(x.week_xp) || 0 : 0;
           openSheet(`<div class="info">${face(x.avatar, true)}<h2>${esc(x.name)}</h2>
             <p>Level ${Number(x.level) || 1} · ${Number(x.streak) || 0}-day streak · ${xp} XP this week</p>
-            <p class="muted">Friend code ${esc(x.code)}${x.duels_open === false ? " · battles turned off" : ""}</p>
-            <div class="toolbar" style="justify-content:center;margin:0"><button class="btn" data-action="battle-new" data-id="${x.id}" ${x.duels_open === false ? "disabled" : ""}>${px("sword", 14)} Challenge</button><button class="btn soft" data-action="friend-close">Close</button><button class="btn danger" data-action="friend-remove" data-id="${x.id}">Remove friend</button></div></div>`);
+            <p class="muted">Friend code ${esc(x.code)}${x.duels_open === false ? " · not taking feast invites" : ""}</p>
+            <div class="toolbar" style="justify-content:center;margin:0"><button class="btn" data-action="feast-new" data-id="${x.id}" ${x.duels_open === false ? "disabled" : ""}>${px("tankard", 14)} Invite to a feast</button><button class="btn soft" data-action="friend-close">Close</button><button class="btn danger" data-action="friend-remove" data-id="${x.id}">Remove friend</button></div></div>`);
           return;
         }
         case "friend-remove": {
@@ -3553,116 +3599,165 @@
       }
     }
 
-    function battleStrip(today) {
+    // ---------- Tavern feasts (page) ----------
+    // The feast you're in (one at a time): waiting, scheduled, running, or over and not yet collected.
+    function currentFeast(today) {
+      return (social.feasts || []).map((f) => ({ f, phase: feastPhase(f, today) }))
+        .find((x) => x.f.my_status === "accepted" && x.phase !== "expired" && !(x.phase === "over" && x.f.claimed)) || null;
+    }
+    function feastStrip(today) {
       if (!account.user || !social.me) return "";
-      const b = (social.battles || []).find((x) => x.my_status === "accepted" && battlePhase(x, today) === "active");
-      if (!b) return "";
-      const st = battleStandings(b.players), me = st.find((p) => p.me) || st[0], rival = st.find((p) => !p.me);
-      const score = st.length === 2 ? `You ${me.xp} · ${esc(rival.name)} ${rival.xp}` : `You're ${ordinal(me.place)} of ${st.length} · ${me.xp} XP`;
-      return `<button class="battle-strip" data-tab="tavern" aria-label="Battle: ${score}. Open the Tavern.">${px("sword", 22)}<span>${score}</span><span class="muted">Day ${battleDayNumber(b, today)} of ${BATTLE_DAYS}</span></button>`;
+      const cur = currentFeast(today);
+      if (!cur || cur.phase !== "active") return "";
+      const t = feastTable(cur.f.players);
+      return `<button class="feast-strip" data-tab="tavern" aria-label="Tavern feast: ${t.total} of ${t.goal} XP together. Open the Tavern.">${px("pancake", 22)}<span>Feast · ${t.total} / ${t.goal} XP</span><span class="muted">Day ${feastDayNumber(cur.f, today)} of ${FEAST_DAYS}</span></button>`;
     }
-    function battleCard(b, phase, today) {
-      const players = b.players || [], st = battleStandings(players);
+    // A hand-drawn tavern in the same ink style as the adventure map.
+    function tavernArt() {
+      return `<svg class="tav-art" viewBox="0 0 340 178" aria-hidden="true">
+        <defs><filter id="tavInk"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
+        <radialGradient id="tavGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFE2A0" stop-opacity=".9"/><stop offset="1" stop-color="#FFE2A0" stop-opacity="0"/></radialGradient></defs>
+        <g filter="url(#tavInk)" stroke="#3a2f26" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M10 162 Q90 156 170 160 T330 158" fill="none"/>
+          <path d="M60 175 Q120 166 150 162 M190 162 Q230 168 280 176" fill="none" stroke-width="1" opacity=".5"/>
+          <rect x="232" y="24" width="16" height="30" fill="#B07A55"/>
+          <path d="M240 20 q-8 -6 0 -11 q8 -5 0 -9 M247 15 q5 -4 2 -8" fill="none" stroke-width="1.2" opacity=".55"/>
+          <path d="M58 78 L170 20 L282 78 Z" fill="#8E5E40"/>
+          <path d="M78 68 L170 30 L262 68 M98 58 L170 40 L242 58" fill="none" stroke-width="1" opacity=".45"/>
+          <rect x="72" y="76" width="196" height="86" fill="#F4E4C4"/>
+          <path d="M72 98 H268 M120 76 V162 M220 76 V162 M72 76 L120 98 M268 76 L220 98" fill="none" stroke-width="2.2" stroke="#6B4630"/>
+          <circle cx="96" cy="126" r="26" fill="url(#tavGlow)" stroke="none"/><circle cx="244" cy="126" r="26" fill="url(#tavGlow)" stroke="none"/>
+          <rect x="84" y="112" width="24" height="26" rx="3" fill="#F6CB6E"/><path d="M96 112 V138 M84 125 H108" stroke-width="1.2"/>
+          <rect x="232" y="112" width="24" height="26" rx="3" fill="#F6CB6E"/><path d="M244 112 V138 M232 125 H256" stroke-width="1.2"/>
+          <path d="M150 162 V122 Q170 100 190 122 V162 Z" fill="#7A4E34"/>
+          <path d="M170 162 V104 Q182 108 190 122 V162 Z" fill="#F6CB6E"/>
+          <circle cx="164" cy="140" r="1.6" fill="#3a2f26"/>
+          <path d="M190 86 H226 M200 86 V92 M218 86 V92" fill="none" stroke-width="1.4"/>
+          <rect x="194" y="92" width="30" height="20" rx="4" fill="#FBF2E0"/>
+          <path d="M140 102 v6" fill="none"/><rect x="135" y="108" width="10" height="13" rx="2" fill="#F6CB6E"/>
+          <ellipse cx="128" cy="154" rx="9" ry="3" fill="#B07A55"/><path d="M119 154 V140 Q128 136 137 140 V154" fill="#B07A55"/><path d="M119 146 Q128 149 137 146" fill="none" stroke-width="1"/>
+          <path d="M206 162 q-4 -12 2 -18 M210 162 q4 -14 10 -16 M214 162 q0 -10 -6 -14" fill="none" stroke="#4f7d55" stroke-width="1.6"/>
+        </g>
+        <g transform="translate(201 94)">${px("tankard", 16)}</g>
+      </svg>`;
+    }
+    function tavernHero() {
+      const friends = social.friends.filter((x) => x.status === "accepted");
+      return `<button class="tav-hero" data-action="feast-new" ${friends.length ? "" : "disabled"} aria-label="Gather your friends for a three-day feast">${tavernArt()}
+        <small class="tav-name">The Sprout &amp; Tankard</small><b>Gather your friends</b>
+        <span>Plan a 3-day feast together. Every quest you finish brings food to the table.</span>
+        <span class="hand">${friends.length ? "Tap the tavern to send invitations" : "Add a friend below, then gather here"}</span></button>`;
+    }
+    function feastCard(f, phase, today) {
+      const players = f.players || [], t = feastTable(players);
+      const seated = players.filter((p) => p.status === "accepted"), invited = players.filter((p) => p.status === "invited");
+      const names = (list) => { const n = list.map((p) => esc(p.name)); return n.length > 1 ? n.slice(0, -1).join(", ") + " &amp; " + n[n.length - 1] : n[0] || ""; };
       const others = players.filter((p) => !p.me && p.status !== "declined");
-      const title = others.length === 1 ? "You vs " + esc(others[0].name) : "Battle of " + (others.length + 1);
-      const invited = others.filter((p) => p.status === "invited").map((p) => esc(p.name));
-      const when = phase === "waiting" ? "Waiting to start" : phase === "scheduled" ? "Starts " + relative(b.start_day, today).toLowerCase()
-        : phase === "active" ? `Day ${battleDayNumber(b, today)} of ${BATTLE_DAYS} · ends ${relative(b.end_day, today).toLowerCase()}` : "Battle over";
-      let body;
+      const when = phase === "waiting" ? "Waiting for a yes" : phase === "scheduled" ? "Begins " + relative(f.start_day, today).toLowerCase()
+        : phase === "active" ? `Day ${feastDayNumber(f, today)} of ${FEAST_DAYS} · ends ${relative(f.end_day, today).toLowerCase()}` : "The feast is over";
+      const guests = seated.concat(invited).map((p) => `<span class="guest${p.status === "invited" ? " invited" : ""}">${face(p.avatar)}${p.me ? "You" : esc(p.name)}</span>`).join("");
+      const plates = Array.from({ length: t.plates }, (_, i) => (i < t.dishes ? `<span class="dish">${px(FEAST_DISHES[i % FEAST_DISHES.length], 16)}</span>` : '<span class="dish open"></span>')).join("");
+      let below;
       if (phase === "waiting") {
-        body = `<div class="battle-waiting">${others.map((p) => face(p.avatar)).join("")}<span>Waiting for ${invited.join(", ") || "friends"} to accept. It starts the day after someone does.</span></div>`;
-      } else if (st.length === 2) {
-        const me = st.find((p) => p.me) || st[0], rival = st.find((p) => p !== me), total = me.xp + rival.xp, share = total ? Math.round((me.xp / total) * 100) : 50;
-        const diff = me.xp - rival.xp;
-        const note = phase === "scheduled" ? "Finish quests once it starts to pull ahead."
-          : phase === "over" ? (diff > 0 ? "You won!" : diff < 0 ? esc(rival.name) + " won this one." : "A tie!")
-          : diff > 0 ? `You're ahead by ${diff} XP` : diff < 0 ? `${esc(rival.name)} leads by ${-diff} XP` : "Neck and neck";
-        body = `<div class="duel"><div class="duel-side">${face(me.avatar)}<span><b>You</b><span class="lb-xp">${me.xp} XP</span></span></div>
-          <div class="duel-side right"><span><b>${esc(rival.name)}</b><span class="lb-xp">${rival.xp} XP</span></span>${face(rival.avatar)}</div></div>
-          <div class="duel-bar" role="img" aria-label="You ${me.xp} XP, ${esc(rival.name)} ${rival.xp} XP"><div style="width:${share}%"></div><span class="duel-mark" style="left:${share}%">${px("sword", 14)}</span></div>
-          <p class="muted duel-note">${note}${phase === "active" ? " · up to " + BATTLE_DAILY_CAP + " XP a day counts" : ""}</p>`;
+        below = invited.length ? `<p class="feast-note">Waiting for ${names(invited)} to say yes. The feast begins the day after someone does.</p>` : '<p class="feast-note">No one could make it this time.</p>';
+        if (f.mine) below += `<div class="feast-actions"><button class="linkbtn" data-action="feast-cancel" data-id="${f.id}">${invited.length ? "Cancel invitations" : "Close"}</button></div>`;
+      } else if (phase === "scheduled") {
+        below = `<p class="feast-note">The table is set. The feast begins ${relative(f.start_day, today).toLowerCase()}${invited.length ? `, and ${names(invited)} can still join` : ""}.</p>`;
       } else {
-        body = st.map((p) => `<div class="battle-row"><span class="lb-rank medal m${Math.min(p.place, 3)}"${p.place > 3 ? ' style="background:none;box-shadow:none"' : ""}>${p.place}</span>${face(p.avatar)}<span class="lb-name"><b>${esc(p.name)}${p.me ? '<span class="you-tag">You</span>' : ""}</b></span><span class="lb-xp">${p.xp} XP</span></div>`).join("") +
-          (invited.length ? `<p class="muted duel-note">Still invited: ${invited.join(", ")}</p>` : "");
+        const left = Math.max(0, t.plates - t.dishes), pct = Math.min(100, Math.round((t.total / t.goal) * 100));
+        below = `<div class="feast-bar" role="img" aria-label="${t.total} of ${t.goal} XP together"><div style="width:${pct}%"></div></div>
+          <div class="feast-meta"><span><b>${t.total}</b> / ${t.goal} XP together</span><span>${t.full ? "A full table!" : left + (left === 1 ? " more dish" : " more dishes") + " to a full table"}</span></div>
+          <p class="thanks">${esc(feastThanks(players))}.${phase === "active" ? " Keep it going!" : ""}</p>`;
+        if (phase === "over") below += `<button class="btn" data-action="feast-claim" data-id="${f.id}">${px("chest", 16)} Collect your reward</button>`;
       }
-      const claim = phase === "over" && !b.claimed ? `<button class="btn" data-action="battle-claim" data-id="${b.id}">${px("trophy", 16)} Claim your prize</button>` : "";
-      return `<div class="battle-card"><div class="battle-head">${px("sword", 16)}<b>${title}</b><span class="muted">${when}</span></div>${body}${claim}</div>`;
+      return `<div class="feast"><div class="feast-head"><b>Feast with ${names(others) || "friends"}</b><span class="muted">${when}</span></div>
+        <div class="guests">${guests}</div><div class="feast-table${phase === "waiting" ? " bare" : ""}">${plates}</div><div class="feast-legs"><i></i><i></i></div>${below}</div>`;
     }
-    function battlesPanel(today) {
-      const shown = (social.battles || []).filter((b) => b.my_status === "accepted").map((b) => ({ b, phase: battlePhase(b, today) }))
-        .filter((x) => x.phase !== "expired" && !(x.phase === "over" && x.b.claimed));
-      const friends = social.friends.filter((x) => x.status === "accepted");
-      const running = shown.filter((x) => x.phase !== "over").length;
-      const start = friends.length ? `<button class="btn sm" data-action="battle-new" ${running < BATTLE_MAX_ACTIVE ? "" : "disabled"}>${px("sword", 14)} Start a battle</button>` : "";
-      const toggle = `<label class="feed-toggle" style="white-space:normal;margin-top:10px"><input type="checkbox" data-social="battles" ${social.me.duels_open !== false ? "checked" : ""} /> Open to battles (friends can challenge me)</label>`;
-      if (!shown.length) return `<div class="panel" style="margin-top:0"><h3>Battles</h3>
-        <p class="muted" style="margin:-4px 0 10px">Challenge 1 to 5 friends to a 3-day battle. Whoever earns the most quest XP wins ${BATTLE_PRIZES.win} coins and a trophy.</p>
-        ${friends.length ? start : '<p class="muted">Add a friend first, then challenge them here.</p>'}${toggle}</div>`;
-      return `<div class="panel" style="margin-top:0"><h3>Battles</h3>${shown.map((x) => battleCard(x.b, x.phase, today)).join("")}
-        <div class="toolbar" style="margin:4px 0 0">${start}${running >= BATTLE_MAX_ACTIVE ? '<span class="muted">3 battles at once is the limit</span>' : ""}</div>${toggle}</div>`;
+    // The top of the Tavern: the tavern picture, or the feast table while you're in one.
+    function feastTop(today) {
+      const cur = currentFeast(today);
+      return `<div class="panel" style="margin-top:0">${cur ? feastCard(cur.f, cur.phase, today) : tavernHero()}</div>`;
     }
-    function openBattlePicker(preId) {
+    function openFeastInvite(preId) {
       const friends = social.friends.filter((x) => x.status === "accepted");
-      const rows = friends.map((x) => {
+      const portraits = friends.map((x) => {
         const open = x.duels_open !== false;
-        return `<label class="pick-row${open ? "" : " off"}"><input type="checkbox" name="bfriend" value="${esc(x.id)}" ${open ? "" : "disabled"} ${open && x.id === preId ? "checked" : ""} />${face(x.avatar)}<span><b>${esc(x.name)}</b><small class="muted">${open ? "Level " + (Number(x.level) || 1) : "Battles turned off"}</small></span></label>`;
+        return `<label class="por${open ? "" : " off"}"><input type="checkbox" name="ffriend" value="${esc(x.id)}" ${open ? "" : "disabled"} ${open && x.id === preId ? "checked" : ""} /><span class="ring">${mascotSvg(avatarId(x.avatar))}</span>${esc(x.name)}${open ? "" : "<small>not taking invites</small>"}</label>`;
       }).join("");
-      openSheet(`<h2>Start a battle</h2>
-        <p class="muted">Pick 1 to 5 friends. Once someone accepts, the battle starts the next day and runs ${BATTLE_DAYS} days. Most quest XP wins (up to ${BATTLE_DAILY_CAP} a day counts).</p>
-        <form id="battleForm"><div class="pick-list">${rows}</div>
-        <p class="muted" style="font-size:12px;margin:0 0 12px">Prizes: winner ${BATTLE_PRIZES.win} coins and a trophy · in battles of 3 or more, 2nd ${BATTLE_PRIZES.second} and 3rd ${BATTLE_PRIZES.third} · everyone else ${BATTLE_PRIZES.finish}.</p>
-        <button class="btn" type="submit">${px("sword", 16)} Send challenge</button></form>`);
+      openSheet(`<form id="feastForm" class="feast-invite"><div class="seal-top">${px("tankard", 22)}</div>
+        <h2>A Tavern Feast</h2><p class="sub">3 days together · fill the table as a party</p>
+        <div class="letter"><div class="portraits">${portraits}</div>
+          <div class="facts"><div>${px("calendar", 18)} Starts the day after a friend says yes</div><div>${px("pancake", 18)} Every quest anyone finishes adds to the table</div><div>${px("flame", 18)} Up to ${FEAST_DAILY_CAP} XP a day each counts</div></div>
+          <div class="feast-reward">${px("chest", 18)} Full table: everyone gets ${FEAST_REWARDS.full} coins + a feast badge</div></div>
+        <button class="btn send" type="submit"><span class="dot"></span><span id="feastSendLabel"></span></button>
+        <p class="note">Tap a portrait to invite them</p></form>`);
+      updateFeastSend();
     }
-    async function submitBattle() {
-      const ids = [...document.querySelectorAll("#battleForm input[name=bfriend]:checked")].map((i) => Number(i.value));
-      if (!ids.length) { toast("Pick at least one friend", "scroll"); return; }
-      if (ids.length > BATTLE_MAX_FRIENDS) { toast("Up to 5 friends per battle", "scroll"); return; }
-      const btn = document.querySelector("#battleForm button[type=submit]");
+    function updateFeastSend() {
+      const n = document.querySelectorAll("#feastForm input[name=ffriend]:checked").length, label = $("feastSendLabel");
+      if (label) label.textContent = n ? `Seal & send to ${n} ${n === 1 ? "friend" : "friends"}` : "Pick friends to invite";
+    }
+    async function submitFeast() {
+      const form = $("feastForm"), ids = [...form.querySelectorAll("input[name=ffriend]:checked")].map((i) => Number(i.value));
+      if (!ids.length) { toast("Tap a friend's portrait to invite them", "scroll"); return; }
+      if (ids.length > FEAST_MAX_FRIENDS) { toast("Up to 5 friends per feast", "scroll"); return; }
+      const btn = form.querySelector("button[type=submit]");
       btn.disabled = true;
-      const { data, error } = await account.client.rpc("start_battle", { friend_ids: ids, p_today: getToday() });
-      btn.disabled = false;
-      if (error) { socialFail(); return; }
-      if (data !== "started") {
-        toast({ not_friends: "You can only challenge your friends", closed: "Someone you picked has battles turned off", too_many: "You're already in 3 battles (or started 10 today)", bad_size: "Pick 1 to 5 friends", bad_date: "Your device's date looks off. Check it and try again.", no_profile: "Create your adventurer card first" }[data] || "Couldn't start the battle", "scroll");
+      form.classList.add("sealing");   // press the wax seal before sending
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) await new Promise((r) => setTimeout(r, 600));
+      const { data, error } = await account.client.rpc("start_feast", { friend_ids: ids, p_today: getToday() });
+      if (error || data !== "started") {
+        form.classList.remove("sealing"); btn.disabled = false;
+        if (error) { socialFail(); return; }
+        toast({ busy: "You're already in a feast", closed: "Someone you picked isn't taking feast invites", too_many: "That's a lot of invitations for one day. Try again tomorrow.", not_friends: "You can only invite your friends", bad_size: "Pick 1 to 5 friends", bad_date: "Your device's date looks off. Check it and try again.", no_profile: "Create your adventurer card first" }[data] || "Couldn't send the invitations", "scroll");
         return;
       }
-      track("battle_started", { players: ids.length + 1 });
+      track("feast_started", { players: ids.length + 1 });
       closeSheet();
-      toast("Challenge sent! It starts the day after someone accepts.", "sword");
+      toast("Invitations sent! The feast begins the day after someone says yes.", "tankard");
       await loadSocial();
     }
-    async function setBattlesOpen(on) {
+    async function setFeastsOpen(on) {
       const { error } = await account.client.from("profiles").update({ duels_open: on }).eq("user_id", account.user.id);
       if (error) { socialFail(); render(); return; }
       social.me.duels_open = on;
-      toast(on ? "Friends can challenge you to battles" : "Battles turned off. Friends can't challenge you.", "check");
+      toast(on ? "Friends can invite you to feasts" : "Feast invites turned off", "check");
     }
-    async function battleAction(action, id) {
+    async function feastAction(action, id) {
       const today = getToday();
-      if (action === "battle-accept" || action === "battle-decline") {
-        const accept = action === "battle-accept";
-        const { data, error } = await account.client.rpc("respond_battle", { p_battle: id, p_accept: accept, p_today: today });
+      if (action === "feast-accept" || action === "feast-decline") {
+        const accept = action === "feast-accept";
+        const { data, error } = await account.client.rpc("respond_feast", { p_battle: id, p_accept: accept, p_today: today });
         if (error) { socialFail(); return; }
-        if (data === "accepted" || data === "declined") track(accept ? "battle_accepted" : "battle_declined");
-        toast({ accepted: "Battle accepted! It starts tomorrow.", declined: "Battle declined", expired: "That invite has expired", too_late: "That battle has already started", too_many: "You're already in 3 battles", bad_date: "Your device's date looks off. Check it and try again." }[data] || "That invite isn't available anymore", data === "accepted" ? "sword" : "scroll");
+        if (data === "accepted" || data === "declined") track(accept ? "feast_accepted" : "feast_declined");
+        toast({ accepted: "You're in! The feast begins tomorrow.", declined: "Maybe next time", busy: "Finish your current feast first", expired: "That invitation has expired", too_late: "That feast has already begun", bad_date: "Your device's date looks off. Check it and try again." }[data] || "That invitation isn't available anymore", data === "accepted" ? "tankard" : "scroll");
         await loadSocial();
         return;
       }
-      if (action === "battle-claim") {
-        await reportBattleXp(true);   // make sure the last day's XP is in
-        const { data, error } = await account.client.rpc("claim_battle_prize", { p_battle: id, p_today: today });
+      if (action === "feast-cancel") {
+        const f = (social.feasts || []).find((x) => x.id === id);
+        if (f && (f.players || []).some((p) => p.status === "invited") && !confirm("Cancel this feast? Your friends' invitations will be withdrawn.")) return;
+        const { error } = await account.client.rpc("cancel_feast", { p_battle: id });
+        if (error) { socialFail(); return; }
+        track("feast_cancelled");
+        await loadSocial();
+        return;
+      }
+      if (action === "feast-claim") {
+        await reportFeastXp(true);   // make sure the last day's XP is on the table
+        const { data, error } = await account.client.rpc("claim_feast_reward", { p_battle: id, p_today: today });
         if (error || !data) { socialFail(); return; }
-        if (!data.ok) { toast({ not_over: "The battle isn't over yet", already_claimed: "You already claimed this prize" }[data.error] || "Couldn't claim the prize", "scroll"); await loadSocial(); return; }
+        if (!data.ok) { toast({ not_over: "The feast isn't over yet", already_claimed: "You already collected this reward" }[data.error] || "Couldn't collect the reward", "scroll"); await loadSocial(); return; }
         state.spendableXp += Number(data.coins) || 0;
-        if (data.trophy) state.battleWins = (state.battleWins || 0) + 1;
+        if (data.full) state.feastBadges = (state.feastBadges || 0) + 1;
         save();
-        track("battle_prize_claimed", { place: data.place, players: data.players, coins: data.coins });
+        track("feast_reward_collected", { full: !!data.full, players: data.players, coins: data.coins });
         await loadSocial();
         render();
-        const heading = data.trophy ? "Victory!" : data.place <= 3 && data.players >= 3 && data.xp > 0 ? ordinal(data.place) + " place!" : "Battle complete";
-        openSheet(`<div class="info">${px(data.trophy ? "trophy" : "medal", 56)}<h2>${heading}</h2>
-          <p>${data.trophy ? "You earned the most XP" : "You finished " + ordinal(data.place) + " of " + data.players} with ${Number(data.xp) || 0} XP.</p>
-          <p class="prize-line">+${Number(data.coins) || 0} coins${data.trophy ? " · +1 trophy" : ""}</p>
+        const half = !data.full && data.total * 2 >= data.goal;
+        openSheet(`<div class="info">${px(data.full ? "chest" : half ? "pancake" : "tankard", 56)}<h2>${data.full ? "A full table!" : half ? "A cozy feast" : "Thanks for coming"}</h2>
+          <p>Together you brought ${Number(data.total) || 0} of ${Number(data.goal) || 0} XP to the feast.</p>
+          <p class="prize-line">+${Number(data.coins) || 0} coins${data.full ? " · +1 feast badge" : ""}</p>
           <button class="btn" data-action="friend-close">Collect</button></div>`);
       }
     }
@@ -3678,16 +3773,18 @@
         <p class="muted" style="margin:0 0 12px">Pick the name your friends will see. You'll get a friend code to share.</p>${heroFormHtml()}</div>`;
       const me = Object.assign({}, social.me, heroCardStats(state, today));
       const incoming = social.friends.filter((x) => x.status === "pending" && x.incoming), outgoing = social.friends.filter((x) => x.status === "pending" && !x.incoming);
-      const wins = Number(state.battleWins) || 0;
+      const badges = Number(state.feastBadges) || 0;
       const card = `<div class="panel"><h3>Your adventurer card</h3>
-        <div class="hero-card">${face(me.avatar)}<div><b>${esc(me.name)}</b><div class="muted">Level ${me.level} · ${me.streak}-day streak${wins ? ` · ${px("trophy", 12)} ${wins} ${wins === 1 ? "win" : "wins"}` : ""}</div></div>
+        <div class="hero-card">${face(me.avatar)}<div><b>${esc(me.name)}</b><div class="muted">Level ${me.level} · ${me.streak}-day streak${badges ? ` · ${px("pancake", 12)} ${badges} ${badges === 1 ? "feast" : "feasts"}` : ""}</div></div>
           <div class="code-box"><button class="code-tag" data-action="friend-copy-code" aria-label="Friend code ${esc(me.code)}. Tap to copy"><small>Friend code</small><b>${esc(me.code)}</b><span class="mini-seal" aria-hidden="true">${px("tankard", 16)}</span></button><span class="muted">Tap to copy</span></div></div>
-        <div class="toolbar" style="margin:12px 0 0"><button class="btn" data-action="friend-share">Share my code</button><button class="btn soft" data-action="hero-rename">Rename</button></div></div>`;
-      const invites = (social.battles || []).filter((b) => b.my_status === "invited" && ["waiting", "scheduled"].includes(battlePhase(b, today)));
-      const inviteRows = invites.map((b) => {
-        const host = (b.players || []).find((p) => p.creator) || {}, n = (b.players || []).filter((p) => p.status !== "declined").length;
-        return `<div class="friend-row">${face(host.avatar)}<div><div class="feed-name">${esc(host.name || "A friend")} challenged you</div><div class="feed-meta">3-day battle · ${n > 2 ? n + " players" : "just you two"}${battlePhase(b, today) === "scheduled" ? " · starts " + relative(b.start_day, today).toLowerCase() : ""}</div></div>
-          <button class="btn sm" data-action="battle-accept" data-id="${b.id}">Accept</button><button class="linkbtn" data-action="battle-decline" data-id="${b.id}">Decline</button></div>`;
+        <div class="toolbar" style="margin:12px 0 0"><button class="btn" data-action="friend-share">Share my code</button><button class="btn soft" data-action="hero-rename">Rename</button></div>
+        <label class="feed-toggle" style="white-space:normal;margin-top:10px"><input type="checkbox" data-social="feasts" ${social.me.duels_open !== false ? "checked" : ""} /> Open to feast invites</label></div>`;
+      const invites = (social.feasts || []).filter((f) => f.my_status === "invited" && ["waiting", "scheduled"].includes(feastPhase(f, today)));
+      const busy = !!currentFeast(today);
+      const inviteRows = invites.map((f) => {
+        const host = (f.players || []).find((p) => p.creator) || {}, n = (f.players || []).filter((p) => p.status !== "declined").length;
+        return `<div class="friend-row">${face(host.avatar)}<div><div class="feed-name">${esc(host.name || "A friend")} invited you to a feast</div><div class="feed-meta">${busy ? "Finish your current feast first" : "3 days · " + (n > 2 ? "with " + (n - 1) + " friends" : "just the two of you")}</div></div>
+          <button class="btn sm" data-action="feast-accept" data-id="${f.id}" ${busy ? "disabled" : ""}>Accept</button><button class="linkbtn" data-action="feast-decline" data-id="${f.id}">Decline</button></div>`;
       }).join("");
       const requests = incoming.length || outgoing.length || invites.length ? `<div class="panel"><h3>Waiting at the door</h3>${inviteRows}
         ${incoming.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Level ${Number(x.level) || 1} · wants to join your table</div></div>
@@ -3703,7 +3800,7 @@
         return p.isMe ? `<div class="lb-row me">${inner}</div>` : `<button class="lb-row" data-action="friend-open" data-id="${p.id}" aria-label="${esc(p.name)}: ${p.xpNow} XP this week">${inner}</button>`;
       }).join("");
       const weekOf = nice(weekDays(today)[0], { month: "short", day: "numeric" });
-      const board_ = `<div class="panel"><h3>This week's regulars</h3>
+      const board_ = `<div class="panel"><h3>Guest book</h3>
         ${board.length > 1 ? `<p class="muted" style="margin:-4px 0 10px">Week of ${weekOf} · XP from quests finished since Monday. Tap a friend to see their card.</p>`
           : `<p class="hand-note">Every quest is easier with friends.</p><p class="muted" style="margin:0 0 10px">Share your friend code, or add a friend with theirs below.</p>`}
         <div class="lb">${rows}</div>
@@ -3716,7 +3813,7 @@
       const add = `<div class="panel"><h3>Add a friend</h3>
         <p class="muted" style="margin:-4px 0 10px">Enter their friend code. They'll get a request and need to accept it.</p>
         <form id="friendSearch" class="friend-search"><input id="friendQuery" maxlength="6" placeholder="e.g. 4VXBLZ" value="${esc(social.query)}" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Friend code" /><button class="btn soft" type="submit">Find</button></form>${results}</div>`;
-      return battlesPanel(today) + requests + card + board_ + add;
+      return feastTop(today) + requests + card + board_ + add;
     }
 
     function loginActions() {
@@ -3728,7 +3825,7 @@
       const head = `<div class="page"><div class="board-head"><h2>The Tavern</h2></div>`;
       if (account.status === "off") return head + `<div class="panel" style="margin-top:0"><p class="muted">Friends need accounts, which aren't set up in this copy of DailyQuest.</p></div></div>`;
       if (!account.user) {
-        const perks = [["star", "Add your friends and cheer each other on"], ["trophy", "See who earns the most XP each week"], ["sword", "Challenge friends to 3-day XP battles"], ["shield", "Friends see your level and XP, never your quests"]];
+        const perks = [["star", "Add your friends and cheer each other on"], ["trophy", "See who earns the most XP each week"], ["pancake", "Gather friends for 3-day tavern feasts"], ["shield", "Friends see your level and XP, never your quests"]];
         return head + `<div class="panel sealed" style="margin-top:0">
           <div class="seal-wrap" aria-hidden="true"><div class="wax-seal">${px("tankard", 38)}</div></div>
           <h3>The tavern is for members</h3>
@@ -4119,7 +4216,7 @@
         const action = btn.dataset.action;
         // Undo only covers the latest completion; any other change closes that window.
         if (lastCompletion && !["undo-complete", "moment-next", "complete", "check-in"].includes(action)) lastCompletion = null;
-        if (/^(friend|hero|battle)-/.test(action)) { socialAction(action, btn); return; }
+        if (/^(friend|hero|feast)-/.test(action)) { socialAction(action, btn); return; }
         switch (action) {
           case "complete": {
             const quest = state.quests.find((q) => q.id === id);
@@ -4322,7 +4419,7 @@
         if (e.target.id === "pasteForm") { findPastedQuests(); return; }
         if (e.target.id === "heroForm") { submitHeroCard(); return; }
         if (e.target.id === "friendSearch") { findByCode(); return; }
-        if (e.target.id === "battleForm") { submitBattle(); return; }
+        if (e.target.id === "feastForm") { submitFeast(); return; }
         const today = getToday();
         lastCompletion = null;
         if (e.target.id === "captureForm") {
@@ -4379,7 +4476,8 @@
           }
           return;
         }
-        if (e.target.dataset && e.target.dataset.social === "battles") { setBattlesOpen(e.target.checked); return; }
+        if (e.target.dataset && e.target.dataset.social === "feasts") { setFeastsOpen(e.target.checked); return; }
+        if (e.target.name === "ffriend") { updateFeastSend(); return; }
         if (e.target.dataset && e.target.dataset.feedQuests) { setFeedQuests(e.target.dataset.feedQuests, e.target.checked); return; }
         if (e.target.id === "themeSelect") { state.theme = e.target.value; save(); render(); }
         if (e.target.id === "eRepeat") $("eDays").hidden = e.target.value !== "days";

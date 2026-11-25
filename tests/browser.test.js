@@ -103,85 +103,105 @@ test("Tavern: add a friend by code only; requests wait for acceptance; nothing p
   allTrue(out);
 });
 
-// A pretend Supabase with one friend (Ana) for battles. Dates follow the app's own "today".
-const FAKE_BATTLES = `
-window.__db = { battles: [], rpcs: [], updates: [], reports: [] };
+// A pretend Supabase with one friend (Ana) for feasts. Dates follow the app's own "today".
+const FAKE_FEASTS = `
+window.__db = { feasts: [], rpcs: [], updates: [], reports: [] };
 window.supabase = { createClient() {
   let cb = null; const session = { user: { id: "u1", email: "me@example.com", app_metadata: { provider: "email" } } };
   setTimeout(() => cb && cb("INITIAL_SESSION", session), 0);
   const ok = (d) => Promise.resolve(Object.assign({ error: null }, d || {}));
   const clone = (x) => x == null ? x : JSON.parse(JSON.stringify(x));
   const T = () => getToday(), lastMon = () => addDays(weekDays(T())[0], -7);
-  const me = () => ({ user_id: "u1", name: "Sabrina", code: "SAB234", avatar: "mint", level: 4, streak: 2, week_xp: 0, week: weekDays(T())[0], last_week_xp: 40, last_week: lastMon(), searchable: false, duels_open: true });
+  const goal = (f) => 180 * f.players.filter((p) => p.status === "accepted").length;
   window.__me = null;
   return {
     auth: { onAuthStateChange(f) { cb = f; return { data: { subscription: { unsubscribe() {} } } }; }, signOut() { return ok(); } },
     from(t) { return {
-      select() { return { eq() { return { maybeSingle() { if (t !== "profiles") return ok({ data: null }); __me = __me || me(); return ok({ data: clone(__me) }); } }; } }; },
+      select() { return { eq() { return { maybeSingle() { if (t !== "profiles") return ok({ data: null });
+        __me = __me || { user_id: "u1", name: "Sabrina", code: "SAB234", avatar: "mint", level: 4, streak: 2, week_xp: 0, week: weekDays(T())[0], last_week_xp: 40, last_week: lastMon(), searchable: false, duels_open: true };
+        return ok({ data: clone(__me) }); } }; } }; },
       upsert(row) { return { select() { return { single() { return ok({ data: { updated_at: row.updated_at } }); } }; } }; },
       update(o) { return { eq() { __db.updates.push(clone(o)); Object.assign(__me, o); return ok(); } }; },
     }; },
     rpc(name, args) {
       __db.rpcs.push(name);
       if (name === "friend_list") return ok({ data: [{ id: 7, status: "accepted", incoming: false, name: "Ana", code: "ANA234", avatar: "berry", level: 5, streak: 4, week_xp: 0, week: weekDays(T())[0], duels_open: true, last_week_xp: 300, last_week: lastMon() }] });
-      if (name === "my_battles") return ok({ data: clone(__db.battles) });
-      if (name === "start_battle") {
-        __db.battles.unshift({ id: 1, status: "waiting", start_day: null, end_day: null, created_at: new Date().toISOString(), mine: true, my_status: "accepted", claimed: false,
+      if (name === "my_feasts") return ok({ data: __db.feasts.map((f) => Object.assign(clone(f), { goal: goal(f) })) });
+      if (name === "start_feast") {
+        if (__db.feasts.some((f) => f.my_status === "accepted" && !f.claimed)) return ok({ data: "busy" });
+        __db.feasts.unshift({ id: 1, status: "waiting", start_day: null, end_day: null, created_at: new Date().toISOString(), mine: true, my_status: "accepted", claimed: false,
           players: [{ name: "Sabrina", avatar: "mint", status: "accepted", xp: 0, me: true, creator: true }, { name: "Ana", avatar: "berry", status: "invited", xp: 0, me: false, creator: false }] });
         return ok({ data: args.friend_ids.length === 1 && args.friend_ids[0] === 7 ? "started" : "not_friends" });
       }
-      if (name === "respond_battle") {
-        const b = __db.battles.find((x) => x.id === args.p_battle);
-        if (!b || b.my_status !== "invited") return ok({ data: "not_invited" });
-        b.my_status = args.p_accept ? "accepted" : "declined"; b.players.find((p) => p.me).status = b.my_status;
-        if (args.p_accept && b.status === "waiting") Object.assign(b, { status: "active", start_day: addDays(args.p_today, 1), end_day: addDays(args.p_today, 3) });
+      if (name === "cancel_feast") { const n = __db.feasts.length; __db.feasts = __db.feasts.filter((f) => !(f.id === args.p_battle && f.mine && f.status === "waiting")); return ok({ data: __db.feasts.length < n }); }
+      if (name === "respond_feast") {
+        const f = __db.feasts.find((x) => x.id === args.p_battle);
+        if (!f || f.my_status !== "invited") return ok({ data: "not_invited" });
+        f.my_status = args.p_accept ? "accepted" : "declined"; f.players.find((p) => p.me).status = f.my_status;
+        if (args.p_accept && f.status === "waiting") Object.assign(f, { status: "active", start_day: addDays(args.p_today, 1), end_day: addDays(args.p_today, 3) });
         return ok({ data: args.p_accept ? "accepted" : "declined" });
       }
-      if (name === "report_battle_xp") { __db.reports.push(clone(args)); for (const b of __db.battles) if (b.status === "active" && b.my_status === "accepted") b.players.find((p) => p.me).xp = Math.min(150, args.p_days[args.p_today] || 0); return ok({ data: 1 }); }
-      if (name === "claim_battle_prize") { const b = __db.battles.find((x) => x.id === args.p_battle); b.claimed = true; return ok({ data: { ok: true, place: 1, players: 2, coins: 50, trophy: true, xp: 120 } }); }
+      if (name === "report_feast_xp") {   // like the database: add up the feast's days (each capped at 150), ignore days outside it
+        __db.reports.push(clone(args));
+        for (const f of __db.feasts) if (f.status === "active" && f.my_status === "accepted")
+          f.players.find((p) => p.me).xp = Object.entries(args.p_days).filter(([d]) => d >= f.start_day && d <= f.end_day && d <= args.p_today).reduce((n, [, v]) => n + Math.min(150, v), 0);
+        return ok({ data: 1 });
+      }
+      if (name === "claim_feast_reward") { const f = __db.feasts.find((x) => x.id === args.p_battle); f.claimed = true; const total = f.players.reduce((n, p) => n + p.xp, 0);
+        return ok({ data: { ok: true, full: total >= goal(f), total, goal: goal(f), players: 2, coins: total >= goal(f) ? 40 : total * 2 >= goal(f) ? 15 : 5 } }); }
       return ok({ data: null });
     },
   };
 } };`;
 
-test("Battles: challenge a friend, accept an invite, live score on Today, claim the prize, Tavern Champion crown", { skip, timeout: 120000 }, async () => {
-  const out = await runInBrowser({ accounts: "fake", fake: FAKE_BATTLES, driver: `
+test("Feasts: the tavern picture invites friends, joining a feast swaps in the table, quests add dishes, everyone collects", { skip, timeout: 120000 }, async () => {
+  const out = await runInBrowser({ accounts: "fake", fake: FAKE_FEASTS, driver: `
     const r = {}; const text = () => q("#view").textContent; const sheet = () => document.getElementById("sheetOverlay");
+    window.confirm = () => true;   // "Cancel this feast?" would otherwise wait forever in a headless browser
     q('[data-tab="tavern"]').click();
-    r.battlesPanelFirst = await until(() => q("#view .panel h3") && q("#view .panel h3").textContent === "Battles");
-    r.championCrown = text().includes("Last week's Tavern Champion: Ana") && !!q(".lb-row .crown-tag");
-    q('[data-action="battle-new"]').click(); await w(80);
-    r.pickerShowsPrizes = !sheet().hidden && sheet().textContent.includes("winner 50 coins");
-    q("#battleForm").requestSubmit(); await w(150);
-    r.mustPickSomeone = !__db.rpcs.includes("start_battle");
-    q('#battleForm input[name="bfriend"]').checked = true; q("#battleForm").requestSubmit();
-    r.challengeSent = await until(() => sheet().hidden && text().includes("Waiting for Ana to accept"));
-    // Ana challenges me back; I accept from "Waiting at the door"
-    __db.battles.unshift({ id: 2, status: "waiting", start_day: null, end_day: null, created_at: new Date().toISOString(), mine: false, my_status: "invited", claimed: false,
+    r.tavernPicture = await until(() => !!q(".tav-hero .tav-art") && text().includes("Gather your friends"));
+    r.guestBookKeepsCrown = text().includes("Guest book") && text().includes("Last week's Tavern Champion: Ana") && !!q(".lb-row .crown-tag");
+    q(".tav-hero").click(); await w(80);
+    r.invitationLetter = !sheet().hidden && sheet().textContent.includes("A Tavern Feast") && !!q(".por .ring") && !/winners or losers/i.test(sheet().textContent);
+    r.sendNeedsAFriend = q("#feastSendLabel").textContent === "Pick friends to invite";
+    q('.por input[name="ffriend"]').click(); await w(30);
+    r.sendCountsFriends = q("#feastSendLabel").textContent === "Seal & send to 1 friend";
+    q("#feastForm").requestSubmit();
+    r.invitationsSent = await until(() => sheet().hidden && text().includes("Waiting for Ana to say yes"));
+    r.tableReplacesPicture = !q(".tav-hero") && !!q(".feast-table.bare");
+    q('[data-action="feast-cancel"]').click();
+    r.cancelBringsTavernBack = await until(() => !!q(".tav-hero"));
+    // Ana invites me; I join from "Waiting at the door"
+    __db.feasts.unshift({ id: 2, status: "waiting", start_day: null, end_day: null, created_at: new Date().toISOString(), mine: false, my_status: "invited", claimed: false,
       players: [{ name: "Ana", avatar: "berry", status: "accepted", xp: 0, me: false, creator: true }, { name: "Sabrina", avatar: "mint", status: "invited", xp: 0, me: true, creator: false }] });
     await loadSocial();
-    r.inviteAtTheDoor = await until(() => text().includes("Ana challenged you") && !document.getElementById("tavernDot").hidden);
-    q('[data-action="battle-accept"][data-id="2"]').click();
-    r.acceptedStartsTomorrow = await until(() => text().includes("Starts tomorrow"));
-    // jump to the first battle day: the duel bar shows, the app reports capped XP, Today shows the strip
+    r.inviteAtTheDoor = await until(() => text().includes("Ana invited you to a feast") && !document.getElementById("tavernDot").hidden);
+    q('[data-action="feast-accept"][data-id="2"]').click();
+    r.tableIsSet = await until(() => text().includes("The table is set") && !q(".tav-hero"));
+    q('[data-action="friend-open"]').click(); await w(50); q('#sheetOverlay [data-action="feast-new"]').click(); await w(80);
+    r.oneFeastAtATime = sheet().hidden && /already in a feast/.test(q("#toast").textContent);
+    // the first feast day: quests add dishes; Today shows the strip
     state.dayOffset = 1; const t = getToday();
+    __db.feasts[0].players[0].xp = 140;
     state.quests.push({ id: 9001, name: "Big quest", day: t, done: true, completedOn: t, xpEarned: 200, category: "Class", difficulty: "Hard" });
-    await reportBattleXp(true); render();
+    await reportFeastXp(true); render();
     r.reportedCapped = __db.reports.length > 0 && __db.reports[__db.reports.length - 1].p_days[t] === 150;
-    r.duelBar = !!q(".duel-bar") && text().includes("You're ahead by 150 XP");
+    r.dishesOnTable = document.querySelectorAll(".feast-table .dish:not(.open)").length === 4 && text().includes("290 / 360 XP together");
+    r.thanksLine = text().includes("You brought 150 XP · Ana 140");
     q('[data-tab="today"]').click(); await w(80);
-    r.todayStrip = !!q(".battle-strip") && q(".battle-strip").textContent.includes("You 150 · Ana 0") && q(".battle-strip").textContent.includes("Day 1 of 3");
-    // after the last day: claim the prize
+    r.todayStrip = !!q(".feast-strip") && q(".feast-strip").textContent.includes("Feast · 290 / 360 XP") && q(".feast-strip").textContent.includes("Day 1 of 3");
+    // after the last day: everyone collects the same reward
+    __db.feasts[0].players[0].xp = 210;
     state.dayOffset = 4; q('[data-tab="tavern"]').click();
-    r.claimButton = await until(() => !!q('[data-action="battle-claim"]'));
+    r.collectButton = await until(() => !!q('[data-action="feast-claim"]'));
     const coins = state.spendableXp;
-    q('[data-action="battle-claim"]').click();
-    r.victory = await until(() => !sheet().hidden && sheet().textContent.includes("Victory!") && sheet().textContent.includes("+50 coins"));
-    r.coinsAndTrophy = state.spendableXp === coins + 50 && state.battleWins === 1;
-    q('[data-action="friend-close"]').click(); await w(60);
-    r.trophyOnCard = text().includes("1 win");
-    q('[data-social="battles"]').click();
-    r.battlesSwitch = await until(() => __db.updates.some((u) => u.duels_open === false));
+    q('[data-action="feast-claim"]').click();
+    r.fullTable = await until(() => !sheet().hidden && sheet().textContent.includes("A full table!") && sheet().textContent.includes("+40 coins"));
+    r.coinsAndBadge = state.spendableXp === coins + 40 && state.feastBadges === 1;
+    q('[data-action="friend-close"]').click();
+    r.pictureBackAfterCollect = await until(() => !!q(".tav-hero") && text().includes("1 feast"));
+    q('[data-social="feasts"]').click();
+    r.feastInvitesSwitch = await until(() => __db.updates.some((u) => u.duels_open === false));
     r.noHorizontalScroll = document.documentElement.scrollWidth <= window.innerWidth;
     return r;` });
   allTrue(out);
