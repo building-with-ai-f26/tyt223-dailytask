@@ -88,7 +88,7 @@ test("Tavern: add a friend by code only; requests wait for acceptance; nothing p
     __db.friends.push({ id: 2, status: "pending", incoming: true, name: "<img src=x onerror=window.__xss=1>", code: "EVL777", avatar: "\\"><script>window.__xss=2<\\/script>", level: 2, streak: 1, week_xp: 30 });
     await loadSocial();
     r.redDot = await until(() => !document.getElementById("tavernDot").hidden);
-    r.scriptNameIsText = window.__xss === undefined && !q("#view img:not(.tav-art)") && text().includes("<img src=x onerror=window.__xss=1>");   // the tavern painting is the only picture allowed
+    r.scriptNameIsText = window.__xss === undefined && !q("#view img") && text().includes("<img src=x onerror=window.__xss=1>");   // the tavern painting is the only picture allowed
     q('[data-action="friend-accept"]').click();
     r.accepted = await until(() => document.querySelectorAll(".lb-row").length === 2 && document.getElementById("tavernDot").hidden);
     const before = __db.updates.length, today = getToday();
@@ -159,8 +159,8 @@ test("Feasts: the tavern picture invites friends, joining a feast swaps in the t
     const r = {}; const text = () => q("#view").textContent; const sheet = () => document.getElementById("sheetOverlay");
     window.confirm = () => true;   // "Cancel this feast?" would otherwise wait forever in a headless browser
     q('[data-tab="tavern"]').click();
-    r.tavernPicture = await until(() => !!q(".tav-hero img.tav-art") && text().includes("Gather your friends"));
-    r.tavernImageLoaded = await until(() => q(".tav-hero img").complete && q(".tav-hero img").naturalWidth === 1200);
+    r.tavernPicture = await until(() => !!q(".tav-hero svg.tav-art.pixel") && text().includes("Gather your friends"));
+    r.tavernBanner = q(".tav-hero .px-banner").textContent === "The Sprout & Tankard";
     r.guestBookKeepsCrown = text().includes("Guest book") && text().includes("Last week's Tavern Champion: Ana") && !!q(".lb-row .crown-tag");
     q(".tav-hero").click(); await w(80);
     r.invitationLetter = !sheet().hidden && sheet().textContent.includes("A Tavern Feast") && !!q(".por .ring") && !/winners or losers/i.test(sheet().textContent);

@@ -375,6 +375,17 @@
     .tav-hero:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
     .tav-hero:disabled { cursor: default; }
     .tav-art { width: 100%; height: auto; display: block; border-radius: 8px; }
+    .tav-art.pixel, .feast-art.pixel { image-rendering: pixelated; border-radius: 6px; box-shadow: 0 0 0 1px rgba(48, 40, 32, .25); }
+    .feast-art.pixel { width: 100%; margin: 0; }
+    .px-banner { font-family: var(--display); font-size: 4.6px; fill: #302820; letter-spacing: .1px; }
+    .px-name { font-family: var(--display); font-size: 3.6px; fill: #FBE9A8; }
+    .px-flicker { animation: px-flicker 3.2s steps(1) infinite; }
+    .px-smoke { animation: px-smoke 4s steps(4) infinite; }
+    .px-twinkle { animation: px-twinkle 2.6s steps(1) infinite; }
+    @keyframes px-flicker { 0%, 100% { opacity: 1; } 30% { opacity: .55; } 34% { opacity: 1; } 62% { opacity: .75; } 66% { opacity: 1; } }
+    @keyframes px-smoke { 0% { transform: translate(0, 0); opacity: 1; } 100% { transform: translate(2px, -4px); opacity: 0; } }
+    @keyframes px-twinkle { 0%, 100% { opacity: .1; } 50% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .px-flicker, .px-smoke, .px-twinkle { animation: none; } }
     .tav-hero { background: linear-gradient(#FBF4E6, #F3E6CC); }
     .tav-name { display: block; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-ink); font-weight: 700; margin-top: 2px; }
     .tav-hero b { font-family: var(--serif); font-weight: 400; font-size: 21px; display: block; margin: 2px 0 2px; }
@@ -388,8 +399,7 @@
     .guest { display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 600; max-width: 56px; overflow-wrap: anywhere; text-align: center; }
     .guest .face { width: 40px; height: 40px; }
     .guest.invited { opacity: .45; }
-    .feast-art { width: calc(100% + 16px); height: auto; display: block; margin: 0 -8px; }
-    .tv-name { font-family: var(--hand); font-size: 12px; fill: #FBF0D8; }
+    .feast-art { width: 100%; height: auto; display: block; }
     .feast-bar { margin: 10px 0 4px; height: 10px; border-radius: 6px; background: var(--gold-soft); box-shadow: inset 0 0 0 1px rgba(198,154,80,.5); overflow: hidden; }
     .feast-bar div { height: 100%; background: linear-gradient(#E9C77A, var(--gold)); transition: width .5s ease; }
     .feast-meta { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
@@ -3608,105 +3618,188 @@
       const t = feastTable(cur.f.players);
       return `<button class="feast-strip" data-tab="tavern" aria-label="Tavern feast: ${t.total} of ${t.goal} XP together. Open the Tavern.">${px("pancake", 22)}<span>Feast · ${t.total} / ${t.goal} XP</span><span class="muted">Day ${feastDayNumber(cur.f, today)} of ${FEAST_DAYS}</span></button>`;
     }
-    // ---------- Ink-and-watercolor painting for the feast table ----------
-    // (The tavern picture itself is a watercolor image, docs/app/img/tavern.jpg.) Built from many small strokes: doubled sketchy ink lines, cross-hatching in the shadows, watercolor washes
-    // with ragged wet edges, a painted vignette and paper grain. A fixed seed keeps every drawing identical.
-    const TV_INK = "#3B2A1E";
-    function tvRand(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-    const tvLine = (d, w = .8, o = 1, c = TV_INK) => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"${o < 1 ? ` opacity="${o}"` : ""}/>`;
-    const tvShape = (d, fill, w = .8, o = 1) => `<path d="${d}" fill="${fill}" stroke="${TV_INK}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"${o < 1 ? ` opacity="${o}"` : ""}/>`;
-    const tvPaint = (d, fill, o = .6) => `<path d="${d}" fill="${fill}" opacity="${o}" filter="url(#tvWet)"/>`;
-    const tvGlow = (cx, cy, rx, ry, c, o = .55) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" opacity="${o}" filter="url(#tvBlur)"/>`;
-    // Parallel hatching clipped to a shape (shadows the way an engraver draws them).
-    function tvHatch(defs, id, shape, x0, y0, x1, y1, gap = 2.6, w = .4, o = .55, cross) {
-      defs.push(`<clipPath id="${id}"><path d="${shape}"/></clipPath>`);
-      const h = y1 - y0; let d = "";
-      for (let k = -h; k < x1 - x0; k += gap) d += `M${(x0 + k).toFixed(1)} ${y1} L${(x0 + k + h).toFixed(1)} ${y0} `;
-      if (cross) for (let k = 0; k < x1 - x0 + h; k += gap * 1.4) d += `M${(x0 + k).toFixed(1)} ${y1} L${(x0 + k - h).toFixed(1)} ${y0} `;
-      return `<g clip-path="url(#${id})">${tvLine(d, w, o)}</g>`;
+    // ---------- Pixel art for the Tavern (same palette and style as the avatars, icons and boss) ----------
+    // Each picture is drawn on a small grid of letters (one letter per pixel), then merged into crisp SVG rectangles.
+    // Extra night and wood tones extend the icon palette; soft light is a separate layer of see-through pixels.
+    const PX_PAL = Object.assign({}, ICON_PALETTE, {
+      1: "#1C2A42", 2: "#26385A", 3: "#344770", 4: "#4D5585", 5: "#7A6694", 6: "#A47C93",   // night sky, top to horizon
+      h: "#2E4A44", j: "#3F5E50", k: "#58775E",                                             // hills, far to near
+      g: "#A9C77F", a: "#FBE9A8", e: "#E58E3A", w: "#5A3C27", v: "#7A5235", u: "#9A6B45",   // leaf light, warm light, wood
+    });
+    function pxGrid(W, H) {
+      const g = Array.from({ length: H }, () => Array(W).fill("."));
+      const set = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && x < W && y >= 0 && y < H) g[y][x] = c; };
+      const rect = (x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
+      const box = (x, y, w, h, fill, edge = "K") => { rect(x, y, w, h, edge); rect(x + 1, y + 1, w - 2, h - 2, fill); };
+      const pts = (list, c) => list.forEach(([x, y]) => set(x, y, c));
+      const svg = () => {
+        let out = "";
+        g.forEach((row, y) => { for (let x = 0; x < W;) { const c = row[x]; if (!PX_PAL[c]) { x++; continue; } let e = x; while (e + 1 < W && row[e + 1] === c) e++; out += `<rect x="${x}" y="${y}" width="${e - x + 1}" height="1" fill="${PX_PAL[c]}"/>`; x = e + 1; } });
+        return out;
+      };
+      return { g, set, rect, box, pts, svg };
     }
-    const TV_FILTERS = (k) => `
-      <filter id="tvWet" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".045" numOctaves="3" seed="${k}"/><feDisplacementMap in="SourceGraphic" scale="7"/><feGaussianBlur stdDeviation=".5"/></filter>
-      <filter id="tvBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
-      <filter id="tvHandA"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="1" seed="${k + 2}"/><feDisplacementMap in="SourceGraphic" scale="1.1"/></filter>
-      <filter id="tvHandB"><feTurbulence type="fractalNoise" baseFrequency=".6" numOctaves="1" seed="${k + 9}"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
-      <filter id="tvGrain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" seed="${k + 4}"/><feColorMatrix values="0 0 0 0 .36  0 0 0 0 .27  0 0 0 0 .18  0 0 0 .55 -.16"/></filter>
-      <filter id="tvEdge"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="4" seed="${k + 6}"/><feDisplacementMap in="SourceGraphic" scale="16"/></filter>`;
+    // See-through pixels for light: [x, y, w, h, color, opacity]
+    const pxLight = (list) => list.map(([x, y, w, h, c, o]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}" opacity="${o}"/>`).join("");
+    // A soft pixel halo: rings of squares, fainter toward the edge.
+    const pxHalo = (cx, cy, r, c, o) => { let out = ""; for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) { const d = Math.hypot(x, y); if (d <= r) out += `<rect x="${cx + x}" y="${cy + y}" width="1" height="1" fill="${c}" opacity="${(o * (1 - d / (r + .5))).toFixed(2)}"/>`; } return out; };
 
-    // Dishes for the feast, each a small shaded ink drawing.
-    const FEAST_FOOD = [
-      `<path d="M-8 0 Q-8 -8 0 -8 Q8 -8 8 0 Z" fill="#D9A35E" stroke="${TV_INK}" stroke-width=".6"/><path d="M-6 -1 Q-6 -6.6 0 -6.6" fill="none" stroke="#F4D9A0" stroke-width="1.2" opacity=".8"/><path d="M-4 -6.6 l2.4 2.4 M0 -7.4 l2.4 2.4 M4 -6.6 l2 2" fill="none" stroke="${TV_INK}" stroke-width=".5"/>`,
-      `<path d="M-8 0 L-6.6 -3.6 H6.6 L8 0 Z" fill="#B97A45" stroke="${TV_INK}" stroke-width=".6"/><path d="M-6.6 -3.6 Q0 -9 6.6 -3.6 Z" fill="#E1A55F" stroke="${TV_INK}" stroke-width=".55"/><path d="M-4 -5 l6 3 M-1 -6.6 l5 3 M2 -6.4 l-5 3.4 M5 -4.6 l-5 3" fill="none" stroke="${TV_INK}" stroke-width=".4"/><path d="M-1 -3.6 l1 -2 l1 2" fill="#B5543A"/>`,
-      `<path d="M-3.6 0 V-9 H3.6 V0 Z" fill="#E9B54E" stroke="${TV_INK}" stroke-width=".6"/><path d="M-1.6 -1 V-8" stroke="#F7DA8E" stroke-width="1.2"/><path d="M-4.2 -9 q1.4 -2.6 2.8 0 q1.4 -2.6 2.8 0 q1.4 -2.6 2.8 0 Z" fill="#FBF6E9" stroke="${TV_INK}" stroke-width=".5"/><path d="M3.6 -7 q3.6 0 3.6 3 q0 3 -3.6 3" fill="none" stroke="${TV_INK}" stroke-width=".7"/><path d="M-3.6 -3 H3.6" stroke="${TV_INK}" stroke-width=".4"/>`,
-      `<ellipse cx="0" cy="-1" rx="8" ry="2.6" fill="#8A6A4C" stroke="${TV_INK}" stroke-width=".5"/><circle cx="-3.4" cy="-3.6" r="3" fill="#C2513C" stroke="${TV_INK}" stroke-width=".5"/><circle cx="3.2" cy="-3.6" r="3" fill="#D9734E" stroke="${TV_INK}" stroke-width=".5"/><circle cx="0" cy="-7.4" r="3" fill="#9FB54E" stroke="${TV_INK}" stroke-width=".5"/><path d="M-4.4 -4.8 a1.2 1.2 0 0 1 1.4 -1 M2.2 -4.8 a1.2 1.2 0 0 1 1.4 -1 M0 -10.4 q.8 -1.8 2.4 -2.2" fill="none" stroke="#FBEFD6" stroke-width=".6"/>`,
-      `<path d="M-8 0 Q-7.4 -8 1 -7 Q8 -6 7 0 Z" fill="#B76E3C" stroke="${TV_INK}" stroke-width=".6"/><path d="M-5 -2 Q-4 -6 1 -5.6" fill="none" stroke="#E7A66A" stroke-width="1.3" opacity=".8"/><path d="M5 -5 l4.4 -3.6" stroke="${TV_INK}" stroke-width="1.4"/><path d="M5 -5 l4.4 -3.6" stroke="#F4EAD6" stroke-width=".7"/><circle cx="9.8" cy="-9.2" r="1.3" fill="#F4EAD6" stroke="${TV_INK}" stroke-width=".4"/><path d="M-6 -1.6 h8 M-5 -3.4 h6" stroke="${TV_INK}" stroke-width=".35" opacity=".6"/>`,
-      `<path d="M-7.6 0 H7.6 V-5 L-7.6 -1.4 Z" fill="#EBC45E" stroke="${TV_INK}" stroke-width=".6"/><path d="M-7.6 -1.4 L7.6 -5 L6 -6.2 L-8.6 -2.4 Z" fill="#F4D985" stroke="${TV_INK}" stroke-width=".5"/><circle cx="-2" cy="-1.2" r=".9" fill="#C99A3A"/><circle cx="3.4" cy="-2.4" r="1.1" fill="#C99A3A"/><circle cx="5.6" cy="-.8" r=".7" fill="#C99A3A"/>`,
-    ];
-    // A candlelit tavern interior: guests seated behind a long trestle table; each filled plate holds a dish.
-    function feastTableArt(t, players) {
-      const R = tvRand(11), defs = [], paint = [], ink = [];
-      const W = 400, H = 176, n = t.plates, x0 = 70, x1 = 330;
-      // back wall, beams, hearth glow, shelf, hanging herbs
-      paint.push(`<rect width="${W}" height="${H}" fill="url(#tvWall)"/>`);
-      paint.push(tvGlow(200, 60, 120, 50, "#F6C36A", .45));
-      ink.push(tvLine("M0 22 H400 M0 26 H400", .8, .7) + tvLine("M70 26 V100 M200 26 V96 M330 26 V100", 3, .45, "#4A3324"));
-      for (let x = 6; x < 400; x += 9) ink.push(tvLine(`M${x} 30 V${100 - R() * 6}`, .35, .25));
-      ink.push(tvShape("M14 58 H58 V61 H14 Z M342 58 H386 V61 H342 Z", "#6B4630", .5));
-      for (const [x, c] of [[18, "#5E7A49"], [26, "#9C4A36"], [34, "#4B6A86"], [44, "#6B4630"], [52, "#C9A15A"], [346, "#9C4A36"], [356, "#5E7A49"], [364, "#C9A15A"], [374, "#4B6A86"], [382, "#6B4630"]])
-        ink.push(tvShape(`M${x - 2.4} 58 V${50 - (x % 3) * 2} q0 -2 2.4 -3 q2.4 1 2.4 3 V58 Z`, c, .5));
-      for (const x of [110, 150, 250, 290]) { ink.push(tvLine(`M${x} 26 V36`, .5)); ink.push(tvLine(`M${x} 36 l-3 10 M${x} 36 l0 11 M${x} 36 l3 10 M${x - 1} 40 l-3 3 M${x + 1} 42 l3 3`, .6, .9, "#5F7F5C")); }
-      const wallInk = ink.length;
-      // seated guests (the players' own avatars), heads and shoulders above the table
-      const seated = (players || []).filter((p) => p.status !== "declined");
-      const gap = Math.min(52, 280 / Math.max(1, seated.length)), start = 200 - (gap * (seated.length - 1)) / 2;
-      const guests = seated.map((p, i) => {
-        const x = start + i * gap, svg = mascotSvg(avatarId(p.avatar)).replace("<svg ", `<svg x="${(x - 19).toFixed(1)}" y="40" width="38" height="36" `);
-        return `<g${p.status === "invited" ? ' opacity=".4"' : ""}>${tvGlow(x, 74, 22, 8, "#3B2A1E", .25)}${svg}<text x="${x.toFixed(1)}" y="35" text-anchor="middle" class="tv-name">${p.me ? "You" : esc(p.name)}</text></g>`;
-      }).join("");
-      // the table: top, cloth runner, apron, legs, bench
-      const top = "M28 80 H372 L394 118 H6 Z";
-      paint.push(tvPaint(top, "#9C6B45", .95));
-      let grain = "";
-      for (let i = 0; i < 9; i++) { const y = 84 + i * 3.8; grain += `M${(20 - i * 1.6).toFixed(1)} ${y.toFixed(1)} q90 ${(R() - .5) * 3} 180 0 t${(180 + i * 3).toFixed(1)} 0 `; }
-      ink.push(tvLine(grain, .35, .55, "#3B2A1E"));
-      const runner = "M60 86 H340 L352 108 H48 Z";
-      paint.push(`<path d="${runner}" fill="#F1E5C8"/>`);
-      ink.push(tvShape(runner, "none", .6) + tvLine("M57 89 H343 M50 105 H350", .4, .7, "#9C4A36") + tvLine("M57 91 H343 M50 103 H350", .3, .5, "#9C4A36"));
-      ink.push(tvShape(top, "none", 1));
-      paint.push(tvPaint("M6 118 H394 V128 H6 Z", "#7A5236", .95));
-      ink.push(tvShape("M6 118 H394 V128 H6 Z", "none", .8) + tvHatch(defs, "tvApron", "M6 118 H394 V128 H6 Z", 4, 116, 396, 130, 2.2, .35, .6));
-      let fringe = "M48 108";
-      for (let x = 48; x < 352; x += 8) fringe += ` q4 7 8 0`;
-      paint.push(`<path d="${fringe} V108 Z" fill="#EADBB9"/>`); ink.push(tvLine(fringe, .5, .9));
-      for (const x of [34, 366]) { const leg = `M${x - 6} 128 h12 l-2 30 h-8 Z`; paint.push(tvPaint(leg, "#6B4630", .95)); ink.push(tvShape(leg, "none", .8) + tvHatch(defs, "tvLeg" + x, leg, x - 6, 126, x + 7, 160, 1.8, .35, .7)); }
-      ink.push(tvLine("M34 146 H366", 2.2, .8, "#4A3324"));
-      paint.push(tvPaint("M18 160 H382 L376 168 H24 Z", "#5B3F2C", .9)); ink.push(tvShape("M18 160 H382 L376 168 H24 Z", "none", .7));
-      // candelabras with three flames each
-      for (const x of [36, 364]) {
-        paint.push(tvGlow(x, 54, 26, 24, "#F6C35C", .65));
-        ink.push(tvLine(`M${x} 98 V72 M${x - 9} 74 Q${x} 82 ${x + 9} 74 M${x - 9} 74 V66 M${x + 9} 74 V66 M${x - 5} 98 H${x + 5}`, .9, 1, "#6B4630"));
-        for (const dx of [-9, 0, 9]) { const y = dx ? 66 : 62; ink.push(tvShape(`M${x + dx - 1.6} ${y} V${y - 10} H${x + dx + 1.6} V${y} Z`, "#F6EEDA", .45) + `<path d="M${x + dx} ${y - 10} q-2.4 -3.6 0 -7.2 q2.4 3.6 0 7.2 Z" fill="#F2B347" stroke="${TV_INK}" stroke-width=".3"/>`); }
+    // The Sprout & Tankard at night (64 x 56 pixels).
+    function pixelTavern() {
+      const W = 64, H = 56, oy = 6, P = pxGrid(W, H);
+      const set = (x, y, c) => P.set(x, y + oy, c), rect = (x, y, w, h, c) => P.rect(x, y + oy, w, h, c), box = (x, y, w, h, f, e) => P.box(x, y + oy, w, h, f, e), pts = (l, c) => l.forEach(([x, y]) => set(x, y, c));
+      // night sky in bands, dithered where they meet
+      const bands = ["1", "2", "3", "4", "5", "6"];
+      for (let y = 0; y < 48; y++) { const b = Math.min(5, Math.floor(y / 8)), next = bands[Math.min(5, b + 1)]; for (let x = 0; x < W; x++) P.set(x, y, y % 8 >= 6 && (x + y) % 2 ? next : bands[b]); }
+      // stars and a bigger crescent moon
+      P.pts([[3, 9], [9, 14], [21, 10], [27, 13], [36, 8], [47, 12], [61, 18], [5, 22], [58, 26]], "a");
+      P.pts([[54, 8], [55, 8], [56, 8], [53, 9], [54, 9], [52, 10], [53, 10], [52, 11], [52, 12], [53, 12], [52, 13], [53, 13], [53, 14], [54, 14], [54, 15], [55, 15], [56, 15]], "Y");
+      P.pts([[54, 10], [53, 11], [54, 13]], "a");
+      // rolling hills behind the tavern
+      for (let x = 0; x < W; x++) {
+        const far = Math.round(34 + Math.sin(x / 7) * 2.2 + Math.sin(x / 3.1) * .8), near = Math.round(39 + Math.sin((x + 9) / 9) * 2.4);
+        for (let y = far; y < 48; y++) P.set(x, y, y >= near ? "j" : "h");
+        if (x % 5 === 2 && far < 37) P.set(x, far - 1, "h");
       }
-      // plates and dishes
-      const plates = Array.from({ length: n }, (_, i) => {
-        const x = (x0 + ((x1 - x0) * i) / (n - 1)).toFixed(1), full = i < t.dishes;
-        const plate = `<ellipse rx="14" ry="5" fill="#C9C4B8" stroke="${TV_INK}" stroke-width=".6"/><ellipse rx="9.6" ry="3.2" fill="#DAD6CC" stroke="${TV_INK}" stroke-width=".35"/><path d="M-11 -2 q4 -2.4 9 -2.6" fill="none" stroke="#F4F2EC" stroke-width=".8"/>`;
-        return full
-          ? `<g class="dish-full" transform="translate(${x} 97)">${plate}<g transform="translate(0 -1.6) scale(1.4)">${FEAST_FOOD[i % FEAST_FOOD.length]}</g></g>`
-          : `<g class="dish-empty" transform="translate(${x} 97)"><ellipse rx="14" ry="5" fill="none" stroke="${TV_INK}" stroke-width=".6" stroke-dasharray="1.6 2.2" opacity=".6"/></g>`;
+      // ground: grass with tufts and a few flowers
+      rect(0, 42, W, 8, "G");
+      for (let y = 42; y < 50; y++) for (let x = 0; x < W; x++) if ((x * 7 + y * 13) % 11 === 0) set(x, y, "T");
+      rect(0, 42, W, 1, "T");
+      pts([[3, 46], [12, 48], [55, 47], [60, 45], [8, 44], [58, 49]], "R");
+      pts([[6, 48], [51, 49], [62, 47]], "P");
+      pts([[15, 47], [47, 48], [1, 49]], "Y");
+      // the tree: leaf clusters lit from the upper left
+      for (let y = 18; y <= 34; y++) for (let x = 0; x <= 13; x++) {
+        const d = Math.hypot(x - 6.5, (y - 25.5) * 1.05);
+        if (d >= 7.4) continue;
+        const lit = (x - 6.5) + (y - 25.5) * .9, bump = (Math.sin(x * 1.9) + Math.cos(y * 1.7)) > 1.1;
+        set(x, y, d > 6.4 ? "K" : lit < -3.5 ? (bump ? "a" : "g") : lit < 1.5 ? (bump ? "g" : "G") : (bump ? "G" : "T"));
+      }
+      pts([[3, 20], [2, 23], [4, 22], [7, 19]], "g");
+      box(5, 32, 4, 11, "w"); pts([[6, 35], [7, 38], [6, 40]], "v"); pts([[4, 42], [9, 42]], "w");
+      // chimney behind the roof
+      box(40, 6, 5, 10, "S"); rect(39, 5, 7, 1, "K"); pts([[41, 8], [43, 8], [42, 10], [41, 12], [43, 12], [42, 14]], "M");
+      // the gable roof: neat shingle rows with a little moss
+      for (let y = 8; y <= 21; y++) {
+        const half = Math.round((y - 8) * 1.62), l = 32 - half - 1, r = 31 + half + 1, row = y - 8;
+        for (let x = l; x <= r; x++) {
+          let c = "R";
+          if (row % 3 === 2) c = "n";
+          else if (row % 3 === 1 && (x + (Math.floor(row / 3) % 2) * 2) % 4 === 0) c = "n";
+          set(x, y, x === l || x === r ? "K" : c);
+        }
+      }
+      set(31, 7, "K"); set(32, 7, "K"); rect(9, 21, 46, 1, "n"); set(9, 21, "K"); set(54, 21, "K");
+      pts([[22, 18], [23, 18], [23, 17], [40, 15], [41, 15], [41, 14], [46, 19], [47, 19], [17, 20]], "T");
+      pts([[22, 17], [40, 14], [46, 18]], "G");
+      // round attic window
+      box(29, 12, 6, 6, "Y"); rect(30, 15, 4, 2, "O"); set(31, 13, "K"); set(32, 13, "K"); rect(30, 14, 4, 1, "K"); set(31, 15, "K"); set(32, 16, "K");
+      // the walls: cream plaster, timber frame
+      box(14, 22, 36, 20, "C");
+      rect(15, 31, 34, 1, "v"); rect(26, 23, 1, 8, "v"); rect(37, 23, 1, 8, "v");
+      for (let i = 0; i < 7; i++) { set(28 + i, 30 - i, "v"); set(35 - i, 30 - i, "v"); }
+      // upper windows with flower boxes
+      for (const x of [17, 40]) {
+        box(x, 23, 7, 7, "Y"); rect(x + 1, 27, 5, 2, "O"); rect(x + 3, 24, 1, 5, "K"); rect(x + 1, 26, 5, 1, "K");
+        rect(x - 1, 30, 9, 1, "u"); pts([[x, 29], [x + 2, 29], [x + 4, 29], [x + 6, 29]], "R"); pts([[x + 1, 29], [x + 5, 29]], "P"); pts([[x - 1, 29], [x + 3, 29], [x + 7, 29]], "G");
+      }
+      // ground floor: bay window with a fire and guests, the open door, the right window, lanterns
+      box(16, 33, 10, 7, "Y"); rect(17, 36, 8, 3, "O"); rect(17, 38, 3, 1, "e"); pts([[18, 37], [17, 37]], "e");
+      rect(21, 36, 2, 3, "w"); set(21, 35, "w"); set(22, 35, "w"); rect(24, 37, 1, 2, "w"); set(24, 36, "w");
+      rect(20, 34, 1, 5, "K"); rect(17, 35, 3, 1, "K"); rect(21, 34, 4, 0, "K"); rect(15, 40, 12, 1, "u");
+      P.rect(28, 33 + oy, 8, 9, "K"); rect(29, 34, 3, 8, "w"); rect(32, 34, 3, 8, "a"); rect(32, 38, 3, 4, "Y"); set(28, 33, "C"); set(35, 33, "C");
+      rect(30, 35, 1, 7, "v"); set(31, 38, "Y");
+      pts([[33, 36], [33, 37], [34, 37], [33, 38], [34, 38], [33, 39], [34, 39], [33, 40], [34, 40], [33, 41], [34, 41]], "w");   // a guest in the doorway
+      set(34, 36, "w");
+      box(39, 33, 8, 7, "Y"); rect(40, 36, 6, 3, "O"); rect(43, 34, 1, 5, "K"); rect(40, 35, 6, 1, "K"); rect(38, 40, 10, 1, "u");
+      for (const x of [26, 37]) { set(x, 33, "K"); set(x, 34, "Y"); set(x, 35, "e"); set(x, 36, "K"); }
+      rect(27, 42, 10, 1, "S");
+      // ivy up the left corner
+      pts([[14, 40], [15, 39], [14, 38], [15, 37], [16, 36], [15, 35], [14, 34], [15, 33], [16, 32], [15, 30], [14, 29], [15, 28], [16, 27], [15, 26], [14, 25]], "G");
+      pts([[15, 41], [14, 39], [16, 38], [14, 35], [16, 34], [14, 31], [16, 29], [14, 27]], "T"); pts([[15, 36], [14, 28]], "g");
+      // the hanging sign with a tankard
+      rect(50, 26, 7, 1, "K"); set(57, 27, "K"); set(56, 26, "K"); set(52, 27, "K"); set(55, 27, "K");
+      box(51, 28, 6, 6, "u"); set(53, 29, "W"); set(54, 29, "W"); rect(53, 30, 2, 3, "Y"); set(55, 31, "K");
+      // barrel, with the cat curled on top
+      box(46, 37, 6, 6, "u"); rect(47, 39, 4, 1, "v"); rect(47, 41, 4, 1, "v"); set(48, 38, "O");
+      pts([[46, 34], [48, 34]], "M"); rect(46, 35, 6, 1, "M"); rect(45, 36, 8, 1, "M"); set(46, 35, "Y"); set(48, 35, "Y"); set(47, 35, "K"); pts([[53, 35], [53, 34], [52, 33]], "M"); pts([[49, 36], [51, 36]], "S");
+      // a lamp post by the path
+      rect(41, 44, 1, 6, "K"); box(40, 42, 3, 3, "Y"); set(41, 41, "K");
+      // bushes
+      pts([[10, 41], [11, 40], [12, 41], [11, 41], [53, 41], [54, 40], [55, 41], [54, 41], [56, 41]], "T"); pts([[11, 39], [12, 40], [54, 39], [55, 40]], "G");
+      // cobbled path: clear stones, wider toward you
+      for (let r = 0; r < 7; r++) {
+        const l = 28 - Math.round(r * 1.6), rr = 35 + Math.round(r * 1.6);
+        for (let x = l; x <= rr; x++) set(x, 43 + r, (x - l + (r % 2) * 2) % 4 === 3 ? "S" : "C");
+      }
+      // the name banner across the top
+      P.rect(9, 0, 46, 6, "K"); P.rect(10, 1, 44, 4, "C"); P.pts([[7, 1], [8, 1], [8, 2], [7, 4], [8, 4], [8, 3], [56, 1], [55, 1], [55, 2], [56, 4], [55, 4], [55, 3]], "u");
+      const light = pxLight([
+        [27, 43 + oy - 1, 10, 3, "#F6C35C", .35], [25, 46 + oy - 1, 14, 3, "#F6C35C", .22], [16, 41 + oy, 10, 1, "#F6C35C", .28], [39, 41 + oy, 8, 1, "#F6C35C", .28],
+      ]) + pxHalo(26, 34 + oy, 3, "#F6C35C", .55) + pxHalo(37, 34 + oy, 3, "#F6C35C", .55) + pxHalo(41, 43 + oy, 3, "#F6C35C", .5) + pxHalo(54, 11, 5, "#FBE9A8", .35);
+      const flicker = `<g class="px-flicker">${pxLight([[17, 34 + oy, 8, 5, "#FBE9A8", .35], [40, 34 + oy, 6, 5, "#FBE9A8", .3], [18, 24 + oy, 5, 5, "#FBE9A8", .25], [41, 24 + oy, 5, 5, "#FBE9A8", .25], [32, 34 + oy, 3, 8, "#FFFFFF", .25]])}</g>`;
+      const smoke = `<g class="px-smoke">${pxLight([[42, 4 + oy - 1, 2, 1, "#C9C0B2", .8], [43, 2 + oy - 1, 2, 2, "#C9C0B2", .6], [41, 0 + oy - 1, 3, 2, "#C9C0B2", .4]])}</g>`;
+      const twinkle = `<g class="px-twinkle">${pxLight([[21, 10, 1, 1, "#FFFFFF", .9], [47, 12, 1, 1, "#FFFFFF", .9], [5, 22, 1, 1, "#FFFFFF", .9]])}</g>`;
+      return `<svg class="tav-art pixel" viewBox="0 0 ${W} ${H}" shape-rendering="crispEdges" role="img" aria-label="A pixel-art tavern called The Sprout and Tankard at night, its windows and open door glowing">
+        ${P.svg()}${light}${flicker}${smoke}${twinkle}
+        <text x="32" y="4.3" text-anchor="middle" class="px-banner">The Sprout &amp; Tankard</text></svg>`;
+    }
+
+    // Pixel dishes (each 6 x 5, drawn with the same letters) for the feast table.
+    const PX_DISHES = [
+      ["..OO..", ".OYYO.", "OYOYOO", "OOOOOO", "......"],   // bread loaf
+      ["..nn..", ".nOOn.", "nOnOnO", "uuuuuu", "......"],   // lattice pie
+      ["WWWW..", "YYYYK.", "YaYY.K", "YYYYK.", "YYYY.."],   // tankard of ale
+      [".G....", "RR.RR.", "RRgRRR", ".RRRR.", "......"],   // apples
+      ["....WW", ".OOOW.", "OeOOO.", "OOOOO.", "......"],   // roast
+      [".....Y", "...YYY", ".YYOYY", "YYYYYY", "......"],   // cheese wedge
+    ];
+    // The feast table (80 x 40 pixels): a tavern wall with candles, guests seated behind, plates that fill with dishes.
+    function feastTableArt(t, players) {
+      const W = 80, H = 40, P = pxGrid(W, H);
+      // back wall: dark planks, a beam, hanging herbs and a shelf
+      P.rect(0, 0, W, 26, "w");
+      for (let x = 0; x < W; x += 5) P.rect(x, 0, 1, 26, "v");
+      P.rect(0, 3, W, 2, "u"); P.rect(0, 5, W, 1, "K");
+      for (const x of [16, 28, 52, 64]) { P.set(x, 6, "K"); P.pts([[x - 1, 7], [x, 7], [x + 1, 7], [x - 1, 8], [x + 1, 8], [x, 9]], "G"); P.set(x, 8, "T"); }
+      P.rect(0, 26, W, 14, "n"); for (let y = 28; y < H; y += 3) P.rect(0, y, W, 1, "w"); for (let x = 7; x < W; x += 13) P.rect(x, 26, 1, 14, "w");   // floorboards
+      P.rect(2, 13, 10, 1, "u"); P.rect(68, 13, 10, 1, "u");
+      for (const [x, c] of [[3, "T"], [5, "R"], [7, "B"], [9, "u"], [69, "R"], [71, "Y"], [73, "T"], [75, "B"]]) { P.rect(x, 10, 1, 3, c); P.set(x, 9, "K"); }
+      // seated guests: the players' own pixel avatars
+      const seated = (players || []).filter((p) => p.status !== "declined");
+      const gap = Math.min(15, 60 / Math.max(1, seated.length)), start = 40 - (gap * (seated.length - 1)) / 2;
+      const guests = seated.map((p, i) => {
+        const x = start + i * gap, svg = mascotSvg(avatarId(p.avatar)).replace("<svg ", `<svg x="${(x - 6.5).toFixed(1)}" y="12" width="13" height="12" `);
+        return `<g${p.status === "invited" ? ' opacity=".4"' : ""}>${svg}<text x="${x.toFixed(1)}" y="10.6" text-anchor="middle" class="px-name">${p.me ? "You" : esc(p.name)}</text></g>`;
       }).join("");
-      return `<svg class="feast-art" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t.dishes} of ${t.plates} dishes on the feast table"><defs>${TV_FILTERS(13)}
-          <linearGradient id="tvWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6B4A33"/><stop offset=".55" stop-color="#A9784E"/><stop offset="1" stop-color="#6E4C34"/></linearGradient>
-          <mask id="tvRoom"><path d="M8 18 Q60 4 200 8 Q340 4 392 18 Q400 90 392 168 Q300 176 200 172 Q90 176 8 168 Q0 90 8 18 Z" fill="#fff" filter="url(#tvEdge)"/></mask>
-          ${defs.join("")}</defs>
-        <g mask="url(#tvRoom)">${paint.slice(0, 2).join("")}<g filter="url(#tvHandA)">${ink.slice(0, wallInk).join("")}</g>${guests}${paint.slice(2).join("")}
-          <g filter="url(#tvHandA)">${ink.slice(wallInk).join("")}</g>${plates}
-          <rect width="${W}" height="${H}" filter="url(#tvGrain)" opacity=".45"/></g></svg>`;
+      // the table: plank top, cloth runner, front edge, legs and a bench
+      const T = pxGrid(W, H);
+      T.rect(2, 22, 76, 6, "u");
+      for (let y = 22; y < 28; y += 2) for (let x = 2; x < 78; x++) if ((x + y * 3) % 9 === 0) T.set(x, y, "v");
+      T.rect(2, 22, 76, 1, "a"); T.rect(10, 24, 60, 3, "C"); T.rect(10, 26, 60, 1, "W"); T.rect(10, 24, 60, 1, "R");
+      T.rect(1, 28, 78, 3, "v"); T.rect(1, 31, 78, 1, "K"); T.rect(1, 28, 78, 1, "K"); T.set(1, 29, "K"); T.set(78, 29, "K"); T.set(1, 30, "K"); T.set(78, 30, "K");
+      for (const x of [5, 72]) T.box(x, 32, 4, 7, "w");
+      T.rect(9, 35, 63, 1, "v");
+      // candlesticks at both ends
+      for (const x of [4, 75]) { T.rect(x, 17, 1, 5, "W"); T.set(x, 21, "S"); T.rect(x - 1, 21, 3, 1, "M"); T.set(x, 16, "Y"); T.set(x, 15, "O"); }
+      // plates and dishes
+      const n = t.plates, x0 = 13, x1 = 61;
+      const plates = Array.from({ length: n }, (_, i) => {
+        const x = Math.round(x0 + ((x1 - x0) * i) / (n - 1)), full = i < t.dishes;
+        if (!full) return `<g class="dish-empty">${pxLight([[x, 24, 6, 1, "#FFFFFF", .55], [x + 1, 25, 4, 1, "#C9C0B2", .5]])}</g>`;
+        const d = PX_DISHES[i % PX_DISHES.length]; let r = "";
+        d.forEach((row, y) => [...row].forEach((c, k) => { if (PX_PAL[c]) r += `<rect x="${x + k}" y="${19 + y}" width="1" height="1" fill="${PX_PAL[c]}"/>`; }));
+        return `<g class="dish-full"><rect x="${x - 1}" y="24" width="8" height="1" fill="${PX_PAL.S}"/><rect x="${x}" y="25" width="6" height="1" fill="${PX_PAL.W}"/>${r}</g>`;
+      }).join("");
+      const glow = pxHalo(4, 15, 6, "#F6C35C", .55) + pxHalo(75, 15, 6, "#F6C35C", .55) + pxLight([[0, 14, W, 8, "#F6C35C", .08]]);
+      const flicker = `<g class="px-flicker">${pxHalo(4, 15, 3, "#FBE9A8", .7)}${pxHalo(75, 15, 3, "#FBE9A8", .7)}</g>`;
+      return `<svg class="feast-art pixel" viewBox="0 0 ${W} ${H}" shape-rendering="crispEdges" role="img" aria-label="${t.dishes} of ${t.plates} dishes on the feast table">
+        ${P.svg()}${glow}${guests}${T.svg()}${plates}${flicker}</svg>`;
     }
 
     function tavernHero() {
       const friends = social.friends.filter((x) => x.status === "accepted");
-      return `<button class="tav-hero" data-action="feast-new" ${friends.length ? "" : "disabled"} aria-label="Gather your friends for a three-day feast"><img class="tav-art" src="img/tavern.jpg" width="1200" height="800" alt="A watercolor sketch of a cozy tavern at dusk, its door open and lamps glowing" />
+      return `<button class="tav-hero" data-action="feast-new" ${friends.length ? "" : "disabled"} aria-label="Gather your friends for a three-day feast">${pixelTavern()}
         <b>Gather your friends</b>
         <span>Plan a 3-day feast together. Every quest you finish brings food to the table.</span>
         <span class="hand">${friends.length ? "Tap the tavern to send invitations" : "Add a friend below, then gather here"}</span></button>`;

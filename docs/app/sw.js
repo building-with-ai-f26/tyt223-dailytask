@@ -5,7 +5,7 @@
 // Bump CACHE when you want every device to drop its old copy (normally not needed: the page
 // is fetched fresh whenever there's a connection).
 const CACHE = "dailyquest-v2";
-const APP_FILES = ["./", "./manifest.webmanifest", "./icons/apple-touch-icon.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/favicon-64.png", "./img/tavern.jpg"];
+const APP_FILES = ["./", "./manifest.webmanifest", "./icons/apple-touch-icon.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/favicon-64.png"];
 // Other sites whose files are safe to keep offline: the pinned Supabase library and Google Fonts.
 const CACHEABLE_HOSTS = ["cdn.jsdelivr.net", "fonts.googleapis.com", "fonts.gstatic.com"];
 
