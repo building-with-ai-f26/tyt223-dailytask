@@ -88,7 +88,7 @@ test("Tavern: add a friend by code only; requests wait for acceptance; nothing p
     __db.friends.push({ id: 2, status: "pending", incoming: true, name: "<img src=x onerror=window.__xss=1>", code: "EVL777", avatar: "\\"><script>window.__xss=2<\\/script>", level: 2, streak: 1, week_xp: 30 });
     await loadSocial();
     r.redDot = await until(() => !document.getElementById("tavernDot").hidden);
-    r.scriptNameIsText = window.__xss === undefined && !q("#view img") && text().includes("<img src=x onerror=window.__xss=1>");
+    r.scriptNameIsText = window.__xss === undefined && !q("#view img:not(.tav-art)") && text().includes("<img src=x onerror=window.__xss=1>");   // the tavern painting is the only picture allowed
     q('[data-action="friend-accept"]').click();
     r.accepted = await until(() => document.querySelectorAll(".lb-row").length === 2 && document.getElementById("tavernDot").hidden);
     const before = __db.updates.length, today = getToday();
