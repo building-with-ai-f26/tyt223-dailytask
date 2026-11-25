@@ -388,9 +388,10 @@
     .guest { display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 600; max-width: 56px; overflow-wrap: anywhere; text-align: center; }
     .guest .face { width: 40px; height: 40px; }
     .guest.invited { opacity: .45; }
-    .feast-art { width: 100%; height: auto; display: block; margin-top: -4px; }
-    .tav-note { font-family: var(--hand); font-size: 12px; fill: #5E4A38; opacity: .85; }
-    .tav-note.big { font-size: 17px; opacity: 1; }
+    .feast-art { width: calc(100% + 16px); height: auto; display: block; margin: 0 -8px; }
+    .tv-note { font-family: var(--hand); font-size: 14px; fill: #3B2A1E; }
+    .tv-title { font-family: var(--serif); font-style: italic; font-size: 13.5px; fill: #3B2A1E; }
+    .tv-name { font-family: var(--hand); font-size: 12px; fill: #FBF0D8; }
     .feast-bar { margin: 10px 0 4px; height: 10px; border-radius: 6px; background: var(--gold-soft); box-shadow: inset 0 0 0 1px rgba(198,154,80,.5); overflow: hidden; }
     .feast-bar div { height: 100%; background: linear-gradient(#E9C77A, var(--gold)); transition: width .5s ease; }
     .feast-meta { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
@@ -3609,130 +3610,288 @@
       const t = feastTable(cur.f.players);
       return `<button class="feast-strip" data-tab="tavern" aria-label="Tavern feast: ${t.total} of ${t.goal} XP together. Open the Tavern.">${px("pancake", 22)}<span>Feast · ${t.total} / ${t.goal} XP</span><span class="muted">Day ${feastDayNumber(cur.f, today)} of ${FEAST_DAYS}</span></button>`;
     }
-    // ---------- Pen-and-ink drawings for the Tavern (same hand as the adventure map) ----------
-    const TAV_INK = "#5E4A38", TAV_PAPER = "#F8EEDB";
-    const tavPen = (w = .7, c = TAV_INK) => `fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`;
-    const tavFill = (w = .7, fill = TAV_PAPER) => tavPen(w).replace('fill="none"', `fill="${fill}"`);
-    const tavWash = (cx, cy, rx, ry, c, o = .3) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" opacity="${o}" filter="url(#tavSoft)"/>`;
-    const tavStar = (x, y, r = 2.4) => `<path d="M${x} ${y - r} Q${x} ${y} ${x + r} ${y} Q${x} ${y} ${x} ${y + r} Q${x} ${y} ${x - r} ${y} Q${x} ${y} ${x} ${y - r} Z" fill="#C9A15A" opacity=".8"/>`;
-    const TAV_DEFS = `<defs><filter id="tavSoft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.2"/></filter>
-      <filter id="tavHand"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="1" seed="3"/><feDisplacementMap in="SourceGraphic" scale=".7"/></filter></defs>`;
+    // ---------- Ink-and-watercolor paintings for the Tavern ----------
+    // Built from many small strokes: doubled sketchy ink lines, cross-hatching in the shadows, watercolor washes
+    // with ragged wet edges, a painted vignette and paper grain. A fixed seed keeps every drawing identical.
+    const TV_INK = "#3B2A1E";
+    function tvRand(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+    const tvLine = (d, w = .8, o = 1, c = TV_INK) => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"${o < 1 ? ` opacity="${o}"` : ""}/>`;
+    const tvShape = (d, fill, w = .8, o = 1) => `<path d="${d}" fill="${fill}" stroke="${TV_INK}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"${o < 1 ? ` opacity="${o}"` : ""}/>`;
+    const tvPaint = (d, fill, o = .6) => `<path d="${d}" fill="${fill}" opacity="${o}" filter="url(#tvWet)"/>`;
+    const tvGlow = (cx, cy, rx, ry, c, o = .55) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" opacity="${o}" filter="url(#tvBlur)"/>`;
+    // Parallel hatching clipped to a shape (shadows the way an engraver draws them).
+    function tvHatch(defs, id, shape, x0, y0, x1, y1, gap = 2.6, w = .4, o = .55, cross) {
+      defs.push(`<clipPath id="${id}"><path d="${shape}"/></clipPath>`);
+      const h = y1 - y0; let d = "";
+      for (let k = -h; k < x1 - x0; k += gap) d += `M${(x0 + k).toFixed(1)} ${y1} L${(x0 + k + h).toFixed(1)} ${y0} `;
+      if (cross) for (let k = 0; k < x1 - x0 + h; k += gap * 1.4) d += `M${(x0 + k).toFixed(1)} ${y1} L${(x0 + k - h).toFixed(1)} ${y0} `;
+      return `<g clip-path="url(#${id})">${tvLine(d, w, o)}</g>`;
+    }
+    const TV_FILTERS = (k) => `
+      <filter id="tvWet" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".045" numOctaves="3" seed="${k}"/><feDisplacementMap in="SourceGraphic" scale="7"/><feGaussianBlur stdDeviation=".5"/></filter>
+      <filter id="tvBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
+      <filter id="tvHandA"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="1" seed="${k + 2}"/><feDisplacementMap in="SourceGraphic" scale="1.1"/></filter>
+      <filter id="tvHandB"><feTurbulence type="fractalNoise" baseFrequency=".6" numOctaves="1" seed="${k + 9}"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
+      <filter id="tvGrain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" seed="${k + 4}"/><feColorMatrix values="0 0 0 0 .36  0 0 0 0 .27  0 0 0 0 .18  0 0 0 .55 -.16"/></filter>
+      <filter id="tvEdge"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="4" seed="${k + 6}"/><feDisplacementMap in="SourceGraphic" scale="16"/></filter>`;
 
-    // The Sprout & Tankard, sketched at dusk: a timbered inn in three-quarter view with a tiled roof, latticed
-    // windows glowing, a lantern by the door, ivy, a cat on the barrel, the moon and a few stars.
     function tavernArt() {
-      const roofRows = [60, 67, 74, 81, 88].map((y) => {           // scalloped tiles across the roof, row by row
-        const l = 116 - (y - 52) * .74, r = 220 + (y - 52) * .7, n = Math.floor((r - l) / 6.2);
-        let d = `M${l.toFixed(1)} ${y}`;
-        for (let i = 0; i < n; i++) d += " q3.1 3 6.2 0";
-        return `<path d="${d}" ${tavPen(.4)} opacity=".75"/>`;
-      }).join("");
-      const sideHatch = Array.from({ length: 8 }, (_, i) => { const x = 239 + i * 3.6; return `<path d="M${x} ${95 - i * 1.4} V${173 - i * 1.6}" ${tavPen(.35)} opacity=".45"/>`; }).join("");
-      const lattice = (x, y, w, h) => {
-        let d = "";
-        for (let k = -h; k < w; k += 4) d += `M${Math.max(x, x + k).toFixed(1)} ${(k < 0 ? y - k : y).toFixed(1)} L${Math.min(x + w, x + k + h).toFixed(1)} ${(k + h > w ? y + (w - k) : y + h).toFixed(1)} `;
-        for (let k = 0; k < w + h; k += 4) d += `M${Math.min(x + w, x + k).toFixed(1)} ${(k > w ? y + (k - w) : y).toFixed(1)} L${Math.max(x, x + k - h).toFixed(1)} ${(k - h < 0 ? y + k : y + h).toFixed(1)} `;
-        return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1" fill="#F3D694" opacity=".9"/><path d="${d}" ${tavPen(.3)} opacity=".7"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1" ${tavPen(.7)}/>`;
-      };
-      const stones = [[166, 182, 4], [178, 184, 3.4], [160, 189, 4.4], [175, 191, 4], [189, 188, 3.6], [153, 197, 5], [168, 199, 4.6], [184, 198, 4.6], [199, 196, 4], [146, 205, 5.4], [163, 207, 5], [181, 207, 5.2], [199, 205, 5], [214, 203, 4.4]]
-        .map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${(r * .45).toFixed(1)}" ${tavPen(.4)} opacity=".6"/>`).join("");
-      const ivyLeaf = (x, y, a) => `<path transform="translate(${x} ${y}) rotate(${a})" d="M0 0 q2.4 -1.4 4.4 0 q-2 1.6 -4.4 0 Z" fill="#DCE6CF" stroke="#5F7F5C" stroke-width=".4"/>`;
-      return `<svg class="tav-art" viewBox="0 0 340 214" aria-hidden="true">${TAV_DEFS}
-        ${tavWash(170, 46, 190, 50, "#C3CED8", .16)}${tavWash(128, 147, 30, 18, "#F2C66B", .5)}${tavWash(210, 146, 18, 14, "#F2C66B", .45)}${tavWash(176, 160, 18, 22, "#F2C66B", .4)}${tavWash(98, 146, 9, 26, "#9DBB8C", .18)}
-        <g filter="url(#tavHand)">
-          <path d="M283 22 a10 10 0 1 0 9 15 a8 8 0 1 1 -9 -15 Z" ${tavFill(.55)}/>
-          ${tavStar(246, 20)}${tavStar(318, 46, 2)}${tavStar(58, 26, 2)}${tavStar(28, 60, 1.6)}${tavStar(214, 14, 1.6)}
-          <path d="M0 126 Q34 110 70 117 T150 113 T240 108 T340 119" ${tavPen(.45)} opacity=".55"/>
-          ${[[22, 124, .8], [34, 120, .9], [306, 118, .85], [320, 121, .7]].map(([x, y, k]) => `<path transform="translate(${x} ${y}) scale(${k})" d="M0 -9 L3.4 -3 H1.7 L4 1.6 H-4 L-1.7 -3 H-3.4 Z M0 1.6 V4" ${tavFill(.55)}/>`).join("")}
-          <path d="M0 179 Q60 175 120 178 T240 177 T340 180" ${tavPen(.75)}/>
-          <path d="M18 186 q10 -2 20 0 M262 187 q12 -2 24 0 M300 183 q8 -1.5 16 0" ${tavPen(.4)} opacity=".5"/>
-          ${stones}
-          <!-- side wall, in shadow -->
-          <path d="M236 94 L268 82 V164 L236 178 Z" ${tavFill(.7, "#EEE0C6")}/>${sideHatch}
-          <!-- roof: front and side planes, tiled -->
-          <path d="M84 95 L116 52 L220 52 L252 95 Z" ${tavFill(.8, "#EADCC2")}/>
-          <path d="M220 52 L252 95 L282 82 L250 44 Z" ${tavFill(.8, "#E0CDAE")}/>
-          ${roofRows}
-          <path d="M226 58 L251 89 M232 55 L258 86 M238 52 L265 84 M244 49 L272 83" ${tavPen(.35)} opacity=".5"/>
-          <!-- dormer -->
-          <path d="M158 76 V62 H182 V76" ${tavFill(.7)}/><path d="M154 63 L170 50 L186 63" ${tavFill(.75, "#EADCC2")}/>${lattice(163, 64, 14, 10)}
-          <!-- chimney and smoke -->
-          <path d="M238 66 V36 H250 V61" ${tavFill(.7)}/><path d="M236 36 H252 M238 44 H250 M238 52 H250 M244 36 V44 M241 44 V52 M247 44 V52" ${tavPen(.35)} opacity=".7"/>
-          <path d="M244 32 c-7 -5 5 -10 -1 -16 c-5 -5 7 -9 3 -15 M249 30 c4 -3 1 -7 4 -10" ${tavPen(.45)} opacity=".55"/>
-          <!-- front wall with timber frame -->
-          <rect x="96" y="94" width="140" height="84" ${tavFill(.8)}/>
-          <path d="M96 126 H236 M96 94 V178 M130 94 V126 M166 94 V126 M202 94 V126 M236 94 V178" ${tavPen(1, "#6B5340")}/>
-          <path d="M98 124 L128 96 M132 96 L164 124 M204 124 L234 96" ${tavPen(.7, "#6B5340")}/>
-          <path d="M100 170 h8 M112 174 h7 M222 170 h9 M214 174 h7 M100 162 h5 M226 162 h6" ${tavPen(.35)} opacity=".6"/>
-          ${lattice(138, 100, 22, 18)}${lattice(172, 100, 22, 18)}
-          <path d="M136 120 H162 M170 120 H196" ${tavPen(.6)}/>
-          ${[141, 147, 153, 159, 175, 181, 187, 193].map((x, i) => `<circle cx="${x}" cy="119" r="1.1" fill="${i % 2 ? "#B5543A" : "#D98A6A"}" opacity=".85"/>`).join("")}
-          <!-- bay window, bench, door, small window -->
-          ${lattice(106, 136, 44, 24)}<path d="M128 136 V160 M104 134 H152 M104 161 H152" ${tavPen(.7)}/>
-          <path d="M106 170 H146 M110 170 V176 M142 170 V176" ${tavPen(.6)}/>
-          <path d="M162 178 V148 Q174 132 186 148 V178" ${tavFill(.8, "#D8C3A2")}/>
-          <path d="M174 178 V140 Q181 141 186 148 V178 Z" fill="#F3D694" opacity=".95"/>
-          <path d="M162 178 V148 Q174 132 186 148 V178" ${tavPen(.8)}/>
-          <path d="M166 146 V178 M170 140 V178 M174 138 V178" ${tavPen(.35)} opacity=".6"/>
-          <path d="M162 154 h5 M162 170 h5" ${tavPen(.7, "#6B5340")}/><circle cx="171.5" cy="161" r=".9" fill="${TAV_INK}"/>
-          <ellipse cx="174" cy="179.5" rx="16" ry="2.4" ${tavFill(.5)}/>
-          ${lattice(206, 138, 18, 16)}
-          <!-- lantern -->
-          <path d="M196 132 h4 v3" ${tavPen(.6)}/><path d="M197.5 135 h5 l1 2 v8 l-1 2 h-5 l-1 -2 v-8 Z" ${tavFill(.55, "#F3D694")}/><path d="M200 135 v12" ${tavPen(.3)}/>
-          ${tavWash(200, 141, 9, 9, "#F2C66B", .6)}
-          <!-- hanging sign with a tankard -->
-          <path d="M96 108 H70 q-4 0 -4 4 q0 3 3 3" ${tavPen(.8)}/><path d="M74 108 V114 M88 108 V114" ${tavPen(.45)}/>
-          <ellipse cx="81" cy="124" rx="14" ry="10" ${tavFill(.7)}/><ellipse cx="81" cy="124" rx="11.5" ry="7.8" ${tavPen(.35)} opacity=".6"/>
-          <path d="M77 129 V120 H85 V129 Z M76.4 120 q1.3 -2.2 2.6 0 q1.3 -2.2 2.6 0 q1.3 -2.2 2.6 0 M85 122 q3 0 3 2.6 q0 2.4 -3 2.4" ${tavFill(.55, "#F0D9A3")}/>
-          <!-- ivy climbing the corner -->
-          <path d="M98 178 q-6 -16 2 -28 q7 -11 -1 -24 q-5 -9 3 -20" ${tavPen(.55, "#5F7F5C")}/>
-          ${[[96, 168, -20], [101, 158, 40], [95, 148, -30], [102, 138, 30], [97, 128, -40], [101, 116, 20], [96, 108, -10]].map(([x, y, a]) => ivyLeaf(x, y, a)).join("")}
-          <!-- barrel, and the cat on it -->
-          <path d="M210 178 V164 Q220 160 230 164 V178" ${tavFill(.7, "#E3CBA6")}/><ellipse cx="220" cy="164" rx="10" ry="3" ${tavFill(.6, "#EADBC0")}/>
-          <path d="M210 169 Q220 172 230 169 M210 175 Q220 178 230 175 M216 165 V178 M224 165 V178" ${tavPen(.35)} opacity=".7"/>
-          <path d="M215 162 q-1 -6 2 -8 l1 -3 l1.6 2.4 h1.8 l1.6 -2.4 l1 3 q3 2 2 8 Z" fill="${TAV_INK}" opacity=".88"/>
-          <path d="M224 161 q6 0 5 -6 q-1 -3 1.5 -4" ${tavPen(.8)}/>
-          <!-- crates by the wall -->
-          <path d="M240 178 V166 H254 V178 Z M240 166 L254 178 M254 166 L240 178" ${tavFill(.55, "#E3CBA6")}/>
-        </g>
-        <text x="16" y="26" class="tav-note big">The Sprout &amp; Tankard</text>
-        <path d="M16 31 q40 4 92 -1" ${tavPen(.5)} opacity=".7"/>
-        <text x="262" y="200" class="tav-note">mind the cat</text>
-        <path d="M262 195 q-14 -4 -26 -22" ${tavPen(.45)} opacity=".7"/><path d="M236 173 l.6 4.2 M236 173 l3.6 2" ${tavPen(.45)} opacity=".7"/>
-        <text x="20" y="160" class="tav-note">warm cider,</text><text x="22" y="170" class="tav-note">good company</text>
-      </svg>`;
+      const R = tvRand(42), defs = [], ink = [], paint = [], sketch = [];
+      const W = 400, H = 262;
+      // --- sky, hills and light (watercolor, under the ink) ---
+      paint.push(`<rect x="0" y="0" width="${W}" height="190" fill="url(#tvSky)"/>`);
+      paint.push(tvGlow(338, 46, 34, 30, "#FFF1C9", .55));
+      paint.push(tvPaint("M0 152 L36 120 L58 132 L92 100 L124 126 L156 108 L192 132 L238 102 L272 124 L306 96 L350 128 L400 110 V178 H0 Z", "#8193A8", .5));
+      paint.push(tvPaint("M0 170 Q60 144 128 158 T262 150 T400 160 V196 H0 Z", "#7E9670", .62));
+      paint.push(tvPaint("M0 204 Q100 190 200 197 T400 200 V262 H0 Z", "#9AA66E", .62));
+      paint.push(tvPaint("M0 230 Q90 220 170 232 T400 236 V262 H0 Z", "#7F8E58", .45));
+      paint.push(tvGlow(200, 226, 70, 18, "#F2B85A", .6));
+      // --- distant mountains in thin ink ---
+      ink.push(tvLine("M0 152 L36 120 L58 132 L92 100 L124 126 L156 108 L192 132 L238 102 L272 124 L306 96 L350 128 L400 110", .5, .55));
+      ink.push(tvLine("M92 100 l-6 9 l5 -2 l3 5 M238 102 l-5 8 l5 -2 l2 4 M306 96 l-6 9 l5 -1 l3 4", .45, .5));
+      // --- moon and stars ---
+      ink.push(tvShape("M332 30 a14 14 0 1 0 13 21 a11 11 0 1 1 -13 -21 Z", "#FBF3DC", .6));
+      for (const [x, y, r] of [[284, 22, 2.6], [372, 70, 2], [248, 40, 1.6], [362, 18, 1.8], [52, 26, 2.2], [24, 66, 1.5], [206, 16, 1.6], [120, 34, 1.4]])
+        ink.push(`<path d="M${x} ${y - r} Q${x} ${y} ${x + r} ${y} Q${x} ${y} ${x} ${y + r} Q${x} ${y} ${x - r} ${y} Q${x} ${y} ${x} ${y - r} Z" fill="#E2BC6A" stroke="${TV_INK}" stroke-width=".25"/>`);
+      // --- the old oak on the left ---
+      const trunk = "M62 210 C67 184 60 162 68 142 C72 128 64 116 70 104 L84 104 C79 117 88 130 83 144 C76 164 85 186 81 210 Z";
+      paint.push(tvPaint(trunk, "#6E523B", .85));
+      ink.push(tvShape(trunk, "none", .9));
+      ink.push(tvHatch(defs, "tvTrunk", trunk, 60, 100, 90, 212, 2.2, .4, .7, true));
+      ink.push(tvLine("M68 190 q3 -8 -1 -16 M72 168 q2 -6 -1 -12 M66 150 q3 -5 0 -10 M76 132 q-3 -6 1 -12", .45, .8));
+      ink.push(tvLine("M72 108 Q58 96 40 96 M80 106 Q96 90 112 92 M74 112 Q60 110 50 116", .9));
+      const blobs = [];
+      for (let i = 0; i < 30; i++) { const a = R() * Math.PI * 2, rr = Math.sqrt(R()); blobs.push([76 + Math.cos(a) * rr * 52, 84 + Math.sin(a) * rr * 38, 9 + R() * 9]); }
+      blobs.forEach(([x, y, r], i) => paint.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${i % 3 ? "#5C7A49" : "#87A363"}" opacity=".55" filter="url(#tvWet)"/>`));
+      let canopy = "";
+      for (let i = 0; i <= 26; i++) { const a = (i / 26) * Math.PI * 2, rx = 56 + R() * 6, ry = 42 + R() * 5; const x = 76 + Math.cos(a) * rx, y = 82 + Math.sin(a) * ry; canopy += i ? ` Q${(x + Math.cos(a) * 7).toFixed(1)} ${(y + Math.sin(a) * 7).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)}` : `M${x.toFixed(1)} ${y.toFixed(1)}`; }
+      ink.push(tvLine(canopy, .8));
+      let ticks = "";
+      for (let i = 0; i < 70; i++) { const a = R() * Math.PI * 2, rr = Math.sqrt(R()); const x = 76 + Math.cos(a) * rr * 50, y = 84 + Math.sin(a) * rr * 36; ticks += `M${x.toFixed(1)} ${y.toFixed(1)} q2 -2.4 4 0 `; }
+      ink.push(tvLine(ticks, .45, .7));
+      ink.push(tvHatch(defs, "tvCanopy", canopy + " Z", 76, 60, 136, 130, 2.4, .35, .55));
+      // --- pines on the right ---
+      for (const [x, y, k] of [[352, 200, 1.15], [378, 206, .95], [330, 206, .8]]) {
+        const p = `M${x} ${y - 70 * k} L${x + 10 * k} ${y - 48 * k} L${x + 5 * k} ${y - 48 * k} L${x + 15 * k} ${y - 26 * k} L${x + 7 * k} ${y - 26 * k} L${x + 19 * k} ${y - 4 * k} L${x - 19 * k} ${y - 4 * k} L${x - 7 * k} ${y - 26 * k} L${x - 15 * k} ${y - 26 * k} L${x - 5 * k} ${y - 48 * k} L${x - 10 * k} ${y - 48 * k} Z`;
+        paint.push(tvPaint(p, "#3F5E45", .75));
+        ink.push(tvShape(p, "none", .7));
+        ink.push(tvHatch(defs, "tvPine" + x, p, x, y - 72 * k, x + 22 * k, y, 1.9, .35, .7));
+        ink.push(tvLine(`M${x} ${y - 4 * k} V${y + 4}`, 1.2));
+      }
+      // --- the tavern ---
+      const front = "M130 112 H264 V212 H130 Z", side = "M264 112 L304 100 V204 L264 212 Z";
+      const roofF = "M116 114 L150 52 L244 52 L276 114 Z", roofS = "M244 52 L276 114 L312 102 L282 44 Z";
+      paint.push(tvPaint(side, "#C9B08C", .85));
+      paint.push(tvPaint("M130 112 H264 V152 H130 Z", "#EFE0C0", .9));
+      paint.push(tvPaint("M130 152 H264 V196 H130 Z", "#E8D5B0", .9));
+      paint.push(tvPaint(roofF, "#A55F45", .75));
+      paint.push(tvPaint("M116 114 L128 92 H266 L276 114 Z", "#7B4433", .55));
+      paint.push(tvPaint(roofS, "#7E4636", .8));
+      paint.push(tvPaint("M170 62 q14 -6 26 2 q-10 6 -26 -2 Z M214 86 q16 -6 30 2 q-14 7 -30 -2 Z M132 104 q10 -5 20 0 q-10 5 -20 0 Z", "#6F8A4E", .7));
+      // roof tiles, row by row
+      for (let y = 58, row = 0; y <= 110; y += 5.6, row++) {
+        const l = 150 - ((y - 52) / 62) * 34, r = 244 + ((y - 52) / 62) * 32;
+        let d = `M${l.toFixed(1)} ${y.toFixed(1)}`, x = l + (row % 2 ? 3.5 : 0);
+        if (row % 2) d += ` L${x.toFixed(1)} ${y.toFixed(1)}`;
+        while (x + 7 <= r) { d += ` q3.5 3.4 7 0`; x += 7; }
+        ink.push(tvLine(d, .45, .85));
+      }
+      ink.push(tvHatch(defs, "tvEave", "M116 114 L124 100 H270 L276 114 Z", 116, 98, 278, 116, 2, .4, .6, true));
+      ink.push(tvHatch(defs, "tvRoofS", roofS, 244, 42, 314, 116, 2.2, .4, .6));
+      ink.push(tvLine("M250 60 L280 108 M258 58 L290 106 M266 55 L298 104 M274 52 L306 102", .4, .55));
+      ink.push(tvShape(roofF, "none", 1)); ink.push(tvShape(roofS, "none", 1));
+      sketch.push(tvLine("M116 114 L150 52 L244 52 L282 44 L312 102 L304 100 V204 L264 212 H130 V112", 1.1));
+      // dormers
+      for (const x of [160, 214]) {
+        paint.push(tvPaint(`M${x} 96 V76 H${x + 22} V96 Z`, "#EFE0C0", .9));
+        ink.push(tvShape(`M${x} 96 V76 H${x + 22} V96`, "none", .8));
+        paint.push(tvPaint(`M${x - 4} 77 L${x + 11} 63 L${x + 26} 77 Z`, "#9A5842", .8));
+        ink.push(tvShape(`M${x - 4} 77 L${x + 11} 63 L${x + 26} 77 Z`, "none", .8));
+        ink.push(tvLine(`M${x + 1} 74 q2.5 2 5 0 q2.5 2 5 0 q2.5 2 5 0 q2.5 2 5 0 M${x + 6} 69 q2.5 2 5 0 q2.5 2 5 0`, .4, .8));
+        paint.push(`<rect x="${x + 5}" y="80" width="12" height="12" fill="#F4CF7A"/>`);
+        ink.push(`<rect x="${x + 5}" y="80" width="12" height="12" fill="none" stroke="${TV_INK}" stroke-width=".7"/>` + tvLine(`M${x + 11} 80 V92 M${x + 5} 86 H${x + 17}`, .5));
+      }
+      // chimney and smoke
+      const chim = "M286 74 V30 H300 V66";
+      paint.push(tvPaint("M286 74 V30 H300 V66 Z", "#9E6A52", .85));
+      ink.push(tvShape(chim, "none", .9)); ink.push(tvShape("M283 30 H303 V25 H283 Z", "#7D5443", .8));
+      let bricks = "";
+      for (let y = 34, r = 0; y < 70; y += 4.4, r++) { bricks += `M286 ${y.toFixed(1)} H300 `; for (let x = 286 + (r % 2 ? 3.5 : 0); x < 300; x += 7) bricks += `M${x.toFixed(1)} ${y.toFixed(1)} v4.4 `; }
+      ink.push(tvLine(bricks, .35, .7));
+      paint.push(tvGlow(300, 14, 18, 10, "#B8B4AE", .45));
+      ink.push(tvLine("M292 24 c-8 -6 6 -11 -1 -18 c-6 -6 9 -10 4 -17 M297 22 c6 -4 1 -9 6 -12 c4 -3 0 -7 4 -9", .5, .6));
+      // walls: timber frame, plaster, stone base
+      ink.push(tvShape(front, "none", 1)); ink.push(tvShape(side, "none", 1));
+      paint.push(tvPaint("M126 112 H268 V116 H126 Z M126 148 H268 V153 H126 Z", "#5B3F2C", .9));
+      ink.push(tvShape("M126 112 H268 V116 H126 Z", "#5B3F2C", .6)); ink.push(tvShape("M126 148 H268 V153 H126 Z", "#5B3F2C", .6));
+      for (const x of [128, 162, 198, 232, 264]) ink.push(tvShape(`M${x} 116 H${x + 4} V148 H${x} Z`, "#5B3F2C", .5));
+      ink.push(tvShape("M132 146 L160 118 L162 121 L134 149 Z", "#5B3F2C", .4)); ink.push(tvShape("M234 118 L262 146 L260 149 L232 121 Z", "#5B3F2C", .4));
+      ink.push(tvShape("M132 118 L160 146 L158 148 L130 120 Z", "#5B3F2C", .4)); ink.push(tvShape("M262 118 L234 146 L236 148 L264 120 Z", "#5B3F2C", .4));
+      ink.push(tvShape("M130 153 H134 V196 H130 Z M260 153 H264 V196 H260 Z", "#5B3F2C", .5));
+      // side wall timbers and shading
+      ink.push(tvLine("M264 116 L304 104 M264 150 L304 140 M284 108 V206", 1.6, .9, "#5B3F2C"));
+      ink.push(tvHatch(defs, "tvSide", side, 262, 98, 306, 214, 2, .4, .65, true));
+      paint.push(`<path d="M276 160 L292 156 V172 L276 176 Z" fill="#F4CF7A"/>`);
+      ink.push(tvShape("M276 160 L292 156 V172 L276 176 Z", "none", .7) + tvLine("M284 158 V174 M276 168 L292 164", .45));
+      // stone foundation
+      let stones = "";
+      for (let y = 197, r = 0; y < 212; y += 5, r++) for (let x = 130 + (r % 2 ? 6 : 0); x < 262; x += 10 + R() * 4) stones += `M${x.toFixed(1)} ${y + 4.6} q${(1 + R()).toFixed(1)} -4.6 ${(8 + R() * 2).toFixed(1)} -4.2 q1.4 2 0 4.2 `;
+      paint.push(tvPaint("M130 196 H264 V212 H130 Z", "#B9AC96", .75));
+      ink.push(tvLine("M130 196 H264", .8) + tvLine(stones, .4, .75));
+      // upper windows with flower boxes
+      for (const x of [170, 206]) {
+        paint.push(`<rect x="${x}" y="120" width="18" height="20" fill="url(#tvLit)"/>`);
+        ink.push(`<rect x="${x}" y="120" width="18" height="20" fill="none" stroke="${TV_INK}" stroke-width=".8"/>` + tvLine(`M${x + 9} 120 V140 M${x} 130 H${x + 18} M${x} 125 L${x + 9} 120 M${x + 9} 140 L${x + 18} 135`, .4, .7));
+        ink.push(tvShape(`M${x - 2} 141 H${x + 20} V145 H${x - 2} Z`, "#8A5E40", .6));
+        for (let i = 0; i < 7; i++) ink.push(`<circle cx="${x + 1 + i * 2.7}" cy="${139.6 - (i % 2) * 1.6}" r="1.4" fill="${["#B5543A", "#D98A9A", "#E8C25A"][i % 3]}" stroke="${TV_INK}" stroke-width=".2"/>`);
+        ink.push(tvLine(`M${x} 141 q2 -3 4 -1 M${x + 9} 141 q2 -3 4 -1 M${x + 15} 141 q2 -3 3 -1`, .45, .8, "#5F7F5C"));
+      }
+      // the bay window with guests inside
+      const bay = "M140 158 H178 V190 H140 Z";
+      paint.push(`<path d="${bay}" fill="url(#tvLit)"/>`);
+      paint.push(`<path d="M148 190 q0 -9 7 -9 q7 0 7 9 Z M164 190 q0 -8 6 -8 q6 0 6 8 Z" fill="#6B4A33" opacity=".55"/><circle cx="155" cy="176" r="3.4" fill="#6B4A33" opacity=".55"/><circle cx="170" cy="178" r="3" fill="#6B4A33" opacity=".55"/>`);
+      ink.push(tvShape(bay, "none", .9) + tvLine("M152.7 158 V190 M165.3 158 V190 M140 168 H178 M140 179 H178", .5, .8));
+      ink.push(tvShape("M136 155 H182 L180 158 H138 Z", "#5B3F2C", .6) + tvShape("M136 190 H182 L180 194 H138 Z", "#8A6A4C", .6));
+      // the right window
+      paint.push(`<rect x="222" y="160" width="26" height="26" fill="url(#tvLit)"/>`);
+      ink.push(`<rect x="222" y="160" width="26" height="26" fill="none" stroke="${TV_INK}" stroke-width=".9"/>` + tvLine("M235 160 V186 M222 173 H248", .5, .8) + tvShape("M219 186 H251 V189 H219 Z", "#8A6A4C", .6));
+      // the door, half open, light spilling out
+      const doorArch = "M186 212 V178 Q198 160 210 178 V212 Z";
+      paint.push(tvPaint(doorArch, "#6B4630", .95));
+      paint.push(`<path d="M198 212 V168 Q205 170 210 178 V212 Z" fill="#F7D98B"/>`);
+      paint.push(tvGlow(204, 196, 14, 22, "#F6CF7C", .6));
+      ink.push(tvShape(doorArch, "none", 1) + tvLine("M190 212 V172 M194 212 V167 M198 212 V166", .4, .7) + tvLine("M186 186 h8 M186 202 h8", 1, .9, "#2F2219"));
+      ink.push(tvLine("M182 212 V176 Q198 152 214 176 V212", .8) + tvLine("M184 178 l-3 -2 M188 168 l-2 -3 M196 163 v-3.4 M206 166 l2 -3 M211 174 l3 -2", .6, .8));
+      ink.push(`<circle cx="196" cy="194" r="1" fill="${TV_INK}"/>` + tvShape("M180 212 H216 L218 216 H178 Z", "#B9AC96", .6));
+      // lanterns
+      for (const x of [178, 220]) {
+        paint.push(tvGlow(x, 172, 13, 13, "#F4C35C", .7));
+        ink.push(tvLine(`M${x} 160 v4`, .6) + tvShape(`M${x - 3} 164 h6 l1.2 2 v8 l-1.2 2 h-6 l-1.2 -2 v-8 Z`, "#F6D486", .6) + tvLine(`M${x} 164 v12 M${x - 4} 168 h8`, .3, .7));
+      }
+      // the sign, with a raven on its bracket
+      ink.push(tvLine("M128 126 H98 q-6 0 -6 6 q0 5 5 4 q3 -1 2 -4", 1.1) + tvLine("M103 126 q4 -5 10 0 M104 126 V134 M120 126 V134", .6));
+      paint.push(tvPaint("M98 134 H126 Q130 144 126 154 H98 Q94 144 98 134 Z", "#8D6444", .9));
+      ink.push(tvShape("M98 134 H126 Q130 144 126 154 H98 Q94 144 98 134 Z", "none", .8));
+      ink.push(tvShape("M107 150 V140 H116 V150 Z", "#E7C27A", .6) + tvShape("M106.3 140 q1.5 -2.6 3 0 q1.5 -2.6 3 0 q1.5 -2.6 3 0 Z", "#FBF3DC", .5) + tvLine("M116 142 q3.4 0 3.4 3 q0 3 -3.4 3", .6));
+      ink.push(`<path d="M106 126 q-1 -6 4 -8 q3 -3 6 -1 l3 -1 l-2.4 2.4 q1 4 -3 7 Z" fill="#20160F"/><circle cx="114.2" cy="117.6" r=".6" fill="#F4CF7A"/>` + tvLine("M108 126 l-1 3 M111 126 l.4 3", .5));
+      // broom by the door, barrels with the cat, crates
+      ink.push(tvLine("M218 212 L226 178", 1.1, 1, "#6B4630") + tvShape("M214 212 L222 212 L221.6 199 L217.4 198 Z", "#C9A15A", .5) + tvLine("M215.6 211 l1.4 -11 M218 211 l.6 -12 M220.4 211 l-.2 -12", .35));
+      for (const [x, y] of [[232, 212], [248, 212], [240, 194]]) {
+        const b = `M${x - 8} ${y} V${y - 16} Q${x} ${y - 19} ${x + 8} ${y - 16} V${y} Q${x} ${y + 2} ${x - 8} ${y} Z`;
+        paint.push(tvPaint(b, "#A87A52", .9));
+        ink.push(tvShape(b, "none", .8) + tvLine(`M${x - 8} ${y - 4} Q${x} ${y - 2} ${x + 8} ${y - 4} M${x - 8} ${y - 12} Q${x} ${y - 10} ${x + 8} ${y - 12} M${x - 3} ${y - 17.6} V${y + 1} M${x + 3} ${y - 17.6} V${y + 1}`, .45, .85));
+        ink.push(tvHatch(defs, "tvBarrel" + x + y, b, x + 2, y - 20, x + 9, y + 2, 1.6, .35, .7));
+      }
+      ink.push(`<path d="M235 178 q-1 -6 2 -8 l1 -3.4 l1.8 2.6 h2 l1.8 -2.6 l1 3.4 q3 2 2 8 Z" fill="#20160F"/><circle cx="238.4" cy="172.6" r=".55" fill="#F2D06A"/><circle cx="242" cy="172.6" r=".55" fill="#F2D06A"/>` + tvLine("M245 177 q7 0 6 -7 q-1 -3 2 -4", 1, 1, "#20160F"));
+      paint.push(tvPaint("M266 212 V196 H286 V212 Z M270 196 V184 H284 V196 Z", "#B48A5E", .9));
+      ink.push(tvShape("M266 212 V196 H286 V212 Z", "none", .7) + tvShape("M270 196 V184 H284 V196 Z", "none", .7) + tvLine("M266 196 L286 212 M286 196 L266 212 M270 184 L284 196", .45, .7));
+      // ivy up the corner
+      ink.push(tvLine("M131 212 q-7 -18 2 -32 q8 -12 -1 -28 q-5 -10 4 -24 q4 -8 -2 -16", .7, 1, "#4F6B42"));
+      for (let i = 0; i < 26; i++) { const y = 210 - i * 4, x = 131 + Math.sin(i * 1.3) * 4 + (R() - .5) * 4, a = (R() - .5) * 120;
+        ink.push(`<path transform="translate(${x.toFixed(1)} ${y}) rotate(${a.toFixed(0)})" d="M0 0 q2.6 -2 5 0 q-2.4 2.2 -5 0 Z" fill="${i % 2 ? "#6E8F55" : "#94AE6E"}" stroke="${TV_INK}" stroke-width=".3"/>`); }
+      // ground: shadow, path stones, grass, fence
+      paint.push(tvPaint("M264 212 L304 204 L360 214 L300 224 Z", "#4E4334", .28));
+      ink.push(tvHatch(defs, "tvShadow", "M264 212 L304 204 L360 214 L300 224 Z", 262, 202, 362, 226, 2.4, .35, .55));
+      ink.push(tvLine("M0 210 Q60 205 128 211 M268 213 Q330 208 400 212", .7));
+      for (let y = 218, row = 0; y < 256; y += 6.2, row++) {
+        const half = 14 + row * 7, n = Math.round(half / 6);
+        for (let i = -n; i <= n; i++) { const x = 198 + i * (half / n) + (row % 2 ? 3 : 0) + (R() - .5) * 2, rx = 3 + row * .55 + R(), ry = rx * .42;
+          ink.push(`<ellipse cx="${x.toFixed(1)}" cy="${(y + (R() - .5) * 2).toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="#D7C9AD" stroke="${TV_INK}" stroke-width=".4" opacity=".9"/>`); }
+      }
+      let grass = "";
+      for (let i = 0; i < 60; i++) { const x = R() * W, y = 214 + R() * 44; if (Math.abs(x - 198) < 30 + (y - 214) * 1.2) continue; grass += `M${x.toFixed(1)} ${y.toFixed(1)} l-1.2 -3.6 M${(x + 1.4).toFixed(1)} ${y.toFixed(1)} l.3 -4.4 M${(x + 2.8).toFixed(1)} ${y.toFixed(1)} l1.3 -3.4 `; }
+      ink.push(tvLine(grass, .45, .75, "#3F5233"));
+      for (let x = 14; x <= 112; x += 16) ink.push(tvShape(`M${x} 236 V214 l2 -2 l2 2 V236 Z`, "#B89C78", .55));
+      ink.push(tvLine("M10 220 Q60 218 118 221 M10 230 Q60 228 118 231", .8, 1, "#6B4630"));
+      // --- handwritten notes and the name ribbon ---
+      const notes = `
+        <path d="M22 16 H168 L160 26 L168 36 H22 L30 26 Z" fill="#F4E7C8" stroke="${TV_INK}" stroke-width=".7"/>
+        <path d="M30 26 L22 16 M30 26 L22 36" fill="none" stroke="${TV_INK}" stroke-width=".4"/>
+        <text x="95" y="30" text-anchor="middle" class="tv-title">The Sprout &amp; Tankard</text>
+        <text x="20" y="250" class="tv-note">warm cider &amp; good company</text>
+        <text x="318" y="252" class="tv-note">mind the cat</text>
+        <path d="M316 246 q-26 -10 -64 -62" fill="none" stroke="${TV_INK}" stroke-width=".45" opacity=".75"/><path d="M252 184 l.4 4.6 M252 184 l3.8 2.4" fill="none" stroke="${TV_INK}" stroke-width=".45"/>`;
+      return `<svg class="tav-art" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs>${TV_FILTERS(7)}
+          <linearGradient id="tvSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5E7494"/><stop offset=".45" stop-color="#9D93A6"/><stop offset=".8" stop-color="#E5B98C"/><stop offset="1" stop-color="#F1D3A2"/></linearGradient>
+          <radialGradient id="tvLit" cx="50%" cy="55%" r="65%"><stop offset="0" stop-color="#FBE6A6"/><stop offset=".7" stop-color="#F2BE5E"/><stop offset="1" stop-color="#D98E3E"/></radialGradient>
+          <mask id="tvScene"><path d="M14 46 Q36 8 130 14 Q230 4 310 12 Q388 14 388 64 Q398 146 384 208 Q378 246 300 242 Q200 252 108 244 Q20 248 14 200 Q4 124 14 46 Z" fill="#fff" filter="url(#tvEdge)"/></mask>
+          ${defs.join("")}</defs>
+        <g mask="url(#tvScene)">${paint.join("")}
+          <g filter="url(#tvHandB)" opacity=".3">${sketch.join("")}</g>
+          <g filter="url(#tvHandA)">${ink.join("")}</g>
+          <rect width="${W}" height="${H}" filter="url(#tvGrain)" opacity=".5"/></g>
+        ${notes}</svg>`;
     }
 
-    // Small ink drawings of what the party brings to the table.
+    // Dishes for the feast, each a small shaded ink drawing.
     const FEAST_FOOD = [
-      `<path d="M-7 0 Q-7 -6.5 0 -6.5 Q7 -6.5 7 0 Z" ${tavFill(.55, "#E7C38E")}/><path d="M-3.5 -5.6 l2 2 M-.2 -6 l2 2 M3 -5.6 l2 2" ${tavPen(.4)}/>`,
-      `<path d="M-7 0 L-6 -3.2 H6 L7 0 Z" ${tavFill(.55, "#D9A066")}/><path d="M-6 -3.2 Q0 -7.6 6 -3.2 M-3 -4.6 l2 1.4 M1 -5 l2 1.6 M-1 -5.2 l-1.6 1.8 M3 -4.6 l-1.6 1.6" ${tavPen(.45)}/>`,
-      `<path d="M-3.2 0 V-8 H3.2 V0 Z" ${tavFill(.55, "#F3D58B")}/><path d="M-3.8 -8 q1.27 -2.2 2.53 0 q1.27 -2.2 2.53 0 q1.27 -2.2 2.53 0 Z" ${tavFill(.45)}/><path d="M3.2 -6 q3.2 0 3.2 2.6 q0 2.6 -3.2 2.6" ${tavPen(.55)}/>`,
-      `<circle cx="-3" cy="-2.4" r="2.6" ${tavFill(.5, "#C96B53")}/><circle cx="3" cy="-2.4" r="2.6" ${tavFill(.5, "#D98A6A")}/><circle cx="0" cy="-6.2" r="2.6" ${tavFill(.5, "#C96B53")}/><path d="M0 -8.8 q.6 -1.6 2 -2" ${tavPen(.45, "#5F7F5C")}/>`,
-      `<path d="M-7 0 Q-6.4 -7 .8 -6.2 Q6.6 -5.4 6 0 Z" ${tavFill(.55, "#C98A52")}/><path d="M4.4 -4.4 l3.6 -3 M8 -7.4 a1.1 1.1 0 1 1 1.2 1.1" ${tavPen(.55)}/><path d="M-3 -3.6 q2 -1.2 4 0" ${tavPen(.35)} opacity=".7"/>`,
-      `<path d="M-6.6 0 H6.6 V-4.2 L-6.6 -1.2 Z" ${tavFill(.55, "#EFD07E")}/><circle cx="-1.6" cy="-1" r=".8" ${tavPen(.35)}/><circle cx="2.8" cy="-2.2" r="1" ${tavPen(.35)}/>`,
+      `<path d="M-8 0 Q-8 -8 0 -8 Q8 -8 8 0 Z" fill="#D9A35E" stroke="${TV_INK}" stroke-width=".6"/><path d="M-6 -1 Q-6 -6.6 0 -6.6" fill="none" stroke="#F4D9A0" stroke-width="1.2" opacity=".8"/><path d="M-4 -6.6 l2.4 2.4 M0 -7.4 l2.4 2.4 M4 -6.6 l2 2" fill="none" stroke="${TV_INK}" stroke-width=".5"/>`,
+      `<path d="M-8 0 L-6.6 -3.6 H6.6 L8 0 Z" fill="#B97A45" stroke="${TV_INK}" stroke-width=".6"/><path d="M-6.6 -3.6 Q0 -9 6.6 -3.6 Z" fill="#E1A55F" stroke="${TV_INK}" stroke-width=".55"/><path d="M-4 -5 l6 3 M-1 -6.6 l5 3 M2 -6.4 l-5 3.4 M5 -4.6 l-5 3" fill="none" stroke="${TV_INK}" stroke-width=".4"/><path d="M-1 -3.6 l1 -2 l1 2" fill="#B5543A"/>`,
+      `<path d="M-3.6 0 V-9 H3.6 V0 Z" fill="#E9B54E" stroke="${TV_INK}" stroke-width=".6"/><path d="M-1.6 -1 V-8" stroke="#F7DA8E" stroke-width="1.2"/><path d="M-4.2 -9 q1.4 -2.6 2.8 0 q1.4 -2.6 2.8 0 q1.4 -2.6 2.8 0 Z" fill="#FBF6E9" stroke="${TV_INK}" stroke-width=".5"/><path d="M3.6 -7 q3.6 0 3.6 3 q0 3 -3.6 3" fill="none" stroke="${TV_INK}" stroke-width=".7"/><path d="M-3.6 -3 H3.6" stroke="${TV_INK}" stroke-width=".4"/>`,
+      `<ellipse cx="0" cy="-1" rx="8" ry="2.6" fill="#8A6A4C" stroke="${TV_INK}" stroke-width=".5"/><circle cx="-3.4" cy="-3.6" r="3" fill="#C2513C" stroke="${TV_INK}" stroke-width=".5"/><circle cx="3.2" cy="-3.6" r="3" fill="#D9734E" stroke="${TV_INK}" stroke-width=".5"/><circle cx="0" cy="-7.4" r="3" fill="#9FB54E" stroke="${TV_INK}" stroke-width=".5"/><path d="M-4.4 -4.8 a1.2 1.2 0 0 1 1.4 -1 M2.2 -4.8 a1.2 1.2 0 0 1 1.4 -1 M0 -10.4 q.8 -1.8 2.4 -2.2" fill="none" stroke="#FBEFD6" stroke-width=".6"/>`,
+      `<path d="M-8 0 Q-7.4 -8 1 -7 Q8 -6 7 0 Z" fill="#B76E3C" stroke="${TV_INK}" stroke-width=".6"/><path d="M-5 -2 Q-4 -6 1 -5.6" fill="none" stroke="#E7A66A" stroke-width="1.3" opacity=".8"/><path d="M5 -5 l4.4 -3.6" stroke="${TV_INK}" stroke-width="1.4"/><path d="M5 -5 l4.4 -3.6" stroke="#F4EAD6" stroke-width=".7"/><circle cx="9.8" cy="-9.2" r="1.3" fill="#F4EAD6" stroke="${TV_INK}" stroke-width=".4"/><path d="M-6 -1.6 h8 M-5 -3.4 h6" stroke="${TV_INK}" stroke-width=".35" opacity=".6"/>`,
+      `<path d="M-7.6 0 H7.6 V-5 L-7.6 -1.4 Z" fill="#EBC45E" stroke="${TV_INK}" stroke-width=".6"/><path d="M-7.6 -1.4 L7.6 -5 L6 -6.2 L-8.6 -2.4 Z" fill="#F4D985" stroke="${TV_INK}" stroke-width=".5"/><circle cx="-2" cy="-1.2" r=".9" fill="#C99A3A"/><circle cx="3.4" cy="-2.4" r="1.1" fill="#C99A3A"/><circle cx="5.6" cy="-.8" r=".7" fill="#C99A3A"/>`,
     ];
-    // A long trestle table by candlelight; each filled plate holds a dish, empty plates are faint dotted rings.
-    function feastTableArt(t) {
-      const n = t.plates, x0 = 46, x1 = 274;
+    // A candlelit tavern interior: guests seated behind a long trestle table; each filled plate holds a dish.
+    function feastTableArt(t, players) {
+      const R = tvRand(11), defs = [], paint = [], ink = [];
+      const W = 400, H = 176, n = t.plates, x0 = 70, x1 = 330;
+      // back wall, beams, hearth glow, shelf, hanging herbs
+      paint.push(`<rect width="${W}" height="${H}" fill="url(#tvWall)"/>`);
+      paint.push(tvGlow(200, 60, 120, 50, "#F6C36A", .45));
+      ink.push(tvLine("M0 22 H400 M0 26 H400", .8, .7) + tvLine("M70 26 V100 M200 26 V96 M330 26 V100", 3, .45, "#4A3324"));
+      for (let x = 6; x < 400; x += 9) ink.push(tvLine(`M${x} 30 V${100 - R() * 6}`, .35, .25));
+      ink.push(tvShape("M14 58 H58 V61 H14 Z M342 58 H386 V61 H342 Z", "#6B4630", .5));
+      for (const [x, c] of [[18, "#5E7A49"], [26, "#9C4A36"], [34, "#4B6A86"], [44, "#6B4630"], [52, "#C9A15A"], [346, "#9C4A36"], [356, "#5E7A49"], [364, "#C9A15A"], [374, "#4B6A86"], [382, "#6B4630"]])
+        ink.push(tvShape(`M${x - 2.4} 58 V${50 - (x % 3) * 2} q0 -2 2.4 -3 q2.4 1 2.4 3 V58 Z`, c, .5));
+      for (const x of [110, 150, 250, 290]) { ink.push(tvLine(`M${x} 26 V36`, .5)); ink.push(tvLine(`M${x} 36 l-3 10 M${x} 36 l0 11 M${x} 36 l3 10 M${x - 1} 40 l-3 3 M${x + 1} 42 l3 3`, .6, .9, "#5F7F5C")); }
+      const wallInk = ink.length;
+      // seated guests (the players' own avatars), heads and shoulders above the table
+      const seated = (players || []).filter((p) => p.status !== "declined");
+      const gap = Math.min(52, 280 / Math.max(1, seated.length)), start = 200 - (gap * (seated.length - 1)) / 2;
+      const guests = seated.map((p, i) => {
+        const x = start + i * gap, svg = mascotSvg(avatarId(p.avatar)).replace("<svg ", `<svg x="${(x - 19).toFixed(1)}" y="40" width="38" height="36" `);
+        return `<g${p.status === "invited" ? ' opacity=".4"' : ""}>${tvGlow(x, 74, 22, 8, "#3B2A1E", .25)}${svg}<text x="${x.toFixed(1)}" y="35" text-anchor="middle" class="tv-name">${p.me ? "You" : esc(p.name)}</text></g>`;
+      }).join("");
+      // the table: top, cloth runner, apron, legs, bench
+      const top = "M28 80 H372 L394 118 H6 Z";
+      paint.push(tvPaint(top, "#9C6B45", .95));
+      let grain = "";
+      for (let i = 0; i < 9; i++) { const y = 84 + i * 3.8; grain += `M${(20 - i * 1.6).toFixed(1)} ${y.toFixed(1)} q90 ${(R() - .5) * 3} 180 0 t${(180 + i * 3).toFixed(1)} 0 `; }
+      ink.push(tvLine(grain, .35, .55, "#3B2A1E"));
+      const runner = "M60 86 H340 L352 108 H48 Z";
+      paint.push(`<path d="${runner}" fill="#F1E5C8"/>`);
+      ink.push(tvShape(runner, "none", .6) + tvLine("M57 89 H343 M50 105 H350", .4, .7, "#9C4A36") + tvLine("M57 91 H343 M50 103 H350", .3, .5, "#9C4A36"));
+      ink.push(tvShape(top, "none", 1));
+      paint.push(tvPaint("M6 118 H394 V128 H6 Z", "#7A5236", .95));
+      ink.push(tvShape("M6 118 H394 V128 H6 Z", "none", .8) + tvHatch(defs, "tvApron", "M6 118 H394 V128 H6 Z", 4, 116, 396, 130, 2.2, .35, .6));
+      let fringe = "M48 108";
+      for (let x = 48; x < 352; x += 8) fringe += ` q4 7 8 0`;
+      paint.push(`<path d="${fringe} V108 Z" fill="#EADBB9"/>`); ink.push(tvLine(fringe, .5, .9));
+      for (const x of [34, 366]) { const leg = `M${x - 6} 128 h12 l-2 30 h-8 Z`; paint.push(tvPaint(leg, "#6B4630", .95)); ink.push(tvShape(leg, "none", .8) + tvHatch(defs, "tvLeg" + x, leg, x - 6, 126, x + 7, 160, 1.8, .35, .7)); }
+      ink.push(tvLine("M34 146 H366", 2.2, .8, "#4A3324"));
+      paint.push(tvPaint("M18 160 H382 L376 168 H24 Z", "#5B3F2C", .9)); ink.push(tvShape("M18 160 H382 L376 168 H24 Z", "none", .7));
+      // candelabras with three flames each
+      for (const x of [36, 364]) {
+        paint.push(tvGlow(x, 54, 26, 24, "#F6C35C", .65));
+        ink.push(tvLine(`M${x} 98 V72 M${x - 9} 74 Q${x} 82 ${x + 9} 74 M${x - 9} 74 V66 M${x + 9} 74 V66 M${x - 5} 98 H${x + 5}`, .9, 1, "#6B4630"));
+        for (const dx of [-9, 0, 9]) { const y = dx ? 66 : 62; ink.push(tvShape(`M${x + dx - 1.6} ${y} V${y - 10} H${x + dx + 1.6} V${y} Z`, "#F6EEDA", .45) + `<path d="M${x + dx} ${y - 10} q-2.4 -3.6 0 -7.2 q2.4 3.6 0 7.2 Z" fill="#F2B347" stroke="${TV_INK}" stroke-width=".3"/>`); }
+      }
+      // plates and dishes
       const plates = Array.from({ length: n }, (_, i) => {
         const x = (x0 + ((x1 - x0) * i) / (n - 1)).toFixed(1), full = i < t.dishes;
+        const plate = `<ellipse rx="14" ry="5" fill="#C9C4B8" stroke="${TV_INK}" stroke-width=".6"/><ellipse rx="9.6" ry="3.2" fill="#DAD6CC" stroke="${TV_INK}" stroke-width=".35"/><path d="M-11 -2 q4 -2.4 9 -2.6" fill="none" stroke="#F4F2EC" stroke-width=".8"/>`;
         return full
-          ? `<g class="dish-full" transform="translate(${x} 47)"><ellipse rx="13" ry="4.8" ${tavFill(.6)}/><ellipse rx="8.4" ry="2.9" ${tavPen(.3)} opacity=".6"/><g transform="translate(0 -1.2) scale(1.35)">${FEAST_FOOD[i % FEAST_FOOD.length]}</g></g>`
-          : `<g class="dish-empty" transform="translate(${x} 47)"><ellipse rx="13" ry="4.8" fill="none" stroke="${TAV_INK}" stroke-width=".6" stroke-dasharray="1.4 2.2" opacity=".55"/></g>`;
+          ? `<g class="dish-full" transform="translate(${x} 97)">${plate}<g transform="translate(0 -1.6) scale(1.4)">${FEAST_FOOD[i % FEAST_FOOD.length]}</g></g>`
+          : `<g class="dish-empty" transform="translate(${x} 97)"><ellipse rx="14" ry="5" fill="none" stroke="${TV_INK}" stroke-width=".6" stroke-dasharray="1.6 2.2" opacity=".6"/></g>`;
       }).join("");
-      const candle = (x) => `<path d="M${x - 2} 46 h4 M${x} 46 V30" ${tavPen(.6)}/><path d="M${x - 1.6} 44 V31 H${x + 1.6} V44 Z" ${tavFill(.5)}/><path d="M${x} 30 q-2 -3 0 -6 q2 3 0 6 Z" fill="#E8B04F" stroke="${TAV_INK}" stroke-width=".35"/>${tavWash(x, 27, 9, 9, "#F2C66B", .55)}`;
-      return `<svg class="feast-art" viewBox="0 16 320 80" role="img" aria-label="${t.dishes} of ${t.plates} dishes on the table">${TAV_DEFS}
-        ${tavWash(160, 50, 150, 26, "#E7CFA2", .35)}
-        <g filter="url(#tavHand)">
-          <path d="M22 34 H298 L314 58 H6 Z" ${tavFill(.8, "#EBDDC3")}/>
-          <path d="M30 40 H290 M18 52 H302 M60 37 q50 -1 100 0 M150 55 q60 1 120 0" ${tavPen(.35)} opacity=".45"/>
-          <path d="M6 58 H314 V65 H6 Z" ${tavFill(.7, "#DCC5A1")}/><path d="M12 61.5 H308" ${tavPen(.3)} opacity=".5"/>
-          <path d="M40 65 L64 93 M64 65 L40 93 M256 65 L280 93 M280 65 L256 93 M34 93 H70 M250 93 H286 M52 79 H268" ${tavPen(.75)}/>
-          ${candle(22)}${candle(298)}
-          ${plates}
-        </g>
-      </svg>`;
+      return `<svg class="feast-art" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t.dishes} of ${t.plates} dishes on the feast table"><defs>${TV_FILTERS(13)}
+          <linearGradient id="tvWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6B4A33"/><stop offset=".55" stop-color="#A9784E"/><stop offset="1" stop-color="#6E4C34"/></linearGradient>
+          <mask id="tvRoom"><path d="M8 18 Q60 4 200 8 Q340 4 392 18 Q400 90 392 168 Q300 176 200 172 Q90 176 8 168 Q0 90 8 18 Z" fill="#fff" filter="url(#tvEdge)"/></mask>
+          ${defs.join("")}</defs>
+        <g mask="url(#tvRoom)">${paint.slice(0, 2).join("")}<g filter="url(#tvHandA)">${ink.slice(0, wallInk).join("")}</g>${guests}${paint.slice(2).join("")}
+          <g filter="url(#tvHandA)">${ink.slice(wallInk).join("")}</g>${plates}
+          <rect width="${W}" height="${H}" filter="url(#tvGrain)" opacity=".45"/></g></svg>`;
     }
 
     function tavernHero() {
@@ -3749,7 +3908,6 @@
       const others = players.filter((p) => !p.me && p.status !== "declined");
       const when = phase === "waiting" ? "Waiting for a yes" : phase === "scheduled" ? "Begins " + relative(f.start_day, today).toLowerCase()
         : phase === "active" ? `Day ${feastDayNumber(f, today)} of ${FEAST_DAYS} · ends ${relative(f.end_day, today).toLowerCase()}` : "The feast is over";
-      const guests = seated.concat(invited).map((p) => `<span class="guest${p.status === "invited" ? " invited" : ""}">${face(p.avatar)}${p.me ? "You" : esc(p.name)}</span>`).join("");
       let below;
       if (phase === "waiting") {
         below = invited.length ? `<p class="feast-note">Waiting for ${names(invited)} to say yes. The feast begins the day after someone does.</p>` : '<p class="feast-note">No one could make it this time.</p>';
@@ -3764,7 +3922,7 @@
         if (phase === "over") below += `<button class="btn" data-action="feast-claim" data-id="${f.id}">${px("chest", 16)} Collect your reward</button>`;
       }
       return `<div class="feast"><div class="feast-head"><b>Feast with ${names(others) || "friends"}</b><span class="muted">${when}</span></div>
-        <div class="guests">${guests}</div>${feastTableArt(t)}${below}</div>`;
+        ${feastTableArt(t, players)}${below}</div>`;
     }
     // The top of the Tavern: the tavern picture, or the feast table while you're in one.
     function feastTop(today) {
