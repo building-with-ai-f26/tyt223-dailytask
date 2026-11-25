@@ -32,7 +32,8 @@
 | `PRODUCT.md` | Product context for design work (users, positioning, constraints); read by the Impeccable plugin |
 | `.impeccable/config.json` | Impeccable design-hook settings (`config.local.json` is per-developer and ignored) |
 | `README.md` | Public project overview and how to try it |
-| `Intent.md`, `Plan.md`, `journal/`, `tests/README.md`, `SPONSOR_MEMO.md` | Course templates; mostly unfilled |
+| `tests/` | Automated tests: `node tests/run.js` runs them all (`*.test.js`, Node's built-in runner); `tests/helpers.js` loads the app's script without a browser; `tests/browser/harness.js` drives headless Edge/Chrome with a fake Supabase |
+| `Intent.md`, `Plan.md`, `journal/`, `SPONSOR_MEMO.md` | Course templates; mostly unfilled |
 
 ### How the app code is organized (`docs/app/index.html`)
 - **Design tokens** (colors, fonts, shadows, corner ornaments) are CSS variables at the top of the `<style>` block; journal themes override `--accent` and the `--leather`/`--sky` colors. The look is an elegant fantasy quest journal (see `PRODUCT.md` → Brand Commitments): paper panels with torn edges come from the `#paper-edge` SVG filter applied to `::before` backgrounds only, so text stays crisp.
@@ -59,7 +60,7 @@
 - **Run with AI suggestions:** set up `.env` from `.env.example`, then `node server.js` and open http://localhost:8787/app/. `node server.js --models` lists the models the key can use. Without a key the server still serves the app with AI off.
 - **Deploy:** Push to `main`. GitHub Pages republishes `docs/` in about a minute; browsers may cache the old page for up to 10 minutes. Installed home-screen apps pick up the new page on their next launch with a connection; bump `CACHE` in `sw.js` only if a device must drop its old copy.
 - **Reset the demo:** Profile tab → **Reload sample data** or **Start empty**. **Simulate next day** tests rollover and streaks.
-- **Run deterministic tests:** No automated test suite is committed yet. Before pushing, manually check: add a typed quest (e.g. `exercise 3 times a week`, `coffee chat at 3pm`), use a template chip, complete a quest, claim a reward, import a `.ics` file, tap **Add US holidays** in Schedule, type `send th` and press Tab to accept the suggestion, and check a phone-width window (about 390px). Server tests should use a fake `fetch` (`createServer(env, fakeFetch)`) so they never spend OpenAI credits.
+- **Run deterministic tests:** `node tests/run.js` (Node built-ins only, about 60 checks in under 10 s; browser checks run in headless Edge/Chrome and are skipped if neither is installed). Run it before every push and add a test with each new feature; see `tests/README.md`. Still check by hand: a phone-width screenshot (about 390px) of any changed screen, and the live site after deploy. Server tests use a fake `fetch` (`createServer(env, fakeFetch)`) so they never spend OpenAI credits.
 - **Run model evals:** Not set up yet. The only model use is typing suggestions (the `suggest` function live, `server.js` locally); judge them by hand from `node server.js` and PostHog's `suggestion_shown` / `suggestion_accepted` (property `source`: history or ai).
 
 ## 3. Non-Negotiable Engineering Rules
