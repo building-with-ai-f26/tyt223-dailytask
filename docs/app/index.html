@@ -357,7 +357,8 @@
     .hand-note { font-family: var(--hand); font-size: 22px; line-height: 1.15; color: var(--muted); margin: 0 0 4px; }
     .tab-dot { position: absolute; top: 9px; left: calc(50% + 9px); width: 9px; height: 9px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 0 2px var(--leather, #1B3830); }
     .friend-search { display: flex; gap: 8px; margin-bottom: 6px; }
-    .friend-search input { flex: 1; min-width: 0; }
+    .friend-search input { flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: 2px; }
+    .friend-search input::placeholder { text-transform: none; letter-spacing: normal; }
     .lb { display: grid; gap: 6px; }
     .lb-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 7px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); color: var(--ink); font: inherit; }
     button.lb-row { cursor: pointer; }
@@ -3306,7 +3307,6 @@
     // Hero cards and friend requests live in Supabase (supabase/friends.sql). Friends see only a hero name,
     // avatar, level, streak and XP this week. Every friend action goes through a database function that checks
     // who is asking; the app can read and change only its own hero card directly.
-    const INVITE_KEY = "dailyquest.invite";   // a friend code from an invite link, kept until the player is logged in
     const social = {};
     function resetSocial() { Object.assign(social, { me: null, friends: [], loaded: false, loading: null, loadedAt: 0, error: "", results: null, query: "", sentCard: "" }); }
     resetSocial();
@@ -3335,7 +3335,7 @@
         } catch (e) { social.error = "Couldn't open your friends list. Check your connection and try again."; }
         social.loading = null;
         rerenderFriends();
-        if (social.me) { syncHeroCard(); maybeInvite(); }
+        if (social.me) { syncHeroCard(); hideFromNameSearch(); }
       })();
       return social.loading;
     }
@@ -3350,47 +3350,25 @@
       if (error) social.sentCard = ""; else Object.assign(social.me, stats);
     }
 
-    // Invite links look like …/app/?friend=ABC234. The code waits in this tab until the player is logged in.
-    function captureInvite() {
-      const params = new URLSearchParams(location.search);
-      if (!params.has("friend")) return;
-      const code = friendCodeFrom(params.get("friend"));
-      params.delete("friend");
-      const rest = params.toString();
-      history.replaceState(null, "", location.pathname + (rest ? "?" + rest : "") + location.hash);
-      if (!code) return;
-      try { sessionStorage.setItem(INVITE_KEY, code); } catch (e) { /* the player can still type the code */ }
-      tab = "tavern";
+    // Friends are added only by friend code, and every request must be accepted. Cards made before name search
+    // was removed get hidden from it.
+    async function hideFromNameSearch() {
+      if (!social.me || !social.me.searchable) return;
+      const { error } = await account.client.from("profiles").update({ searchable: false }).eq("user_id", account.user.id);
+      if (!error) social.me.searchable = false;
     }
-    async function maybeInvite() {
-      let code = "";
-      try { code = sessionStorage.getItem(INVITE_KEY) || ""; } catch (e) { return; }
-      if (!code || !social.me || modalOpen()) return;
-      try { sessionStorage.removeItem(INVITE_KEY); } catch (e) { /* ignore */ }
-      if (code === social.me.code) return;
-      const known = social.friends.find((x) => x.code === code);
-      if (known) { toast(known.status === "accepted" ? known.name + " is already your friend" : "A friend request is already waiting", "check"); return; }
-      const { data, error } = await account.client.rpc("find_players", { q: code });
-      const p = !error && data && data.find((x) => x.code === code);
-      if (!p) { toast("That invite link doesn't match a hero anymore", "scroll"); return; }
-      openSheet(`<div class="info">${face(p.avatar, true)}<h2>Add ${esc(p.name)}?</h2>
-        <p>${esc(p.name)} (level ${Number(p.level) || 1}) invited you to be friends on DailyQuest. Friends see each other's hero name, level, streak and XP this week, never quests.</p>
-        <div class="toolbar" style="justify-content:center;margin:0"><button class="btn" data-action="friend-add" data-code="${esc(p.code)}">Send friend request</button><button class="btn soft" data-action="friend-close">Not now</button></div></div>`);
-    }
-    async function shareInvite() {
+    async function shareCode() {
       if (!social.me) return;
-      const url = appUrl() + "?friend=" + social.me.code, text = "Join me on DailyQuest, the quest journal for busy students! My friend code is " + social.me.code + ".";
-      track("invite_shared", { method: navigator.share ? "share" : "copy" });
-      if (navigator.share) { try { await navigator.share({ title: "DailyQuest", text, url }); } catch (e) { /* closed the share sheet */ } return; }
-      try { await navigator.clipboard.writeText(text + " " + url); toast("Invite link copied", "check"); }
-      catch (e) { prompt("Copy your invite link:", url); }
+      const text = "Add me as a friend on DailyQuest! My friend code is " + social.me.code + ".";
+      track("code_shared", { method: navigator.share ? "share" : "copy" });
+      if (navigator.share) { try { await navigator.share({ title: "DailyQuest", text }); } catch (e) { /* closed the share sheet */ } return; }
+      try { await navigator.clipboard.writeText(text); toast("Friend code copied", "check"); } catch (e) { prompt("Your friend code:", social.me.code); }
     }
 
     function heroFormHtml() {
       const me = social.me;
       return `<form id="heroForm">
         <label class="field" style="margin-top:0">Hero name<input id="heroName" maxlength="20" autocomplete="nickname" required value="${esc(me ? me.name : "")}" placeholder="e.g. Sabrina T." /></label>
-        ${me ? "" : `<label class="feed-toggle" style="white-space:normal;margin-top:8px"><input type="checkbox" id="heroSearchable" checked /> Let friends find me by this name</label>`}
         <p class="muted" style="margin:8px 0 12px">Friends see only your hero name, avatar, level, streak and XP this week. Never your quests, calendar or email.</p>
         <button class="btn" type="submit">${me ? "Save name" : "Create my hero card"}</button></form>`;
     }
@@ -3407,15 +3385,13 @@
         closeSheet(); render(); toast("Name saved", "check");
         return;
       }
-      const searchable = $("heroSearchable") ? $("heroSearchable").checked : true;
       for (let tries = 0; tries < 5; tries++) {   // a new random code, in the rare case one is taken
         const stats = heroCardStats(state, getToday());
-        const { data, error } = await account.client.from("profiles").insert(Object.assign({ user_id: account.user.id, name, code: newFriendCode(), searchable }, stats)).select("*").single();
+        const { data, error } = await account.client.from("profiles").insert(Object.assign({ user_id: account.user.id, name, code: newFriendCode(), searchable: false }, stats)).select("*").single();
         if (!error) {
           Object.assign(social, { me: data, friends: [], loaded: true, loadedAt: Date.now(), sentCard: JSON.stringify(stats) });
-          track("hero_card_created", { searchable });
+          track("hero_card_created");
           render(); toast("Your hero card is ready", "check");
-          maybeInvite();
           return;
         }
         if (error.code !== "23505") break;
@@ -3423,20 +3399,15 @@
       btn.disabled = false;
       socialFail();
     }
-    async function setSearchable(on) {
-      const { error } = await account.client.from("profiles").update({ searchable: on }).eq("user_id", account.user.id);
-      if (error) { socialFail(); render(); return; }
-      social.me.searchable = on;
-      toast(on ? "Friends can find you by name" : "Only people with your friend code can find you", "check");
-    }
-    async function searchPlayers() {
-      const q = $("friendQuery").value.trim();
-      social.query = q;
-      if (q.length < 3) { toast("Type at least 3 letters, or a 6-letter friend code", "scroll"); return; }
-      const { data, error } = await account.client.rpc("find_players", { q });
+    async function findByCode() {
+      const code = friendCodeFrom($("friendQuery").value);
+      social.query = $("friendQuery").value.trim().toUpperCase();
+      if (!code) { toast("Friend codes are 6 letters and numbers, like 4VXBLZ", "scroll"); return; }
+      if (code === social.me.code) { toast("That's your own code", "scroll"); return; }
+      const { data, error } = await account.client.rpc("find_players", { q: code });
       if (error) { socialFail(); return; }
-      social.results = data || [];
-      track("friend_search", { results: social.results.length });
+      social.results = (data || []).filter((p) => p.code === code);
+      track("friend_code_lookup", { found: social.results.length > 0 });
       render();
     }
     async function socialAction(action, btn) {
@@ -3444,7 +3415,7 @@
       switch (action) {
         case "friend-close": closeSheet(); return;
         case "friend-retry": social.error = ""; render(); loadSocial(); return;
-        case "friend-share": shareInvite(); return;
+        case "friend-share": shareCode(); return;
         case "friend-copy-code":
           if (!social.me) return;
           try { await navigator.clipboard.writeText(social.me.code); toast("Friend code copied", "check"); } catch (e) { prompt("Your friend code:", social.me.code); }
@@ -3458,7 +3429,7 @@
           if (data === "accepted") track("friend_added");
           if (!$("sheetOverlay").hidden) closeSheet();
           const good = data === "sent" || data === "accepted";
-          toast({ sent: "Friend request sent", accepted: "You're now friends!", already: "You're already connected", not_found: "No hero has that code", self: "That's your own code", too_many: "Too many requests waiting. Try again once some are answered.", no_profile: "Create your hero card first" }[data] || "Something went wrong", good ? "check" : "scroll");
+          toast({ sent: "Request sent. They'll need to accept it.", accepted: "You're now friends!", already: "You're already connected", not_found: "No hero has that code", self: "That's your own code", too_many: "Too many requests waiting. Try again once some are answered.", no_profile: "Create your hero card first" }[data] || "Something went wrong", good ? "check" : "scroll");
           await loadSocial();
           return;
         }
@@ -3502,18 +3473,17 @@
       }
       if (!social.me) return `<div class="panel" style="margin-top:0"><h3>Pull up a chair</h3>
         <p class="hand-note">Every quest is easier with friends.</p>
-        <p class="muted" style="margin:0 0 12px">Pick the name your friends will see. You'll get a friend code and an invite link to share.</p>${heroFormHtml()}</div>`;
+        <p class="muted" style="margin:0 0 12px">Pick the name your friends will see. You'll get a friend code to share.</p>${heroFormHtml()}</div>`;
       const me = Object.assign({}, social.me, heroCardStats(state, today));
       const incoming = social.friends.filter((x) => x.status === "pending" && x.incoming), outgoing = social.friends.filter((x) => x.status === "pending" && !x.incoming);
       const card = `<div class="panel" style="margin-top:0"><h3>Your adventurer card</h3>
         <div class="hero-card">${face(me.avatar)}<div><b>${esc(me.name)}</b><div class="muted">Level ${me.level} · ${me.streak}-day streak</div></div>
           <div class="code-box"><button class="code-tag" data-action="friend-copy-code" aria-label="Friend code ${esc(me.code)}. Tap to copy"><small>Friend code</small><b>${esc(me.code)}</b><span class="mini-seal" aria-hidden="true">${px("tankard", 16)}</span></button><span class="muted">Tap to copy</span></div></div>
-        <div class="toolbar" style="margin:12px 0 0"><button class="btn" data-action="friend-share">Share invite link</button><button class="btn soft" data-action="hero-rename">Rename</button></div>
-        <label class="feed-toggle" style="margin-top:10px;white-space:normal"><input type="checkbox" data-social="searchable" ${me.searchable ? "checked" : ""} /> Let friends find me by name</label></div>`;
+        <div class="toolbar" style="margin:12px 0 0"><button class="btn" data-action="friend-share">Share my code</button><button class="btn soft" data-action="hero-rename">Rename</button></div></div>`;
       const requests = incoming.length || outgoing.length ? `<div class="panel"><h3>Waiting at the door</h3>
         ${incoming.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Level ${Number(x.level) || 1} · wants to join your table</div></div>
           <button class="btn sm" data-action="friend-accept" data-id="${x.id}">Accept</button><button class="linkbtn" data-action="friend-decline" data-id="${x.id}">Decline</button></div>`).join("")}
-        ${outgoing.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Invitation sent · waiting for them</div></div>
+        ${outgoing.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Request sent · waiting for them to accept</div></div>
           <button class="linkbtn" data-action="friend-remove" data-id="${x.id}">Cancel</button></div>`).join("")}</div>` : "";
       const board = leaderboard(me, social.friends, weekDays(today)[0]);
       const rows = board.map((p, i) => {
@@ -3523,15 +3493,16 @@
       const weekOf = nice(weekDays(today)[0], { month: "short", day: "numeric" });
       const board_ = `<div class="panel"><h3>This week's regulars</h3>
         ${board.length > 1 ? `<p class="muted" style="margin:-4px 0 10px">Week of ${weekOf} · XP from quests finished since Monday. Tap a friend to see their card.</p>`
-          : `<p class="hand-note">Every quest is easier with friends.</p><p class="muted" style="margin:0 0 10px">Share your invite link with friends, or find them below.</p>`}
+          : `<p class="hand-note">Every quest is easier with friends.</p><p class="muted" style="margin:0 0 10px">Share your friend code, or add a friend with theirs below.</p>`}
         <div class="lb">${rows}</div></div>`;
       const results = !social.results ? "" : social.results.length ? social.results.map((p) => {
         const known = social.friends.find((x) => x.code === p.code);
         return `<div class="friend-row">${face(p.avatar)}<div><div class="feed-name">${esc(p.name)}</div><div class="feed-meta">Level ${Number(p.level) || 1}</div></div>
-          ${known ? `<span class="muted">${known.status === "accepted" ? "Friends" : "Requested"}</span>` : `<button class="btn soft sm" data-action="friend-add" data-code="${esc(p.code)}">Add</button>`}</div>`;
-      }).join("") : `<p class="muted">No heroes found. Check the spelling, or ask for their 6-letter friend code.</p>`;
-      const add = `<div class="panel"><h3>Invite a friend</h3>
-        <form id="friendSearch" class="friend-search"><input id="friendQuery" maxlength="20" placeholder="Friend code or name" value="${esc(social.query)}" autocomplete="off" aria-label="Friend code or name" /><button class="btn soft" type="submit">Search</button></form>${results}</div>`;
+          ${known ? `<span class="muted">${known.status === "accepted" ? "Friends" : "Requested"}</span>` : `<button class="btn sm" data-action="friend-add" data-code="${esc(p.code)}">Send request</button>`}</div>`;
+      }).join("") : `<p class="muted">No hero has that code. Check it and try again.</p>`;
+      const add = `<div class="panel"><h3>Add a friend</h3>
+        <p class="muted" style="margin:-4px 0 10px">Enter their friend code. They'll get a request and need to accept it.</p>
+        <form id="friendSearch" class="friend-search"><input id="friendQuery" maxlength="6" placeholder="e.g. 4VXBLZ" value="${esc(social.query)}" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Friend code" /><button class="btn soft" type="submit">Find</button></form>${results}</div>`;
       return card + requests + board_ + add;
     }
 
@@ -4137,7 +4108,7 @@
         if (e.target.id === "feedForm") { submitFeed(); return; }
         if (e.target.id === "pasteForm") { findPastedQuests(); return; }
         if (e.target.id === "heroForm") { submitHeroCard(); return; }
-        if (e.target.id === "friendSearch") { searchPlayers(); return; }
+        if (e.target.id === "friendSearch") { findByCode(); return; }
         const today = getToday();
         lastCompletion = null;
         if (e.target.id === "captureForm") {
@@ -4194,7 +4165,6 @@
           }
           return;
         }
-        if (e.target.dataset && e.target.dataset.social === "searchable") { setSearchable(e.target.checked); return; }
         if (e.target.dataset && e.target.dataset.feedQuests) { setFeedQuests(e.target.dataset.feedQuests, e.target.checked); return; }
         if (e.target.id === "themeSelect") { state.theme = e.target.value; save(); render(); }
         if (e.target.id === "eRepeat") $("eDays").hidden = e.target.value !== "days";
@@ -4257,9 +4227,7 @@
         if (e.deltaY) { $("chips").scrollLeft += e.deltaY; e.preventDefault(); }
       }, { passive: false });
 
-      captureInvite();
       render();
-      if (tab === "tavern" && account.status !== "off") setTimeout(() => { if (!account.user) toast("Log in or sign up to accept your friend's invite", "tankard"); }, 1500);
       const backFromLogin = /[?&](code|error_description)=|access_token=/.test(location.search + location.hash);
       if (firstVisit && !backFromLogin) openWelcome();
       initAccounts();
