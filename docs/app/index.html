@@ -335,20 +335,34 @@
     .hero-card { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .hero-card > div:first-of-type { flex: 1; min-width: 120px; }
     .hero-card b { overflow-wrap: anywhere; }
-    .code-box { display: flex; flex-direction: column; align-items: flex-end; }
-    .code-big { font-family: var(--display); font-weight: 400; font-size: 28px; letter-spacing: 3px; line-height: 1; color: var(--accent-dark, var(--ink)); }
+    .code-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .code-box .muted { font-size: 11px; }
+    /* the friend code pressed into a wax seal, like the sealed Profile card */
+    .code-seal { width: 80px; height: 80px; flex: none; display: grid; place-items: center; transform: rotate(-6deg);
+      border-radius: 47% 53% 50% 46% / 52% 46% 54% 48%;
+      background: radial-gradient(circle at 34% 30%, #C9654D 0, #9B3527 45%, #6F2219 100%);
+      box-shadow: inset 0 0 0 5px rgba(60, 14, 8, .28), inset 0 0 0 8px rgba(255, 210, 190, .12), 0 3px 5px rgba(60, 20, 10, .35);
+      color: #FBE9DC; font-family: var(--display); font-weight: 400; font-size: 20px; letter-spacing: 1px; text-shadow: 0 1px 0 rgba(0, 0, 0, .45); }
+    .lb-rank.medal { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); font-size: 17px; flex: none;
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .18), 0 0 0 2px rgba(255, 250, 240, .8); }
+    .lb-rank.m1 { background: radial-gradient(circle at 35% 30%, #F4DC9A, #C69A50 62%, #9C7330); }
+    .lb-rank.m2 { background: radial-gradient(circle at 35% 30%, #F2F3F4, #BFC4CA 62%, #8F969D); }
+    .lb-rank.m3 { background: radial-gradient(circle at 35% 30%, #EDC29C, #B97A4A 62%, #8C5730); }
+    .you-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 6px; background: var(--gold-soft); color: var(--gold-ink); font-size: 11px; font-weight: 700; vertical-align: 1px; }
+    .hand-note { font-family: var(--hand); font-size: 22px; line-height: 1.15; color: var(--muted); margin: 0 0 4px; }
+    .tab-dot { position: absolute; top: 9px; left: calc(50% + 9px); width: 9px; height: 9px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 0 2px var(--leather, #1B3830); }
     .friend-search { display: flex; gap: 8px; margin-bottom: 6px; }
     .friend-search input { flex: 1; min-width: 0; }
     .lb { display: grid; gap: 6px; }
     .lb-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 7px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); color: var(--ink); font: inherit; }
     button.lb-row { cursor: pointer; }
     button.lb-row:hover { border-color: var(--accent-2); }
-    .lb-row.me { border-color: var(--accent); background: var(--card-2); }
+    .lb-row.me { border-color: var(--gold); background: var(--card-2); box-shadow: inset 3px 0 0 var(--gold); }
     .lb-rank { width: 18px; font-family: var(--display); font-size: 20px; color: var(--muted); text-align: center; }
     .lb-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
     .lb-name b { overflow-wrap: anywhere; font-size: 14px; }
     .lb-name small { display: inline-flex; align-items: center; gap: 3px; }
-    .lb-xp { font-family: var(--display); font-size: 20px; white-space: nowrap; }
+    .lb-xp { font-family: var(--display); font-size: 20px; white-space: nowrap; color: var(--gold-ink); }
     .btn.sm { padding: 6px 12px; font-size: 13px; }
     /* Accounts: login sheet and sync status */
     .auth h2 { margin-bottom: 4px; }
@@ -1013,6 +1027,7 @@
     <nav>
       <button data-tab="today"><span data-px="scroll"></span>Today</button>
       <button data-tab="week"><span data-px="compass"></span>Week</button>
+      <button data-tab="tavern"><span data-px="tankard"></span>Tavern<i class="tab-dot" id="tavernDot" hidden></i></button>
       <button data-tab="shop"><span data-px="chest"></span>Shop</button>
       <button data-tab="profile"><span id="tabAvatar"></span>Profile</button>
     </nav>
@@ -1069,7 +1084,7 @@
       chest: ["..KKKKKKKK..", ".KNNNNNNNNK.", "KNNNNNNNNNNK", "KKKKKYYKKKKK", "KNNNNYYNNNNK", "KNNNNKKNNNNK", "KNNNNNNNNNNK", "KnnnnnnnnnnK", "KKKKKKKKKKKK"],
       compass: ["....KKKKK....", "..KKNNNNNKK..", ".KNCCCRCCCNK.", ".KNCCCRCCCNK.", "KNCCCRRRCCCNK", "KNCCCRRRCCCNK", "KNCCCCYCCCCNK", "KNCCCSSSCCCNK", "KNCCCSSSCCCNK", ".KNCCCSCCCNK.", ".KNCCCSCCCNK.", "..KKNNNNNKK..", "....KKKKK...."],
       scroll: [".KKKKKKKKKK..", "KNNKCCCCCCCK.", "KNNKCCCCCCCK.", ".KKCNNNNNCCK.", "...KCCCCCCCK.", "...KCNNNNCCK.", "...KCCCCCCCK.", "...KCNNNCCCK.", "...KCCCCCCCKK", "..KKKKKKKKNNK", "..KCCCCCCKNNK", "...KKKKKKKKK."],
-      duo: ["..KKK.KKK..", ".KFFFKFFFK.", ".KFKFKFKFK.", ".KFFFKFFFK.", "..KKK.KKK..", ".KGGGKRRRK.", "KGGGGKRRRRK", "KGGGGKRRRRK", "KKKKKKKKKKK"],
+      tankard: ["..KKKKKK....", ".KWWWWWWK...", "KWWWWWWWWK..", "KKKKKKKKKKK.", ".KYYYYYYKNNK", ".KYOYYYYK..K", ".KYYYYOYK..K", ".KYYYYYYK..K", ".KYOYYYYKNNK", ".KYYYYYYKK..", ".KKKKKKKK..."],
       vine: ["...........TT.", ".........TTGGT", "........TGGGT.", "....TT..TGGT..", "...TGGT.TT....", "..TGGGGTT.....", "...TGGTN......", "....TTN.......", "......N..TT...", ".....N..TGGT..", "....N..TGGGGT.", "...N....TGGT..", "..N......TT...", ".N............"],
     };
     // Draws a sprite as a crisp inline SVG. Decorative: always paired with visible text.
@@ -2146,7 +2161,7 @@
     // Chapter tabs that sit on top of the journal page.
     function profileTabs(active) {
       const t = (id, label, icon) => `<button class="ptab ${active === id ? "on" : ""}" data-action="pmode" data-mode="${id}" aria-pressed="${active === id}">${px(icon, 16)}${label}</button>`;
-      return `<div class="pagetabs" role="group" aria-label="Profile chapters">${t("journey", "Journey", "compass")}${t("hero", "Hero", "sword")}${t("friends", "Friends", "duo")}${t("settings", "Settings", "book")}</div>`;
+      return `<div class="pagetabs" role="group" aria-label="Profile chapters">${t("journey", "Journey", "compass")}${t("hero", "Hero", "sword")}${t("settings", "Settings", "book")}</div>`;
     }
     function pageTabs(active) {
       const t = (id, label, icon, attrs) => `<button class="ptab ${active === id ? "on" : ""}" ${attrs} aria-pressed="${active === id}">${px(icon, 16)}${label}</button>`;
@@ -2283,7 +2298,6 @@
       if (account.status !== "off" && !account.user) return sealedProfile(avatars, heroStats);
       const acct = accountPanel();
       const head = `<div class="board-head"><h2>Hero Profile</h2></div>${profileTabs(profileMode)}<div class="page tabbed">`;
-      if (profileMode === "friends") return head + friendsPage(today) + "</div>";
       if (profileMode === "hero") return head + `
         <div class="panel" style="margin-top:0"><h3>Your avatar</h3><p class="muted" style="margin:-4px 0 10px">Each level badge unlocks a new one.</p><div class="avatars">${avatars}</div></div>
         <div class="panel"><h3>Hero stats</h3><div class="hero-stats">${heroStats}</div></div>
@@ -2443,7 +2457,8 @@
       document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
       $("quickAdd").hidden = tab !== "today";
       renderChips();
-      $("view").innerHTML = tab === "today" ? renderToday(today) : tab === "week" ? renderWeek(today) : tab === "shop" ? `<div class="page">${renderShop()}</div>` : renderProfile(today);
+      $("view").innerHTML = tab === "today" ? renderToday(today) : tab === "week" ? renderWeek(today) : tab === "shop" ? `<div class="page">${renderShop()}</div>` : tab === "tavern" ? renderTavern(today) : renderProfile(today);
+      updateTavernDot();
       focusCapture();
       if (tab === "today") maybeSwipeHint();
     }
@@ -3292,7 +3307,9 @@
     resetSocial();
     function avatarId(a) { return AVATARS.some((x) => x.id === a) ? a : "mint"; }
     function face(avatar, big) { return `<span class="face${big ? " big" : ""}">${mascotSvg(avatarId(avatar))}</span>`; }
-    function rerenderFriends() { if (tab === "profile" && profileMode === "friends" && $("sheetOverlay").hidden) render(); }
+    function rerenderFriends() { updateTavernDot(); if (tab === "tavern" && $("sheetOverlay").hidden) render(); }
+    // A red dot on the Tavern tab while a friend request is waiting.
+    function updateTavernDot() { const dot = $("tavernDot"); if (dot) dot.hidden = !(social.friends || []).some((x) => x.status === "pending" && x.incoming); }
     function socialFail() { toast("Couldn't reach your account. Try again in a moment.", "scroll"); }
 
     function loadSocial(maxAge = 0) {
@@ -3338,7 +3355,7 @@
       history.replaceState(null, "", location.pathname + (rest ? "?" + rest : "") + location.hash);
       if (!code) return;
       try { sessionStorage.setItem(INVITE_KEY, code); } catch (e) { /* the player can still type the code */ }
-      tab = "profile"; profileMode = "friends";
+      tab = "tavern";
     }
     async function maybeInvite() {
       let code = "";
@@ -3474,44 +3491,64 @@
         if (!social.loading && !social.error) loadSocial();
         return `<div class="panel" style="margin-top:0">${social.error ? `<p>${esc(social.error)}</p><button class="btn soft" data-action="friend-retry">Try again</button>` : `<p class="muted">Opening your friends list…</p>`}</div>`;
       }
-      if (!social.me) return `<div class="panel" style="margin-top:0"><h3>Create your hero card</h3>
-        <p class="muted" style="margin:-4px 0 12px">Pick the name classmates and teammates will see. You'll get a friend code and an invite link to share.</p>${heroFormHtml()}</div>`;
+      if (!social.me) return `<div class="panel" style="margin-top:0"><h3>Pull up a chair</h3>
+        <p class="hand-note">Every quest is easier with friends.</p>
+        <p class="muted" style="margin:0 0 12px">Pick the name classmates and teammates will see. You'll get a friend code and an invite link to share.</p>${heroFormHtml()}</div>`;
       const me = Object.assign({}, social.me, heroCardStats(state, today));
       const incoming = social.friends.filter((x) => x.status === "pending" && x.incoming), outgoing = social.friends.filter((x) => x.status === "pending" && !x.incoming);
-      const card = `<div class="panel" style="margin-top:0"><h3>Your hero card</h3>
+      const card = `<div class="panel" style="margin-top:0"><h3>Your adventurer card</h3>
         <div class="hero-card">${face(me.avatar)}<div><b>${esc(me.name)}</b><div class="muted">Level ${me.level} · ${me.streak}-day streak</div></div>
-          <div class="code-box"><span class="muted">Friend code</span><b class="code-big">${esc(me.code)}</b></div></div>
-        <div class="toolbar" style="margin:12px 0 0"><button class="btn" data-action="friend-share">${px("duo", 16)} Share invite link</button><button class="btn soft" data-action="hero-rename">Rename</button></div>
+          <div class="code-box"><b class="code-seal" aria-label="Friend code ${esc(me.code)}">${esc(me.code)}</b><span class="muted">Your friend code</span></div></div>
+        <div class="toolbar" style="margin:12px 0 0"><button class="btn" data-action="friend-share">Share invite link</button><button class="btn soft" data-action="hero-rename">Rename</button></div>
         <label class="feed-toggle" style="margin-top:10px;white-space:normal"><input type="checkbox" data-social="searchable" ${me.searchable ? "checked" : ""} /> Let classmates find me by nickname</label></div>`;
-      const requests = incoming.length || outgoing.length ? `<div class="panel"><h3>Friend requests</h3>
-        ${incoming.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Level ${Number(x.level) || 1} · wants to be friends</div></div>
+      const requests = incoming.length || outgoing.length ? `<div class="panel"><h3>Waiting at the door</h3>
+        ${incoming.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Level ${Number(x.level) || 1} · wants to join your table</div></div>
           <button class="btn sm" data-action="friend-accept" data-id="${x.id}">Accept</button><button class="linkbtn" data-action="friend-decline" data-id="${x.id}">Decline</button></div>`).join("")}
-        ${outgoing.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Request sent · waiting for them</div></div>
+        ${outgoing.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Invitation sent · waiting for them</div></div>
           <button class="linkbtn" data-action="friend-remove" data-id="${x.id}">Cancel</button></div>`).join("")}</div>` : "";
       const board = leaderboard(me, social.friends, weekDays(today)[0]);
       const rows = board.map((p, i) => {
-        const inner = `<span class="lb-rank">${i + 1}</span>${face(p.avatar)}<span class="lb-name"><b>${esc(p.name)}${p.isMe ? " (you)" : ""}</b><small class="muted">Lv ${Number(p.level) || 1} · ${px("flame", 11)}${Number(p.streak) || 0}-day streak</small></span><span class="lb-xp">${p.xpNow} XP</span>`;
+        const inner = `<span class="lb-rank${i < 3 && board.length > 1 ? " medal m" + (i + 1) : ""}">${i + 1}</span>${face(p.avatar)}<span class="lb-name"><b>${esc(p.name)}${p.isMe ? '<span class="you-tag">You</span>' : ""}</b><small class="muted">Lv ${Number(p.level) || 1} · ${px("flame", 11)}${Number(p.streak) || 0}-day streak</small></span><span class="lb-xp">${p.xpNow} XP</span>`;
         return p.isMe ? `<div class="lb-row me">${inner}</div>` : `<button class="lb-row" data-action="friend-open" data-id="${p.id}" aria-label="${esc(p.name)}: ${p.xpNow} XP this week">${inner}</button>`;
       }).join("");
-      const board_ = `<div class="panel"><h3>This week's leaderboard</h3>
-        ${board.length > 1 ? `<p class="muted" style="margin:-4px 0 10px">XP from quests finished since Monday. Tap a friend to see their card.</p>` : `<p class="muted" style="margin:-4px 0 10px">No friends yet. Share your invite link with classmates and teammates, or search below.</p>`}
+      const weekOf = nice(weekDays(today)[0], { month: "short", day: "numeric" });
+      const board_ = `<div class="panel"><h3>This week's regulars</h3>
+        ${board.length > 1 ? `<p class="muted" style="margin:-4px 0 10px">Week of ${weekOf} · XP from quests finished since Monday. Tap a friend to see their card.</p>`
+          : `<p class="hand-note">Every quest is easier with friends.</p><p class="muted" style="margin:0 0 10px">Share your invite link with classmates and teammates, or find them below.</p>`}
         <div class="lb">${rows}</div></div>`;
       const results = !social.results ? "" : social.results.length ? social.results.map((p) => {
         const known = social.friends.find((x) => x.code === p.code);
         return `<div class="friend-row">${face(p.avatar)}<div><div class="feed-name">${esc(p.name)}</div><div class="feed-meta">Level ${Number(p.level) || 1}</div></div>
           ${known ? `<span class="muted">${known.status === "accepted" ? "Friends" : "Requested"}</span>` : `<button class="btn soft sm" data-action="friend-add" data-code="${esc(p.code)}">Add</button>`}</div>`;
       }).join("") : `<p class="muted">No heroes found. Check the spelling, or ask for their 6-letter friend code.</p>`;
-      const add = `<div class="panel"><h3>Add a friend</h3>
+      const add = `<div class="panel"><h3>Invite a friend</h3>
         <form id="friendSearch" class="friend-search"><input id="friendQuery" maxlength="20" placeholder="Friend code or nickname" value="${esc(social.query)}" autocomplete="off" aria-label="Friend code or nickname" /><button class="btn soft" type="submit">Search</button></form>${results}</div>`;
       return card + requests + board_ + add;
     }
 
+    function loginActions() {
+      return account.status === "loading" ? '<p class="muted" style="margin:0">Opening the journal…</p>'
+        : account.status === "unavailable" ? '<p class="muted" style="margin:0">Can\'t reach the login server right now. Check your connection and try again.</p>'
+        : '<div class="toolbar"><button class="btn" data-action="auth-open" data-mode="login">Log in</button><button class="btn soft" data-action="auth-open" data-mode="signup">Create free account</button></div>';
+    }
+    function renderTavern(today) {
+      const head = `<div class="page"><div class="board-head"><h2>The Tavern</h2></div>`;
+      if (account.status === "off") return head + `<div class="panel" style="margin-top:0"><p class="muted">Friends need accounts, which aren't set up in this copy of DailyQuest.</p></div></div>`;
+      if (!account.user) {
+        const perks = [["star", "Add classmates and teammates as friends"], ["trophy", "See who earns the most XP each week"], ["sword", "Challenge friends to 3-day duels (coming soon)"], ["shield", "Friends see your level and XP, never your quests"]];
+        return head + `<div class="panel sealed" style="margin-top:0">
+          <div class="seal-wrap" aria-hidden="true"><div class="wax-seal">${px("tankard", 38)}</div></div>
+          <h3>The tavern is for members</h3>
+          <p class="sealed-sub">Log in to pull up a chair</p>
+          <ul class="sealed-perks">${perks.map(([icon, text]) => `<li>${px(icon, 20)}${text}</li>`).join("")}</ul>
+          ${loginActions()}</div></div>`;
+      }
+      return head + friendsPage(today) + "</div>";
+    }
     function sealedProfile(avatars, heroStats) {
       const perks = [["crown", "Pick your adventurer avatar"], ["sword", "Grow hero stats and earn badges"], ["trophy", "Unlock achievements and keep streaks"],
         ["clock", "Get quest reminders on your phone"], ["scroll", "Keep your quests on every device"]];
-      const action = account.status === "loading" ? '<p class="muted" style="margin:0">Opening the journal…</p>'
-        : account.status === "unavailable" ? '<p class="muted" style="margin:0">Can\'t reach the login server right now. Check your connection and try again.</p>'
-        : '<div class="toolbar"><button class="btn" data-action="auth-open" data-mode="login">Log in</button><button class="btn soft" data-action="auth-open" data-mode="signup">Create free account</button></div>';
+      const action = loginActions();
       return `<div class="page"><div class="board-head"><h2>Hero Profile</h2></div>
         <div class="panel sealed" style="margin-top:0">
           <div class="seal-wrap" aria-hidden="true"><div class="wax-seal">${px("crown", 38)}</div></div>
@@ -3881,7 +3918,7 @@
       document.addEventListener("click", (e) => {
         if (e.target === $("sheetOverlay")) { closeSheet(); return; }
         const tabBtn = e.target.closest("[data-tab]");
-        if (tabBtn) { tab = tabBtn.dataset.tab; render(); return; }
+        if (tabBtn) { tab = tabBtn.dataset.tab; render(); if (tab === "tavern") loadSocial(30000); return; }
         const btn = e.target.closest("[data-action]");
         if (!btn) return;
         const today = getToday();
@@ -4046,7 +4083,7 @@
             closeSheet();
             break;
           case "mode": todayMode = btn.dataset.mode; tab = "today"; break;
-          case "pmode": profileMode = btn.dataset.mode; tab = "profile"; if (profileMode === "friends") loadSocial(30000); break;
+          case "pmode": profileMode = btn.dataset.mode; tab = "profile"; break;
           case "undo-add":
             if (lastAdded) {
               if (lastAdded.kind === "goal") state.goals = state.goals.filter((g) => g.id !== lastAdded.id);
@@ -4213,7 +4250,7 @@
 
       captureInvite();
       render();
-      if (tab === "profile" && profileMode === "friends" && account.status !== "off") setTimeout(() => { if (!account.user) toast("Log in or sign up to accept your friend's invite", "duo"); }, 1500);
+      if (tab === "tavern" && account.status !== "off") setTimeout(() => { if (!account.user) toast("Log in or sign up to accept your friend's invite", "tankard"); }, 1500);
       const backFromLogin = /[?&](code|error_description)=|access_token=/.test(location.search + location.hash);
       if (firstVisit && !backFromLogin) openWelcome();
       initAccounts();
@@ -4224,7 +4261,7 @@
       window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; if (tab === "profile") render(); });
       window.addEventListener("appinstalled", () => { installPrompt = null; track("app_installed"); });
       if (isInstalled()) track("opened_as_app");
-      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { refreshFromCloud(); refreshDueFeeds(FEED_OPEN_AGE); } });
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { refreshFromCloud(); refreshDueFeeds(FEED_OPEN_AGE); loadSocial(5 * 60 * 1000); } });
       setInterval(() => refreshDueFeeds(FEED_BACKGROUND_AGE), 15 * 60 * 1000);
       window.addEventListener("online", () => { if (account.user && readMeta().pending) pushNow(); });
     }
