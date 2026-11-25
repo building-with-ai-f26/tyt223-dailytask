@@ -335,14 +335,19 @@
     .hero-card { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .hero-card > div:first-of-type { flex: 1; min-width: 120px; }
     .hero-card b { overflow-wrap: anywhere; }
-    .code-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .code-box .muted { font-size: 11px; }
-    /* the friend code pressed into a wax seal, like the sealed Profile card */
-    .code-seal { width: 80px; height: 80px; flex: none; display: grid; place-items: center; transform: rotate(-6deg);
-      border-radius: 47% 53% 50% 46% / 52% 46% 54% 48%;
-      background: radial-gradient(circle at 34% 30%, #C9654D 0, #9B3527 45%, #6F2219 100%);
-      box-shadow: inset 0 0 0 5px rgba(60, 14, 8, .28), inset 0 0 0 8px rgba(255, 210, 190, .12), 0 3px 5px rgba(60, 20, 10, .35);
-      color: #FBE9DC; font-family: var(--display); font-weight: 400; font-size: 20px; letter-spacing: 1px; text-shadow: 0 1px 0 rgba(0, 0, 0, .45); }
+    .code-box { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 8px; }
+    .code-box > .muted { font-size: 11px; }
+    /* the friend code on a little parchment ticket, sealed with the tavern seal; tap to copy */
+    .code-tag { position: relative; display: flex; flex-direction: column; align-items: center; padding: 7px 18px 6px; border: 1px solid var(--gold); border-radius: 6px;
+      background: linear-gradient(#FFF9EE, var(--gold-soft)); color: var(--ink); font: inherit; cursor: pointer;
+      box-shadow: inset 0 0 0 3px #FFF9EE, inset 0 0 0 4px rgba(198, 154, 80, .45), 0 2px 4px rgba(60, 40, 20, .12); transition: transform .12s, border-color .12s; }
+    .code-tag:hover { border-color: var(--gold-ink); transform: translateY(-1px); }
+    .code-tag small { font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--gold-ink); font-weight: 700; }
+    .code-tag b { font-family: var(--display); font-weight: 400; font-size: 28px; letter-spacing: 4px; line-height: 1.05; margin-right: -4px; }
+    .mini-seal { position: absolute; top: -11px; right: -11px; width: 30px; height: 30px; display: grid; place-items: center; transform: rotate(-8deg);
+      border-radius: 47% 53% 50% 46% / 52% 46% 54% 48%; background: radial-gradient(circle at 34% 30%, #C9654D 0, #9B3527 45%, #6F2219 100%);
+      box-shadow: inset 0 0 0 3px rgba(60, 14, 8, .28), 0 2px 3px rgba(60, 20, 10, .35); }
+    .mini-seal .px { filter: brightness(1.15) drop-shadow(0 1px 0 rgba(0, 0, 0, .35)); }
     .lb-rank.medal { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); font-size: 17px; flex: none;
       box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .18), 0 0 0 2px rgba(255, 250, 240, .8); }
     .lb-rank.m1 { background: radial-gradient(circle at 35% 30%, #F4DC9A, #C69A50 62%, #9C7330); }
@@ -3385,7 +3390,7 @@
       const me = social.me;
       return `<form id="heroForm">
         <label class="field" style="margin-top:0">Hero name<input id="heroName" maxlength="20" autocomplete="nickname" required value="${esc(me ? me.name : "")}" placeholder="e.g. Sabrina T." /></label>
-        ${me ? "" : `<label class="feed-toggle" style="white-space:normal;margin-top:8px"><input type="checkbox" id="heroSearchable" checked /> Let classmates find me by this name</label>`}
+        ${me ? "" : `<label class="feed-toggle" style="white-space:normal;margin-top:8px"><input type="checkbox" id="heroSearchable" checked /> Let friends find me by this name</label>`}
         <p class="muted" style="margin:8px 0 12px">Friends see only your hero name, avatar, level, streak and XP this week. Never your quests, calendar or email.</p>
         <button class="btn" type="submit">${me ? "Save name" : "Create my hero card"}</button></form>`;
     }
@@ -3422,7 +3427,7 @@
       const { error } = await account.client.from("profiles").update({ searchable: on }).eq("user_id", account.user.id);
       if (error) { socialFail(); render(); return; }
       social.me.searchable = on;
-      toast(on ? "Classmates can find you by name" : "Only people with your friend code can find you", "check");
+      toast(on ? "Friends can find you by name" : "Only people with your friend code can find you", "check");
     }
     async function searchPlayers() {
       const q = $("friendQuery").value.trim();
@@ -3440,6 +3445,10 @@
         case "friend-close": closeSheet(); return;
         case "friend-retry": social.error = ""; render(); loadSocial(); return;
         case "friend-share": shareInvite(); return;
+        case "friend-copy-code":
+          if (!social.me) return;
+          try { await navigator.clipboard.writeText(social.me.code); toast("Friend code copied", "check"); } catch (e) { prompt("Your friend code:", social.me.code); }
+          return;
         case "hero-rename": openSheet(`<h2>Rename your hero</h2>${heroFormHtml()}`); return;
         case "friend-add": {
           btn.disabled = true;
@@ -3493,14 +3502,14 @@
       }
       if (!social.me) return `<div class="panel" style="margin-top:0"><h3>Pull up a chair</h3>
         <p class="hand-note">Every quest is easier with friends.</p>
-        <p class="muted" style="margin:0 0 12px">Pick the name classmates and teammates will see. You'll get a friend code and an invite link to share.</p>${heroFormHtml()}</div>`;
+        <p class="muted" style="margin:0 0 12px">Pick the name your friends will see. You'll get a friend code and an invite link to share.</p>${heroFormHtml()}</div>`;
       const me = Object.assign({}, social.me, heroCardStats(state, today));
       const incoming = social.friends.filter((x) => x.status === "pending" && x.incoming), outgoing = social.friends.filter((x) => x.status === "pending" && !x.incoming);
       const card = `<div class="panel" style="margin-top:0"><h3>Your adventurer card</h3>
         <div class="hero-card">${face(me.avatar)}<div><b>${esc(me.name)}</b><div class="muted">Level ${me.level} · ${me.streak}-day streak</div></div>
-          <div class="code-box"><b class="code-seal" aria-label="Friend code ${esc(me.code)}">${esc(me.code)}</b><span class="muted">Your friend code</span></div></div>
+          <div class="code-box"><button class="code-tag" data-action="friend-copy-code" aria-label="Friend code ${esc(me.code)}. Tap to copy"><small>Friend code</small><b>${esc(me.code)}</b><span class="mini-seal" aria-hidden="true">${px("tankard", 16)}</span></button><span class="muted">Tap to copy</span></div></div>
         <div class="toolbar" style="margin:12px 0 0"><button class="btn" data-action="friend-share">Share invite link</button><button class="btn soft" data-action="hero-rename">Rename</button></div>
-        <label class="feed-toggle" style="margin-top:10px;white-space:normal"><input type="checkbox" data-social="searchable" ${me.searchable ? "checked" : ""} /> Let classmates find me by nickname</label></div>`;
+        <label class="feed-toggle" style="margin-top:10px;white-space:normal"><input type="checkbox" data-social="searchable" ${me.searchable ? "checked" : ""} /> Let friends find me by name</label></div>`;
       const requests = incoming.length || outgoing.length ? `<div class="panel"><h3>Waiting at the door</h3>
         ${incoming.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Level ${Number(x.level) || 1} · wants to join your table</div></div>
           <button class="btn sm" data-action="friend-accept" data-id="${x.id}">Accept</button><button class="linkbtn" data-action="friend-decline" data-id="${x.id}">Decline</button></div>`).join("")}
@@ -3514,7 +3523,7 @@
       const weekOf = nice(weekDays(today)[0], { month: "short", day: "numeric" });
       const board_ = `<div class="panel"><h3>This week's regulars</h3>
         ${board.length > 1 ? `<p class="muted" style="margin:-4px 0 10px">Week of ${weekOf} · XP from quests finished since Monday. Tap a friend to see their card.</p>`
-          : `<p class="hand-note">Every quest is easier with friends.</p><p class="muted" style="margin:0 0 10px">Share your invite link with classmates and teammates, or find them below.</p>`}
+          : `<p class="hand-note">Every quest is easier with friends.</p><p class="muted" style="margin:0 0 10px">Share your invite link with friends, or find them below.</p>`}
         <div class="lb">${rows}</div></div>`;
       const results = !social.results ? "" : social.results.length ? social.results.map((p) => {
         const known = social.friends.find((x) => x.code === p.code);
@@ -3522,7 +3531,7 @@
           ${known ? `<span class="muted">${known.status === "accepted" ? "Friends" : "Requested"}</span>` : `<button class="btn soft sm" data-action="friend-add" data-code="${esc(p.code)}">Add</button>`}</div>`;
       }).join("") : `<p class="muted">No heroes found. Check the spelling, or ask for their 6-letter friend code.</p>`;
       const add = `<div class="panel"><h3>Invite a friend</h3>
-        <form id="friendSearch" class="friend-search"><input id="friendQuery" maxlength="20" placeholder="Friend code or nickname" value="${esc(social.query)}" autocomplete="off" aria-label="Friend code or nickname" /><button class="btn soft" type="submit">Search</button></form>${results}</div>`;
+        <form id="friendSearch" class="friend-search"><input id="friendQuery" maxlength="20" placeholder="Friend code or name" value="${esc(social.query)}" autocomplete="off" aria-label="Friend code or name" /><button class="btn soft" type="submit">Search</button></form>${results}</div>`;
       return card + requests + board_ + add;
     }
 
@@ -3535,7 +3544,7 @@
       const head = `<div class="page"><div class="board-head"><h2>The Tavern</h2></div>`;
       if (account.status === "off") return head + `<div class="panel" style="margin-top:0"><p class="muted">Friends need accounts, which aren't set up in this copy of DailyQuest.</p></div></div>`;
       if (!account.user) {
-        const perks = [["star", "Add classmates and teammates as friends"], ["trophy", "See who earns the most XP each week"], ["sword", "Challenge friends to 3-day duels (coming soon)"], ["shield", "Friends see your level and XP, never your quests"]];
+        const perks = [["star", "Add your friends and cheer each other on"], ["trophy", "See who earns the most XP each week"], ["sword", "Challenge friends to 3-day duels (coming soon)"], ["shield", "Friends see your level and XP, never your quests"]];
         return head + `<div class="panel sealed" style="margin-top:0">
           <div class="seal-wrap" aria-hidden="true"><div class="wax-seal">${px("tankard", 38)}</div></div>
           <h3>The tavern is for members</h3>
