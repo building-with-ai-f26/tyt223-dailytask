@@ -78,6 +78,18 @@ There is no `package.json`; the app uses no npm packages. Its one browser librar
 
 Re-checked as clean in this round: paste review, chronicle, landmark pop-up and settings with injected HTML (0 scripts); all four functions refuse callers who aren't logged in (401).
 
+### 9. Friends (Build 4, Nov 24)
+New tables `profiles` (each player's public hero card) and `friendships` (requests), in `supabase/friends.sql`. Backup taken first.
+
+- **What friends can see:** only a hero name, avatar, level, streak and XP this week. The app sends just those five numbers/ids from the save; quest names, calendars, rewards and email never leave it (checked in the browser test: the uploaded card never contained a quest name).
+- **Players can read and change only their own card.** Friends' cards and every friend action go through five database functions (`find_players`, `request_friend`, `respond_friend`, `remove_friend`, `friend_list`) that check who is asking. The `friendships` table has no direct access at all.
+- **Before a request is accepted**, the other person sees only name, avatar and level, not streak or weekly XP.
+- **Search** needs at least 3 characters, returns at most 8 players, treats `%` and `_` as plain text, and only lists players who leave **"Let classmates find me by nickname"** on. An exact friend code always works, so a player can share their code without being searchable.
+- **Spam limits:** 20 unanswered requests and 200 friends per player.
+- **Tested in the database** (rolled-back transaction, both real accounts): A can't create B's card; no direct friendships access; B sees only their own card row and can't change A's; a wildcard search returns nothing; requesting yourself or twice is refused; B can't accept B's own request; weekly XP is hidden until accepted; turning off search hides A while the code still works; signed-out visitors get `permission denied` on the tables and the functions.
+- **Tested in the browser** (fake server): a friend named `<img src=x onerror=…>` with a script in their avatar field shows as plain text and runs nothing.
+- **Supabase advisor:** warns that signed-in users can call the five functions. That is intended: they are the only way to reach friends data, and each checks the caller.
+
 ## What I fixed
 1. Added per-user rate limits to `fetch-calendar` (30/hour) and test notifications (5/hour), with friendly messages in the app; built the AI `suggest` function with a login requirement, 30/hour per user and a daily cap from the start.
 2. Removed user counts from the scheduled reminder run's reply.

@@ -325,6 +325,31 @@
     .daypick input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
     .sheet-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
     .info { text-align: center; }
+    /* Friends */
+    .face { display: inline-flex; width: 36px; height: 36px; flex: none; }
+    .face svg { width: 100%; height: 100%; }
+    .face.big { width: 72px; height: 72px; margin: 0 auto 4px; }
+    .friend-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px dashed var(--border); }
+    .friend-row:first-of-type { border-top: 0; }
+    .friend-row > div { flex: 1; min-width: 0; }
+    .hero-card { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .hero-card > div:first-of-type { flex: 1; min-width: 120px; }
+    .hero-card b { overflow-wrap: anywhere; }
+    .code-box { display: flex; flex-direction: column; align-items: flex-end; }
+    .code-big { font-family: var(--display); font-weight: 400; font-size: 28px; letter-spacing: 3px; line-height: 1; color: var(--accent-dark, var(--ink)); }
+    .friend-search { display: flex; gap: 8px; margin-bottom: 6px; }
+    .friend-search input { flex: 1; min-width: 0; }
+    .lb { display: grid; gap: 6px; }
+    .lb-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 7px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); color: var(--ink); font: inherit; }
+    button.lb-row { cursor: pointer; }
+    button.lb-row:hover { border-color: var(--accent-2); }
+    .lb-row.me { border-color: var(--accent); background: var(--card-2); }
+    .lb-rank { width: 18px; font-family: var(--display); font-size: 20px; color: var(--muted); text-align: center; }
+    .lb-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .lb-name b { overflow-wrap: anywhere; font-size: 14px; }
+    .lb-name small { display: inline-flex; align-items: center; gap: 3px; }
+    .lb-xp { font-family: var(--display); font-size: 20px; white-space: nowrap; }
+    .btn.sm { padding: 6px 12px; font-size: 13px; }
     /* Accounts: login sheet and sync status */
     .auth h2 { margin-bottom: 4px; }
     .auth .btn { width: 100%; margin-top: 14px; }
@@ -804,6 +829,9 @@
     .ptab.on .px { filter: none; opacity: 1; }
     .ptab:not(.on)::before { background: linear-gradient(#FBF2E2, #EFE0C4); }
     .ptab:not(.on) { color: var(--muted); }
+    /* Four Profile chapters must fit a phone (comes after the 17px rule above, so it wins) */
+    @media (max-width: 420px) { .pagetabs { gap: 2px; padding-left: 4px; } .ptab { padding: 8px 7px 10px; font-size: 15px; } .ptab .px { margin-right: 4px; } }
+    @media (max-width: 350px) { .ptab .px { display: none; } }
 
     /* The header is a stitched leather cover with square corners */
     .player { border-radius: 4px; }
@@ -1041,6 +1069,7 @@
       chest: ["..KKKKKKKK..", ".KNNNNNNNNK.", "KNNNNNNNNNNK", "KKKKKYYKKKKK", "KNNNNYYNNNNK", "KNNNNKKNNNNK", "KNNNNNNNNNNK", "KnnnnnnnnnnK", "KKKKKKKKKKKK"],
       compass: ["....KKKKK....", "..KKNNNNNKK..", ".KNCCCRCCCNK.", ".KNCCCRCCCNK.", "KNCCCRRRCCCNK", "KNCCCRRRCCCNK", "KNCCCCYCCCCNK", "KNCCCSSSCCCNK", "KNCCCSSSCCCNK", ".KNCCCSCCCNK.", ".KNCCCSCCCNK.", "..KKNNNNNKK..", "....KKKKK...."],
       scroll: [".KKKKKKKKKK..", "KNNKCCCCCCCK.", "KNNKCCCCCCCK.", ".KKCNNNNNCCK.", "...KCCCCCCCK.", "...KCNNNNCCK.", "...KCCCCCCCK.", "...KCNNNCCCK.", "...KCCCCCCCKK", "..KKKKKKKKNNK", "..KCCCCCCKNNK", "...KKKKKKKKK."],
+      duo: ["..KKK.KKK..", ".KFFFKFFFK.", ".KFKFKFKFK.", ".KFFFKFFFK.", "..KKK.KKK..", ".KGGGKRRRK.", "KGGGGKRRRRK", "KGGGGKRRRRK", "KKKKKKKKKKK"],
       vine: ["...........TT.", ".........TTGGT", "........TGGGT.", "....TT..TGGT..", "...TGGT.TT....", "..TGGGGTT.....", "...TGGTN......", "....TTN.......", "......N..TT...", ".....N..TGGT..", "....N..TGGGGT.", "...N....TGGT..", "..N......TT...", ".N............"],
     };
     // Draws a sprite as a crisp inline SVG. Decorative: always paired with visible text.
@@ -1955,6 +1984,41 @@
       return (err && err.message) || "Something went wrong. Please try again.";
     }
 
+    // ---------- Friends (pure) ----------
+    const FRIEND_CODE_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // no 0/O/1/I; same rule as the database
+    function newFriendCode(random = Math.random) {
+      let code = "";
+      for (let i = 0; i < 6; i++) code += FRIEND_CODE_LETTERS[Math.floor(random() * FRIEND_CODE_LETTERS.length)];
+      return code;
+    }
+    // A hero name: 2 to 20 characters, no control characters or angle brackets, single spaces. "" if not usable.
+    function cleanHeroName(raw) {
+      const name = String(raw || "").replace(/[\u0000-\u001f\u007f<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 20).trim();
+      return name.length >= 2 ? name : "";
+    }
+    function friendCodeFrom(raw) {
+      const code = String(raw || "").trim().toUpperCase();
+      return /^[A-HJ-NP-Z2-9]{6}$/.test(code) ? code : "";
+    }
+    // XP earned from quests and check-ins completed between two dates (inclusive).
+    function xpBetween(state, from, to) {
+      const inRange = (d) => !!d && d >= from && d <= to;
+      return state.quests.reduce((n, q) => n + (q.done && inRange(q.completedOn) ? q.xpEarned || 0 : 0), 0) +
+        state.goals.reduce((n, g) => n + g.log.reduce((m, l) => m + (inRange(l.date) ? l.xp || 0 : 0), 0), 0);
+    }
+    // The only numbers friends see. Quest names never leave the save.
+    function heroCardStats(state, today) {
+      const week = weekDays(today);
+      return { avatar: state.avatar, level: levelOf(state.lifetimeXp), streak: currentStreak(state, today), week_xp: xpBetween(state, week[0], week[6]), week: week[0] };
+    }
+    // Me plus accepted friends, most XP this week first. XP saved in an older week counts as 0.
+    function leaderboard(me, friends, monday) {
+      const xpNow = (p) => (p.week === monday ? Number(p.week_xp) || 0 : 0);
+      return [Object.assign({ isMe: true }, me)].concat(friends.filter((x) => x.status === "accepted"))
+        .map((p) => Object.assign({}, p, { xpNow: xpNow(p) }))
+        .sort((a, b) => b.xpNow - a.xpNow || (b.level || 0) - (a.level || 0) || String(a.name).localeCompare(String(b.name)));
+    }
+
     // ---------- Page code ----------
     function load() {
       try {
@@ -2082,7 +2146,7 @@
     // Chapter tabs that sit on top of the journal page.
     function profileTabs(active) {
       const t = (id, label, icon) => `<button class="ptab ${active === id ? "on" : ""}" data-action="pmode" data-mode="${id}" aria-pressed="${active === id}">${px(icon, 16)}${label}</button>`;
-      return `<div class="pagetabs" role="group" aria-label="Profile chapters">${t("journey", "Journey", "compass")}${t("hero", "Hero", "sword")}${t("settings", "Settings", "book")}</div>`;
+      return `<div class="pagetabs" role="group" aria-label="Profile chapters">${t("journey", "Journey", "compass")}${t("hero", "Hero", "sword")}${t("friends", "Friends", "duo")}${t("settings", "Settings", "book")}</div>`;
     }
     function pageTabs(active) {
       const t = (id, label, icon, attrs) => `<button class="ptab ${active === id ? "on" : ""}" ${attrs} aria-pressed="${active === id}">${px(icon, 16)}${label}</button>`;
@@ -2219,6 +2283,7 @@
       if (account.status !== "off" && !account.user) return sealedProfile(avatars, heroStats);
       const acct = accountPanel();
       const head = `<div class="board-head"><h2>Hero Profile</h2></div>${profileTabs(profileMode)}<div class="page tabbed">`;
+      if (profileMode === "friends") return head + friendsPage(today) + "</div>";
       if (profileMode === "hero") return head + `
         <div class="panel" style="margin-top:0"><h3>Your avatar</h3><p class="muted" style="margin:-4px 0 10px">Each level badge unlocks a new one.</p><div class="avatars">${avatars}</div></div>
         <div class="panel"><h3>Hero stats</h3><div class="hero-stats">${heroStats}</div></div>
@@ -2644,6 +2709,7 @@
       if (!$("authForm") || authMode !== "newpass") closeSheetIfAuth();
       await loginSync();
       refreshAccountUi();
+      loadSocial();
       refreshDueFeeds(FEED_OPEN_AGE);
     }
     function closeSheetIfAuth() { if ($("authForm") || $("welcomeSheet")) closeSheet(); }
@@ -2699,6 +2765,7 @@
       } else {
         writeMeta(Object.assign(readMeta(), { user: userId, syncedAt: data.updated_at }));
         account.sync = "saved";
+        syncHeroCard();
         if (account.again || readMeta().pending) { account.again = false; clearTimeout(account.timer); account.timer = setTimeout(pushNow, 300); }
       }
       refreshAccountUi();
@@ -2724,6 +2791,7 @@
         </div></div>`);
     }
     function clearAfterLogout() {
+      resetSocial();
       const stay = tab;   // stay where the player was (usually Profile) so they see they're logged out
       resetTo(newState());
       tab = stay;
@@ -3214,6 +3282,230 @@
     }
 
     // ---------- Sealed Profile (shown until someone logs in) ----------
+    // ---------- Friends ----------
+    // Hero cards and friend requests live in Supabase (supabase/friends.sql). Friends see only a hero name,
+    // avatar, level, streak and XP this week. Every friend action goes through a database function that checks
+    // who is asking; the app can read and change only its own hero card directly.
+    const INVITE_KEY = "dailyquest.invite";   // a friend code from an invite link, kept until the player is logged in
+    const social = {};
+    function resetSocial() { Object.assign(social, { me: null, friends: [], loaded: false, loading: null, loadedAt: 0, error: "", results: null, query: "", sentCard: "" }); }
+    resetSocial();
+    function avatarId(a) { return AVATARS.some((x) => x.id === a) ? a : "mint"; }
+    function face(avatar, big) { return `<span class="face${big ? " big" : ""}">${mascotSvg(avatarId(avatar))}</span>`; }
+    function rerenderFriends() { if (tab === "profile" && profileMode === "friends" && $("sheetOverlay").hidden) render(); }
+    function socialFail() { toast("Couldn't reach your account. Try again in a moment.", "scroll"); }
+
+    function loadSocial(maxAge = 0) {
+      if (!account.user) return Promise.resolve();
+      if (social.loading) return social.loading;
+      if (social.loaded && Date.now() - social.loadedAt < maxAge) return Promise.resolve();
+      social.loading = (async () => {
+        try {
+          const { data: me, error } = await account.client.from("profiles").select("*").eq("user_id", account.user.id).maybeSingle();
+          if (error) throw error;
+          let friends = [];
+          if (me) {
+            const res = await account.client.rpc("friend_list");
+            if (res.error) throw res.error;
+            friends = res.data || [];
+          }
+          Object.assign(social, { me, friends, loaded: true, loadedAt: Date.now(), error: "" });
+        } catch (e) { social.error = "Couldn't open your friends list. Check your connection and try again."; }
+        social.loading = null;
+        rerenderFriends();
+        if (social.me) { syncHeroCard(); maybeInvite(); }
+      })();
+      return social.loading;
+    }
+    // Keeps the hero card's numbers current; called after each save upload. Sends nothing if they haven't changed.
+    async function syncHeroCard() {
+      if (!account.user || !social.me) return;
+      const stats = heroCardStats(state, getToday()), key = JSON.stringify(stats);
+      if (key === social.sentCard) return;
+      social.sentCard = key;
+      if (Object.keys(stats).every((k) => social.me[k] === stats[k])) return;
+      const { error } = await account.client.from("profiles").update(Object.assign({ updated_at: new Date().toISOString() }, stats)).eq("user_id", account.user.id);
+      if (error) social.sentCard = ""; else Object.assign(social.me, stats);
+    }
+
+    // Invite links look like …/app/?friend=ABC234. The code waits in this tab until the player is logged in.
+    function captureInvite() {
+      const params = new URLSearchParams(location.search);
+      if (!params.has("friend")) return;
+      const code = friendCodeFrom(params.get("friend"));
+      params.delete("friend");
+      const rest = params.toString();
+      history.replaceState(null, "", location.pathname + (rest ? "?" + rest : "") + location.hash);
+      if (!code) return;
+      try { sessionStorage.setItem(INVITE_KEY, code); } catch (e) { /* the player can still type the code */ }
+      tab = "profile"; profileMode = "friends";
+    }
+    async function maybeInvite() {
+      let code = "";
+      try { code = sessionStorage.getItem(INVITE_KEY) || ""; } catch (e) { return; }
+      if (!code || !social.me || modalOpen()) return;
+      try { sessionStorage.removeItem(INVITE_KEY); } catch (e) { /* ignore */ }
+      if (code === social.me.code) return;
+      const known = social.friends.find((x) => x.code === code);
+      if (known) { toast(known.status === "accepted" ? known.name + " is already your friend" : "A friend request is already waiting", "check"); return; }
+      const { data, error } = await account.client.rpc("find_players", { q: code });
+      const p = !error && data && data.find((x) => x.code === code);
+      if (!p) { toast("That invite link doesn't match a hero anymore", "scroll"); return; }
+      openSheet(`<div class="info">${face(p.avatar, true)}<h2>Add ${esc(p.name)}?</h2>
+        <p>${esc(p.name)} (level ${Number(p.level) || 1}) invited you to be friends on DailyQuest. Friends see each other's hero name, level, streak and XP this week, never quests.</p>
+        <div class="toolbar" style="justify-content:center;margin:0"><button class="btn" data-action="friend-add" data-code="${esc(p.code)}">Send friend request</button><button class="btn soft" data-action="friend-close">Not now</button></div></div>`);
+    }
+    async function shareInvite() {
+      if (!social.me) return;
+      const url = appUrl() + "?friend=" + social.me.code, text = "Join me on DailyQuest, the quest journal for busy students! My friend code is " + social.me.code + ".";
+      track("invite_shared", { method: navigator.share ? "share" : "copy" });
+      if (navigator.share) { try { await navigator.share({ title: "DailyQuest", text, url }); } catch (e) { /* closed the share sheet */ } return; }
+      try { await navigator.clipboard.writeText(text + " " + url); toast("Invite link copied", "check"); }
+      catch (e) { prompt("Copy your invite link:", url); }
+    }
+
+    function heroFormHtml() {
+      const me = social.me;
+      return `<form id="heroForm">
+        <label class="field" style="margin-top:0">Hero name<input id="heroName" maxlength="20" autocomplete="nickname" required value="${esc(me ? me.name : "")}" placeholder="e.g. Sabrina T." /></label>
+        ${me ? "" : `<label class="feed-toggle" style="white-space:normal;margin-top:8px"><input type="checkbox" id="heroSearchable" checked /> Let classmates find me by this name</label>`}
+        <p class="muted" style="margin:8px 0 12px">Friends see only your hero name, avatar, level, streak and XP this week. Never your quests, calendar or email.</p>
+        <button class="btn" type="submit">${me ? "Save name" : "Create my hero card"}</button></form>`;
+    }
+    async function submitHeroCard() {
+      const name = cleanHeroName($("heroName").value);
+      if (!name) { toast("Pick a name with 2 to 20 characters", "scroll"); return; }
+      const btn = document.querySelector("#heroForm button[type=submit]");
+      btn.disabled = true;
+      if (social.me) {
+        const { error } = await account.client.from("profiles").update({ name, updated_at: new Date().toISOString() }).eq("user_id", account.user.id);
+        btn.disabled = false;
+        if (error) { socialFail(); return; }
+        social.me.name = name;
+        closeSheet(); render(); toast("Name saved", "check");
+        return;
+      }
+      const searchable = $("heroSearchable") ? $("heroSearchable").checked : true;
+      for (let tries = 0; tries < 5; tries++) {   // a new random code, in the rare case one is taken
+        const stats = heroCardStats(state, getToday());
+        const { data, error } = await account.client.from("profiles").insert(Object.assign({ user_id: account.user.id, name, code: newFriendCode(), searchable }, stats)).select("*").single();
+        if (!error) {
+          Object.assign(social, { me: data, friends: [], loaded: true, loadedAt: Date.now(), sentCard: JSON.stringify(stats) });
+          track("hero_card_created", { searchable });
+          render(); toast("Your hero card is ready", "check");
+          maybeInvite();
+          return;
+        }
+        if (error.code !== "23505") break;
+      }
+      btn.disabled = false;
+      socialFail();
+    }
+    async function setSearchable(on) {
+      const { error } = await account.client.from("profiles").update({ searchable: on }).eq("user_id", account.user.id);
+      if (error) { socialFail(); render(); return; }
+      social.me.searchable = on;
+      toast(on ? "Classmates can find you by name" : "Only people with your friend code can find you", "check");
+    }
+    async function searchPlayers() {
+      const q = $("friendQuery").value.trim();
+      social.query = q;
+      if (q.length < 3) { toast("Type at least 3 letters, or a 6-letter friend code", "scroll"); return; }
+      const { data, error } = await account.client.rpc("find_players", { q });
+      if (error) { socialFail(); return; }
+      social.results = data || [];
+      track("friend_search", { results: social.results.length });
+      render();
+    }
+    async function socialAction(action, btn) {
+      const id = Number(btn.dataset.id);
+      switch (action) {
+        case "friend-close": closeSheet(); return;
+        case "friend-retry": social.error = ""; render(); loadSocial(); return;
+        case "friend-share": shareInvite(); return;
+        case "hero-rename": openSheet(`<h2>Rename your hero</h2>${heroFormHtml()}`); return;
+        case "friend-add": {
+          btn.disabled = true;
+          const { data, error } = await account.client.rpc("request_friend", { target_code: btn.dataset.code });
+          if (error) { btn.disabled = false; socialFail(); return; }
+          if (data === "sent") track("friend_request_sent");
+          if (data === "accepted") track("friend_added");
+          if (!$("sheetOverlay").hidden) closeSheet();
+          const good = data === "sent" || data === "accepted";
+          toast({ sent: "Friend request sent", accepted: "You're now friends!", already: "You're already connected", not_found: "No hero has that code", self: "That's your own code", too_many: "Too many requests waiting. Try again once some are answered.", no_profile: "Create your hero card first" }[data] || "Something went wrong", good ? "check" : "scroll");
+          await loadSocial();
+          return;
+        }
+        case "friend-accept":
+        case "friend-decline": {
+          const { data, error } = await account.client.rpc("respond_friend", { request_id: id, accept: action === "friend-accept" });
+          if (error) { socialFail(); return; }
+          if (data && action === "friend-accept") { track("friend_added"); toast("You're now friends!", "check"); }
+          await loadSocial();
+          return;
+        }
+        case "friend-open": {
+          const x = social.friends.find((y) => y.id === id);
+          if (!x) return;
+          const xp = x.week === weekDays(getToday())[0] ? Number(x.week_xp) || 0 : 0;
+          openSheet(`<div class="info">${face(x.avatar, true)}<h2>${esc(x.name)}</h2>
+            <p>Level ${Number(x.level) || 1} · ${Number(x.streak) || 0}-day streak · ${xp} XP this week</p>
+            <p class="muted">Friend code ${esc(x.code)}</p>
+            <div class="toolbar" style="justify-content:center;margin:0"><button class="btn soft" data-action="friend-close">Close</button><button class="btn danger" data-action="friend-remove" data-id="${x.id}">Remove friend</button></div></div>`);
+          return;
+        }
+        case "friend-remove": {
+          const x = social.friends.find((y) => y.id === id);
+          if (!x) return;
+          if (x.status === "accepted" && !confirm(`Remove ${x.name} from your friends? You can add each other again later.`)) return;
+          const { error } = await account.client.rpc("remove_friend", { request_id: id });
+          if (error) { socialFail(); return; }
+          if (!$("sheetOverlay").hidden) closeSheet();
+          toast(x.status === "accepted" ? "Friend removed" : "Request cancelled", "check");
+          await loadSocial();
+          return;
+        }
+      }
+    }
+
+    function friendsPage(today) {
+      if (!account.user) return `<div class="panel" style="margin-top:0"><p class="muted">Log in to add friends.</p></div>`;
+      if (!social.loaded) {
+        if (!social.loading && !social.error) loadSocial();
+        return `<div class="panel" style="margin-top:0">${social.error ? `<p>${esc(social.error)}</p><button class="btn soft" data-action="friend-retry">Try again</button>` : `<p class="muted">Opening your friends list…</p>`}</div>`;
+      }
+      if (!social.me) return `<div class="panel" style="margin-top:0"><h3>Create your hero card</h3>
+        <p class="muted" style="margin:-4px 0 12px">Pick the name classmates and teammates will see. You'll get a friend code and an invite link to share.</p>${heroFormHtml()}</div>`;
+      const me = Object.assign({}, social.me, heroCardStats(state, today));
+      const incoming = social.friends.filter((x) => x.status === "pending" && x.incoming), outgoing = social.friends.filter((x) => x.status === "pending" && !x.incoming);
+      const card = `<div class="panel" style="margin-top:0"><h3>Your hero card</h3>
+        <div class="hero-card">${face(me.avatar)}<div><b>${esc(me.name)}</b><div class="muted">Level ${me.level} · ${me.streak}-day streak</div></div>
+          <div class="code-box"><span class="muted">Friend code</span><b class="code-big">${esc(me.code)}</b></div></div>
+        <div class="toolbar" style="margin:12px 0 0"><button class="btn" data-action="friend-share">${px("duo", 16)} Share invite link</button><button class="btn soft" data-action="hero-rename">Rename</button></div>
+        <label class="feed-toggle" style="margin-top:10px;white-space:normal"><input type="checkbox" data-social="searchable" ${me.searchable ? "checked" : ""} /> Let classmates find me by nickname</label></div>`;
+      const requests = incoming.length || outgoing.length ? `<div class="panel"><h3>Friend requests</h3>
+        ${incoming.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Level ${Number(x.level) || 1} · wants to be friends</div></div>
+          <button class="btn sm" data-action="friend-accept" data-id="${x.id}">Accept</button><button class="linkbtn" data-action="friend-decline" data-id="${x.id}">Decline</button></div>`).join("")}
+        ${outgoing.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Request sent · waiting for them</div></div>
+          <button class="linkbtn" data-action="friend-remove" data-id="${x.id}">Cancel</button></div>`).join("")}</div>` : "";
+      const board = leaderboard(me, social.friends, weekDays(today)[0]);
+      const rows = board.map((p, i) => {
+        const inner = `<span class="lb-rank">${i + 1}</span>${face(p.avatar)}<span class="lb-name"><b>${esc(p.name)}${p.isMe ? " (you)" : ""}</b><small class="muted">Lv ${Number(p.level) || 1} · ${px("flame", 11)}${Number(p.streak) || 0}-day streak</small></span><span class="lb-xp">${p.xpNow} XP</span>`;
+        return p.isMe ? `<div class="lb-row me">${inner}</div>` : `<button class="lb-row" data-action="friend-open" data-id="${p.id}" aria-label="${esc(p.name)}: ${p.xpNow} XP this week">${inner}</button>`;
+      }).join("");
+      const board_ = `<div class="panel"><h3>This week's leaderboard</h3>
+        ${board.length > 1 ? `<p class="muted" style="margin:-4px 0 10px">XP from quests finished since Monday. Tap a friend to see their card.</p>` : `<p class="muted" style="margin:-4px 0 10px">No friends yet. Share your invite link with classmates and teammates, or search below.</p>`}
+        <div class="lb">${rows}</div></div>`;
+      const results = !social.results ? "" : social.results.length ? social.results.map((p) => {
+        const known = social.friends.find((x) => x.code === p.code);
+        return `<div class="friend-row">${face(p.avatar)}<div><div class="feed-name">${esc(p.name)}</div><div class="feed-meta">Level ${Number(p.level) || 1}</div></div>
+          ${known ? `<span class="muted">${known.status === "accepted" ? "Friends" : "Requested"}</span>` : `<button class="btn soft sm" data-action="friend-add" data-code="${esc(p.code)}">Add</button>`}</div>`;
+      }).join("") : `<p class="muted">No heroes found. Check the spelling, or ask for their 6-letter friend code.</p>`;
+      const add = `<div class="panel"><h3>Add a friend</h3>
+        <form id="friendSearch" class="friend-search"><input id="friendQuery" maxlength="20" placeholder="Friend code or nickname" value="${esc(social.query)}" autocomplete="off" aria-label="Friend code or nickname" /><button class="btn soft" type="submit">Search</button></form>${results}</div>`;
+      return card + requests + board_ + add;
+    }
+
     function sealedProfile(avatars, heroStats) {
       const perks = [["crown", "Pick your adventurer avatar"], ["sword", "Grow hero stats and earn badges"], ["trophy", "Unlock achievements and keep streaks"],
         ["clock", "Get quest reminders on your phone"], ["scroll", "Keep your quests on every device"]];
@@ -3597,6 +3889,7 @@
         const action = btn.dataset.action;
         // Undo only covers the latest completion; any other change closes that window.
         if (lastCompletion && !["undo-complete", "moment-next", "complete", "check-in"].includes(action)) lastCompletion = null;
+        if (/^(friend|hero)-/.test(action)) { socialAction(action, btn); return; }
         switch (action) {
           case "complete": {
             const quest = state.quests.find((q) => q.id === id);
@@ -3753,7 +4046,7 @@
             closeSheet();
             break;
           case "mode": todayMode = btn.dataset.mode; tab = "today"; break;
-          case "pmode": profileMode = btn.dataset.mode; tab = "profile"; break;
+          case "pmode": profileMode = btn.dataset.mode; tab = "profile"; if (profileMode === "friends") loadSocial(30000); break;
           case "undo-add":
             if (lastAdded) {
               if (lastAdded.kind === "goal") state.goals = state.goals.filter((g) => g.id !== lastAdded.id);
@@ -3797,6 +4090,8 @@
         if (e.target.id === "authForm") { submitAuth(); return; }
         if (e.target.id === "feedForm") { submitFeed(); return; }
         if (e.target.id === "pasteForm") { findPastedQuests(); return; }
+        if (e.target.id === "heroForm") { submitHeroCard(); return; }
+        if (e.target.id === "friendSearch") { searchPlayers(); return; }
         const today = getToday();
         lastCompletion = null;
         if (e.target.id === "captureForm") {
@@ -3853,6 +4148,7 @@
           }
           return;
         }
+        if (e.target.dataset && e.target.dataset.social === "searchable") { setSearchable(e.target.checked); return; }
         if (e.target.dataset && e.target.dataset.feedQuests) { setFeedQuests(e.target.dataset.feedQuests, e.target.checked); return; }
         if (e.target.id === "themeSelect") { state.theme = e.target.value; save(); render(); }
         if (e.target.id === "eRepeat") $("eDays").hidden = e.target.value !== "days";
@@ -3915,7 +4211,9 @@
         if (e.deltaY) { $("chips").scrollLeft += e.deltaY; e.preventDefault(); }
       }, { passive: false });
 
+      captureInvite();
       render();
+      if (tab === "profile" && profileMode === "friends" && account.status !== "off") setTimeout(() => { if (!account.user) toast("Log in or sign up to accept your friend's invite", "duo"); }, 1500);
       const backFromLogin = /[?&](code|error_description)=|access_token=/.test(location.search + location.hash);
       if (firstVisit && !backFromLogin) openWelcome();
       initAccounts();
