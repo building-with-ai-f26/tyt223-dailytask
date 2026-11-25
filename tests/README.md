@@ -33,7 +33,8 @@ One file: `node --test tests/logic.test.js`. About 60 checks run in under 10 sec
 | `friends.test.js` | Friend codes, hero names, weekly XP, Tavern standings, that friends never see quest names, code-only adding |
 | `security.test.js` | `esc()`, every `value="…"` escaped, the Content-Security-Policy, no secret keys in the page, the pinned Supabase library, calendar and push-service allow-lists |
 | `ai.test.js` | AI input checks and answer cleaning (suggestions, paste notes, chronicle) and `server.js` with a **fake** OpenAI: no real AI calls, no cost |
-| `browser.test.js` | The real app in headless Edge or Chrome: add and finish a quest, every tab opens, and the Tavern friend flow against a **fake** Supabase. Skipped if no browser is found (`BROWSER=/path/to/browser` to choose one) |
+| `battles.test.js` | Battle phases, standings with ties, the 150 XP daily cap, the Tavern Champion |
+| `browser.test.js` | The real app in headless Edge or Chrome: add and finish a quest, every tab opens, the Tavern friend flow and a full battle (challenge, accept, live score, claim) against a **fake** Supabase. Skipped if no browser is found (`BROWSER=/path/to/browser` to choose one) |
 
 **Limits:** nothing here talks to the real Supabase or OpenAI, so database rules (Row Level Security, the friend functions) are tested separately inside the database, as recorded in `SECURITY.md`. Visual design is checked with screenshots, not by these tests.
 

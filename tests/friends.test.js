@@ -41,13 +41,13 @@ test("weekly XP counts only quests and check-ins finished Monday to Sunday", () 
   s.goals = [{ id: 9, days: null, log: [{ date: "2026-11-24", xp: 10 }, { date: "2026-11-20", xp: 99 }] }];
   assert.equal(app.xpBetween(s, "2026-11-23", "2026-11-29"), 70);
   const card = plain(app.heroCardStats(s, "2026-11-25"));
-  assert.deepEqual(card, { avatar: "berry", level: 3, streak: 0, week_xp: 70, week: "2026-11-23" });
+  assert.deepEqual(card, { avatar: "berry", level: 3, streak: 0, week_xp: 70, week: "2026-11-23", last_week_xp: 139, last_week: "2026-11-16" }, "last week: 40 (Sunday quest) + 99 (Friday check-in)");
 });
 
-test("the hero card friends see carries only these five values, never quest names", () => {
+test("the hero card friends see carries only game numbers, never quest names", () => {
   const s = app.sampleState("2026-11-25");
   const card = plain(app.heroCardStats(s, "2026-11-25"));
-  assert.deepEqual(Object.keys(card).sort(), ["avatar", "level", "streak", "week", "week_xp"]);
+  assert.deepEqual(Object.keys(card).sort(), ["avatar", "last_week", "last_week_xp", "level", "streak", "week", "week_xp"]);
   const text = JSON.stringify(card);
   for (const q of s.quests) assert.ok(!text.includes(q.name), "quest name leaked: " + q.name);
 });

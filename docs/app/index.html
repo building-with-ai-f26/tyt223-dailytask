@@ -370,6 +370,37 @@
     .lb-name small { display: inline-flex; align-items: center; gap: 3px; }
     .lb-xp { font-family: var(--display); font-size: 20px; white-space: nowrap; color: var(--gold-ink); }
     .btn.sm { padding: 6px 12px; font-size: 13px; }
+    /* Battles */
+    .battle-card { border: 1px solid var(--border); border-radius: 12px; background: var(--card); padding: 10px 12px; margin-bottom: 10px; }
+    .battle-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .battle-head b { font-size: 14px; overflow-wrap: anywhere; }
+    .battle-head .muted { margin-left: auto; font-size: 12px; }
+    .duel { display: flex; justify-content: space-between; gap: 8px; }
+    .duel-side { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .duel-side > span { display: flex; flex-direction: column; min-width: 0; }
+    .duel-side b { font-size: 13px; overflow-wrap: anywhere; }
+    .duel-side.right { text-align: right; }
+    .duel-side.right > span { align-items: flex-end; }
+    .duel-bar { position: relative; height: 12px; margin: 12px 6px 4px; border-radius: 6px; background: linear-gradient(#DD8D79, var(--danger)); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15); }
+    .duel-bar > div { height: 100%; border-radius: 6px 0 0 6px; background: linear-gradient(#86BC90, var(--accent)); transition: width .4s ease; }
+    .duel-mark { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--card); box-shadow: 0 0 0 1px var(--gold), 0 1px 3px rgba(0, 0, 0, .2); }
+    .duel-note { margin: 8px 0 0; font-size: 12px; text-align: center; }
+    .battle-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+    .battle-row .lb-name b { font-size: 13px; }
+    .battle-card > .btn { margin-top: 10px; width: 100%; }
+    .battle-waiting { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .battle-waiting .face { width: 26px; height: 26px; }
+    .crown-tag { display: inline-flex; vertical-align: -1px; margin-left: 4px; }
+    .champion-note { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 13px; color: var(--gold-ink); font-weight: 600; }
+    .pick-list { display: grid; gap: 6px; margin: 10px 0; }
+    .pick-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); cursor: pointer; }
+    .pick-row input { width: auto; margin: 0; accent-color: var(--accent); }
+    .pick-row > span { display: flex; flex-direction: column; }
+    .pick-row.off { opacity: .55; cursor: default; }
+    .prize-line { font-family: var(--display); font-size: 26px; color: var(--gold-ink); margin: 6px 0 14px; }
+    .battle-strip { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 10px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--card); color: var(--ink); font-size: 13px; font-weight: 600; text-align: left; }
+    .battle-strip .muted { margin-left: auto; font-weight: 500; }
     /* Accounts: login sheet and sync status */
     .auth h2 { margin-bottom: 4px; }
     .auth .btn { width: 100%; margin-top: 14px; }
@@ -1708,7 +1739,7 @@
       return {
         quests: [], goals: [], rewards: [], claims: [], events: [], templates: [], feeds: [], nextId: 1,
         lifetimeXp: 0, spendableXp: 0,
-        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0, boss: null, bossesDefeated: 0, gear: { owned: [], pet: null, frame: null, title: null }, landmarksClaimed: [], chronicles: {},
+        streak: 0, bestStreak: 0, lastCompletedOn: null, clearedOn: null, daysCleared: 0, boss: null, bossesDefeated: 0, gear: { owned: [], pet: null, frame: null, title: null }, landmarksClaimed: [], chronicles: {}, battleWins: 0,
         theme: "classic", dayOffset: 0,
         avatar: "mint", shields: 0, chestOn: null, achievements: {}, weeklyGoalsDone: 0,
         catXp: { Class: 0, Recruiting: 0, Events: 0, Personal: 0 },
@@ -2029,8 +2060,9 @@
     }
     // The only numbers friends see. Quest names never leave the save.
     function heroCardStats(state, today) {
-      const week = weekDays(today);
-      return { avatar: state.avatar, level: levelOf(state.lifetimeXp), streak: currentStreak(state, today), week_xp: xpBetween(state, week[0], week[6]), week: week[0] };
+      const week = weekDays(today), last = weekDays(addDays(week[0], -7));
+      return { avatar: state.avatar, level: levelOf(state.lifetimeXp), streak: currentStreak(state, today), week_xp: xpBetween(state, week[0], week[6]), week: week[0],
+        last_week_xp: xpBetween(state, last[0], last[6]), last_week: last[0] };
     }
     // Me plus accepted friends, most XP this week first. XP saved in an older week counts as 0.
     function leaderboard(me, friends, monday) {
@@ -2038,6 +2070,37 @@
       return [Object.assign({ isMe: true }, me)].concat(friends.filter((x) => x.status === "accepted"))
         .map((p) => Object.assign({}, p, { xpNow: xpNow(p) }))
         .sort((a, b) => b.xpNow - a.xpNow || (b.level || 0) - (a.level || 0) || String(a.name).localeCompare(String(b.name)));
+    }
+
+    // ---------- Battles (pure) ----------
+    // The database (supabase/battles.sql) decides who wins and pays prizes; these mirror its rules for display.
+    const BATTLE_DAYS = 3, BATTLE_DAILY_CAP = 150, BATTLE_MAX_FRIENDS = 5, BATTLE_MAX_ACTIVE = 3, BATTLE_INVITE_DAYS = 2;
+    const BATTLE_PRIZES = { win: 50, second: 25, third: 10, finish: 5 };
+    // XP earned on each of the given days, capped like the server: { "2026-11-26": 120, ... }.
+    function battleDayXp(state, dates) {
+      const out = {};
+      for (const d of dates) out[d] = Math.min(BATTLE_DAILY_CAP, xpBetween(state, d, d));
+      return out;
+    }
+    // Where a battle stands today: waiting (invites out), expired, scheduled (starts tomorrow), active or over.
+    function battlePhase(b, today, nowMs = Date.now()) {
+      if (b.status === "waiting") return nowMs - Date.parse(b.created_at) > BATTLE_INVITE_DAYS * 86400000 ? "expired" : "waiting";
+      if (today < b.start_day) return "scheduled";
+      return today <= b.end_day ? "active" : "over";
+    }
+    // Players who accepted, most XP first; ties share the better place.
+    function battleStandings(players) {
+      const inBattle = (players || []).filter((p) => p.status === "accepted").slice().sort((a, b) => b.xp - a.xp || String(a.name).localeCompare(String(b.name)));
+      return inBattle.map((p) => Object.assign({}, p, { place: 1 + inBattle.filter((q) => q.xp > p.xp).length }));
+    }
+    function battleDayNumber(b, today) { return Math.round((parseDate(today) - parseDate(b.start_day)) / 86400000) + 1; }
+    function ordinal(n) { return n + (n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th"); }
+    // Last week's Tavern Champion(s): the most XP last week (more than 0) among me and my friends.
+    function tavernChampions(me, friends, lastMonday) {
+      const all = [Object.assign({ isMe: true }, me)].concat(friends.filter((x) => x.status === "accepted"));
+      const xp = (p) => (p.last_week === lastMonday ? Number(p.last_week_xp) || 0 : 0);
+      const best = Math.max(0, ...all.map(xp));
+      return best > 0 ? all.filter((p) => xp(p) === best) : [];
     }
 
     // ---------- Page code ----------
@@ -2178,7 +2241,7 @@
       return `<div class="board-head">
           <h2>Today's Quests${todayMode === "quests" ? ` (${total})` : ""}</h2>
         </div>
-        ${pageTabs(todayMode)}<div class="page tabbed">${todayMode === "quests" ? bossStrip(today) + renderTodayList(today) : renderSchedule(today)}</div>
+        ${pageTabs(todayMode)}<div class="page tabbed">${todayMode === "quests" ? bossStrip(today) + battleStrip(today) + renderTodayList(today) : renderSchedule(today)}</div>
         <p class="muted" style="text-align:center;margin-top:18px">This demo records visits, clicks and session replays with PostHog to improve DailyQuest. The text you type is hidden from recordings.</p>`;
     }
     let bossHitAt = 0;
@@ -2787,6 +2850,7 @@
         writeMeta(Object.assign(readMeta(), { user: userId, syncedAt: data.updated_at }));
         account.sync = "saved";
         syncHeroCard();
+        reportBattleXp();
         if (account.again || readMeta().pending) { account.again = false; clearTimeout(account.timer); account.timer = setTimeout(pushNow, 300); }
       }
       refreshAccountUi();
@@ -3308,13 +3372,18 @@
     // avatar, level, streak and XP this week. Every friend action goes through a database function that checks
     // who is asking; the app can read and change only its own hero card directly.
     const social = {};
-    function resetSocial() { Object.assign(social, { me: null, friends: [], loaded: false, loading: null, loadedAt: 0, error: "", results: null, query: "", sentCard: "" }); }
+    function resetSocial() { Object.assign(social, { me: null, friends: [], battles: [], loaded: false, loading: null, loadedAt: 0, error: "", results: null, query: "", sentCard: "", sentBattle: "" }); }
     resetSocial();
     function avatarId(a) { return AVATARS.some((x) => x.id === a) ? a : "mint"; }
     function face(avatar, big) { return `<span class="face${big ? " big" : ""}">${mascotSvg(avatarId(avatar))}</span>`; }
     function rerenderFriends() { updateTavernDot(); if (tab === "tavern" && $("sheetOverlay").hidden) render(); }
-    // A red dot on the Tavern tab while a friend request is waiting.
-    function updateTavernDot() { const dot = $("tavernDot"); if (dot) dot.hidden = !(social.friends || []).some((x) => x.status === "pending" && x.incoming); }
+    // A red dot on the Tavern tab while a friend request or battle invite waits, or a prize is ready to claim.
+    function tavernNeedsYou() {
+      const today = getToday();
+      return (social.friends || []).some((x) => x.status === "pending" && x.incoming) ||
+        (social.battles || []).some((b) => { const p = battlePhase(b, today); return (b.my_status === "invited" && (p === "waiting" || p === "scheduled")) || (b.my_status === "accepted" && p === "over" && !b.claimed); });
+    }
+    function updateTavernDot() { const dot = $("tavernDot"); if (dot) dot.hidden = !tavernNeedsYou(); }
     function socialFail() { toast("Couldn't reach your account. Try again in a moment.", "scroll"); }
 
     function loadSocial(maxAge = 0) {
@@ -3325,17 +3394,19 @@
         try {
           const { data: me, error } = await account.client.from("profiles").select("*").eq("user_id", account.user.id).maybeSingle();
           if (error) throw error;
-          let friends = [];
+          let friends = [], battles = social.battles || [];
           if (me) {
             const res = await account.client.rpc("friend_list");
             if (res.error) throw res.error;
             friends = res.data || [];
+            const b = await account.client.rpc("my_battles");   // battles failing shouldn't hide friends
+            if (!b.error) battles = b.data || [];
           }
-          Object.assign(social, { me, friends, loaded: true, loadedAt: Date.now(), error: "" });
+          Object.assign(social, { me, friends, battles, loaded: true, loadedAt: Date.now(), error: "" });
         } catch (e) { social.error = "Couldn't open your friends list. Check your connection and try again."; }
         social.loading = null;
         rerenderFriends();
-        if (social.me) { syncHeroCard(); hideFromNameSearch(); }
+        if (social.me) { syncHeroCard(); hideFromNameSearch(); reportBattleXp(); }
       })();
       return social.loading;
     }
@@ -3348,6 +3419,21 @@
       if (Object.keys(stats).every((k) => social.me[k] === stats[k])) return;
       const { error } = await account.client.from("profiles").update(Object.assign({ updated_at: new Date().toISOString() }, stats)).eq("user_id", account.user.id);
       if (error) social.sentCard = ""; else Object.assign(social.me, stats);
+    }
+
+    // Sends XP per day (last 4 days) for battles that are on now or ended yesterday, then refreshes the scores.
+    async function reportBattleXp(force) {
+      if (!account.user || !social.me) return;
+      const today = getToday();
+      const live = (social.battles || []).filter((b) => b.my_status === "accepted" && b.status === "active" && b.start_day <= today && b.end_day >= addDays(today, -1));
+      if (!live.length) return;
+      const days = battleDayXp(state, [0, 1, 2, 3].map((n) => addDays(today, -n))), key = today + JSON.stringify(days);
+      if (!force && key === social.sentBattle) return;
+      social.sentBattle = key;
+      const { error } = await account.client.rpc("report_battle_xp", { p_today: today, p_days: days });
+      if (error) { social.sentBattle = ""; return; }
+      const res = await account.client.rpc("my_battles");
+      if (!res.error) { social.battles = res.data || []; rerenderFriends(); }
     }
 
     // Friends are added only by friend code, and every request must be accepted. Cards made before name search
@@ -3414,6 +3500,8 @@
       const id = Number(btn.dataset.id);
       switch (action) {
         case "friend-close": closeSheet(); return;
+        case "battle-new": openBattlePicker(Number(btn.dataset.id) || null); return;
+        case "battle-accept": case "battle-decline": case "battle-claim": battleAction(action, id); return;
         case "friend-retry": social.error = ""; render(); loadSocial(); return;
         case "friend-share": shareCode(); return;
         case "friend-copy-code":
@@ -3447,8 +3535,8 @@
           const xp = x.week === weekDays(getToday())[0] ? Number(x.week_xp) || 0 : 0;
           openSheet(`<div class="info">${face(x.avatar, true)}<h2>${esc(x.name)}</h2>
             <p>Level ${Number(x.level) || 1} · ${Number(x.streak) || 0}-day streak · ${xp} XP this week</p>
-            <p class="muted">Friend code ${esc(x.code)}</p>
-            <div class="toolbar" style="justify-content:center;margin:0"><button class="btn soft" data-action="friend-close">Close</button><button class="btn danger" data-action="friend-remove" data-id="${x.id}">Remove friend</button></div></div>`);
+            <p class="muted">Friend code ${esc(x.code)}${x.duels_open === false ? " · battles turned off" : ""}</p>
+            <div class="toolbar" style="justify-content:center;margin:0"><button class="btn" data-action="battle-new" data-id="${x.id}" ${x.duels_open === false ? "disabled" : ""}>${px("sword", 14)} Challenge</button><button class="btn soft" data-action="friend-close">Close</button><button class="btn danger" data-action="friend-remove" data-id="${x.id}">Remove friend</button></div></div>`);
           return;
         }
         case "friend-remove": {
@@ -3465,6 +3553,120 @@
       }
     }
 
+    function battleStrip(today) {
+      if (!account.user || !social.me) return "";
+      const b = (social.battles || []).find((x) => x.my_status === "accepted" && battlePhase(x, today) === "active");
+      if (!b) return "";
+      const st = battleStandings(b.players), me = st.find((p) => p.me) || st[0], rival = st.find((p) => !p.me);
+      const score = st.length === 2 ? `You ${me.xp} · ${esc(rival.name)} ${rival.xp}` : `You're ${ordinal(me.place)} of ${st.length} · ${me.xp} XP`;
+      return `<button class="battle-strip" data-tab="tavern" aria-label="Battle: ${score}. Open the Tavern.">${px("sword", 22)}<span>${score}</span><span class="muted">Day ${battleDayNumber(b, today)} of ${BATTLE_DAYS}</span></button>`;
+    }
+    function battleCard(b, phase, today) {
+      const players = b.players || [], st = battleStandings(players);
+      const others = players.filter((p) => !p.me && p.status !== "declined");
+      const title = others.length === 1 ? "You vs " + esc(others[0].name) : "Battle of " + (others.length + 1);
+      const invited = others.filter((p) => p.status === "invited").map((p) => esc(p.name));
+      const when = phase === "waiting" ? "Waiting to start" : phase === "scheduled" ? "Starts " + relative(b.start_day, today).toLowerCase()
+        : phase === "active" ? `Day ${battleDayNumber(b, today)} of ${BATTLE_DAYS} · ends ${relative(b.end_day, today).toLowerCase()}` : "Battle over";
+      let body;
+      if (phase === "waiting") {
+        body = `<div class="battle-waiting">${others.map((p) => face(p.avatar)).join("")}<span>Waiting for ${invited.join(", ") || "friends"} to accept. It starts the day after someone does.</span></div>`;
+      } else if (st.length === 2) {
+        const me = st.find((p) => p.me) || st[0], rival = st.find((p) => p !== me), total = me.xp + rival.xp, share = total ? Math.round((me.xp / total) * 100) : 50;
+        const diff = me.xp - rival.xp;
+        const note = phase === "scheduled" ? "Finish quests once it starts to pull ahead."
+          : phase === "over" ? (diff > 0 ? "You won!" : diff < 0 ? esc(rival.name) + " won this one." : "A tie!")
+          : diff > 0 ? `You're ahead by ${diff} XP` : diff < 0 ? `${esc(rival.name)} leads by ${-diff} XP` : "Neck and neck";
+        body = `<div class="duel"><div class="duel-side">${face(me.avatar)}<span><b>You</b><span class="lb-xp">${me.xp} XP</span></span></div>
+          <div class="duel-side right"><span><b>${esc(rival.name)}</b><span class="lb-xp">${rival.xp} XP</span></span>${face(rival.avatar)}</div></div>
+          <div class="duel-bar" role="img" aria-label="You ${me.xp} XP, ${esc(rival.name)} ${rival.xp} XP"><div style="width:${share}%"></div><span class="duel-mark" style="left:${share}%">${px("sword", 14)}</span></div>
+          <p class="muted duel-note">${note}${phase === "active" ? " · up to " + BATTLE_DAILY_CAP + " XP a day counts" : ""}</p>`;
+      } else {
+        body = st.map((p) => `<div class="battle-row"><span class="lb-rank medal m${Math.min(p.place, 3)}"${p.place > 3 ? ' style="background:none;box-shadow:none"' : ""}>${p.place}</span>${face(p.avatar)}<span class="lb-name"><b>${esc(p.name)}${p.me ? '<span class="you-tag">You</span>' : ""}</b></span><span class="lb-xp">${p.xp} XP</span></div>`).join("") +
+          (invited.length ? `<p class="muted duel-note">Still invited: ${invited.join(", ")}</p>` : "");
+      }
+      const claim = phase === "over" && !b.claimed ? `<button class="btn" data-action="battle-claim" data-id="${b.id}">${px("trophy", 16)} Claim your prize</button>` : "";
+      return `<div class="battle-card"><div class="battle-head">${px("sword", 16)}<b>${title}</b><span class="muted">${when}</span></div>${body}${claim}</div>`;
+    }
+    function battlesPanel(today) {
+      const shown = (social.battles || []).filter((b) => b.my_status === "accepted").map((b) => ({ b, phase: battlePhase(b, today) }))
+        .filter((x) => x.phase !== "expired" && !(x.phase === "over" && x.b.claimed));
+      const friends = social.friends.filter((x) => x.status === "accepted");
+      const running = shown.filter((x) => x.phase !== "over").length;
+      const start = friends.length ? `<button class="btn sm" data-action="battle-new" ${running < BATTLE_MAX_ACTIVE ? "" : "disabled"}>${px("sword", 14)} Start a battle</button>` : "";
+      const toggle = `<label class="feed-toggle" style="white-space:normal;margin-top:10px"><input type="checkbox" data-social="battles" ${social.me.duels_open !== false ? "checked" : ""} /> Open to battles (friends can challenge me)</label>`;
+      if (!shown.length) return `<div class="panel" style="margin-top:0"><h3>Battles</h3>
+        <p class="muted" style="margin:-4px 0 10px">Challenge 1 to 5 friends to a 3-day battle. Whoever earns the most quest XP wins ${BATTLE_PRIZES.win} coins and a trophy.</p>
+        ${friends.length ? start : '<p class="muted">Add a friend first, then challenge them here.</p>'}${toggle}</div>`;
+      return `<div class="panel" style="margin-top:0"><h3>Battles</h3>${shown.map((x) => battleCard(x.b, x.phase, today)).join("")}
+        <div class="toolbar" style="margin:4px 0 0">${start}${running >= BATTLE_MAX_ACTIVE ? '<span class="muted">3 battles at once is the limit</span>' : ""}</div>${toggle}</div>`;
+    }
+    function openBattlePicker(preId) {
+      const friends = social.friends.filter((x) => x.status === "accepted");
+      const rows = friends.map((x) => {
+        const open = x.duels_open !== false;
+        return `<label class="pick-row${open ? "" : " off"}"><input type="checkbox" name="bfriend" value="${esc(x.id)}" ${open ? "" : "disabled"} ${open && x.id === preId ? "checked" : ""} />${face(x.avatar)}<span><b>${esc(x.name)}</b><small class="muted">${open ? "Level " + (Number(x.level) || 1) : "Battles turned off"}</small></span></label>`;
+      }).join("");
+      openSheet(`<h2>Start a battle</h2>
+        <p class="muted">Pick 1 to 5 friends. Once someone accepts, the battle starts the next day and runs ${BATTLE_DAYS} days. Most quest XP wins (up to ${BATTLE_DAILY_CAP} a day counts).</p>
+        <form id="battleForm"><div class="pick-list">${rows}</div>
+        <p class="muted" style="font-size:12px;margin:0 0 12px">Prizes: winner ${BATTLE_PRIZES.win} coins and a trophy · in battles of 3 or more, 2nd ${BATTLE_PRIZES.second} and 3rd ${BATTLE_PRIZES.third} · everyone else ${BATTLE_PRIZES.finish}.</p>
+        <button class="btn" type="submit">${px("sword", 16)} Send challenge</button></form>`);
+    }
+    async function submitBattle() {
+      const ids = [...document.querySelectorAll("#battleForm input[name=bfriend]:checked")].map((i) => Number(i.value));
+      if (!ids.length) { toast("Pick at least one friend", "scroll"); return; }
+      if (ids.length > BATTLE_MAX_FRIENDS) { toast("Up to 5 friends per battle", "scroll"); return; }
+      const btn = document.querySelector("#battleForm button[type=submit]");
+      btn.disabled = true;
+      const { data, error } = await account.client.rpc("start_battle", { friend_ids: ids, p_today: getToday() });
+      btn.disabled = false;
+      if (error) { socialFail(); return; }
+      if (data !== "started") {
+        toast({ not_friends: "You can only challenge your friends", closed: "Someone you picked has battles turned off", too_many: "You're already in 3 battles (or started 10 today)", bad_size: "Pick 1 to 5 friends", bad_date: "Your device's date looks off. Check it and try again.", no_profile: "Create your adventurer card first" }[data] || "Couldn't start the battle", "scroll");
+        return;
+      }
+      track("battle_started", { players: ids.length + 1 });
+      closeSheet();
+      toast("Challenge sent! It starts the day after someone accepts.", "sword");
+      await loadSocial();
+    }
+    async function setBattlesOpen(on) {
+      const { error } = await account.client.from("profiles").update({ duels_open: on }).eq("user_id", account.user.id);
+      if (error) { socialFail(); render(); return; }
+      social.me.duels_open = on;
+      toast(on ? "Friends can challenge you to battles" : "Battles turned off. Friends can't challenge you.", "check");
+    }
+    async function battleAction(action, id) {
+      const today = getToday();
+      if (action === "battle-accept" || action === "battle-decline") {
+        const accept = action === "battle-accept";
+        const { data, error } = await account.client.rpc("respond_battle", { p_battle: id, p_accept: accept, p_today: today });
+        if (error) { socialFail(); return; }
+        if (data === "accepted" || data === "declined") track(accept ? "battle_accepted" : "battle_declined");
+        toast({ accepted: "Battle accepted! It starts tomorrow.", declined: "Battle declined", expired: "That invite has expired", too_late: "That battle has already started", too_many: "You're already in 3 battles", bad_date: "Your device's date looks off. Check it and try again." }[data] || "That invite isn't available anymore", data === "accepted" ? "sword" : "scroll");
+        await loadSocial();
+        return;
+      }
+      if (action === "battle-claim") {
+        await reportBattleXp(true);   // make sure the last day's XP is in
+        const { data, error } = await account.client.rpc("claim_battle_prize", { p_battle: id, p_today: today });
+        if (error || !data) { socialFail(); return; }
+        if (!data.ok) { toast({ not_over: "The battle isn't over yet", already_claimed: "You already claimed this prize" }[data.error] || "Couldn't claim the prize", "scroll"); await loadSocial(); return; }
+        state.spendableXp += Number(data.coins) || 0;
+        if (data.trophy) state.battleWins = (state.battleWins || 0) + 1;
+        save();
+        track("battle_prize_claimed", { place: data.place, players: data.players, coins: data.coins });
+        await loadSocial();
+        render();
+        const heading = data.trophy ? "Victory!" : data.place <= 3 && data.players >= 3 && data.xp > 0 ? ordinal(data.place) + " place!" : "Battle complete";
+        openSheet(`<div class="info">${px(data.trophy ? "trophy" : "medal", 56)}<h2>${heading}</h2>
+          <p>${data.trophy ? "You earned the most XP" : "You finished " + ordinal(data.place) + " of " + data.players} with ${Number(data.xp) || 0} XP.</p>
+          <p class="prize-line">+${Number(data.coins) || 0} coins${data.trophy ? " · +1 trophy" : ""}</p>
+          <button class="btn" data-action="friend-close">Collect</button></div>`);
+      }
+    }
+
     function friendsPage(today) {
       if (!account.user) return `<div class="panel" style="margin-top:0"><p class="muted">Log in to add friends.</p></div>`;
       if (!social.loaded) {
@@ -3476,25 +3678,36 @@
         <p class="muted" style="margin:0 0 12px">Pick the name your friends will see. You'll get a friend code to share.</p>${heroFormHtml()}</div>`;
       const me = Object.assign({}, social.me, heroCardStats(state, today));
       const incoming = social.friends.filter((x) => x.status === "pending" && x.incoming), outgoing = social.friends.filter((x) => x.status === "pending" && !x.incoming);
-      const card = `<div class="panel" style="margin-top:0"><h3>Your adventurer card</h3>
-        <div class="hero-card">${face(me.avatar)}<div><b>${esc(me.name)}</b><div class="muted">Level ${me.level} · ${me.streak}-day streak</div></div>
+      const wins = Number(state.battleWins) || 0;
+      const card = `<div class="panel"><h3>Your adventurer card</h3>
+        <div class="hero-card">${face(me.avatar)}<div><b>${esc(me.name)}</b><div class="muted">Level ${me.level} · ${me.streak}-day streak${wins ? ` · ${px("trophy", 12)} ${wins} ${wins === 1 ? "win" : "wins"}` : ""}</div></div>
           <div class="code-box"><button class="code-tag" data-action="friend-copy-code" aria-label="Friend code ${esc(me.code)}. Tap to copy"><small>Friend code</small><b>${esc(me.code)}</b><span class="mini-seal" aria-hidden="true">${px("tankard", 16)}</span></button><span class="muted">Tap to copy</span></div></div>
         <div class="toolbar" style="margin:12px 0 0"><button class="btn" data-action="friend-share">Share my code</button><button class="btn soft" data-action="hero-rename">Rename</button></div></div>`;
-      const requests = incoming.length || outgoing.length ? `<div class="panel"><h3>Waiting at the door</h3>
+      const invites = (social.battles || []).filter((b) => b.my_status === "invited" && ["waiting", "scheduled"].includes(battlePhase(b, today)));
+      const inviteRows = invites.map((b) => {
+        const host = (b.players || []).find((p) => p.creator) || {}, n = (b.players || []).filter((p) => p.status !== "declined").length;
+        return `<div class="friend-row">${face(host.avatar)}<div><div class="feed-name">${esc(host.name || "A friend")} challenged you</div><div class="feed-meta">3-day battle · ${n > 2 ? n + " players" : "just you two"}${battlePhase(b, today) === "scheduled" ? " · starts " + relative(b.start_day, today).toLowerCase() : ""}</div></div>
+          <button class="btn sm" data-action="battle-accept" data-id="${b.id}">Accept</button><button class="linkbtn" data-action="battle-decline" data-id="${b.id}">Decline</button></div>`;
+      }).join("");
+      const requests = incoming.length || outgoing.length || invites.length ? `<div class="panel"><h3>Waiting at the door</h3>${inviteRows}
         ${incoming.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Level ${Number(x.level) || 1} · wants to join your table</div></div>
           <button class="btn sm" data-action="friend-accept" data-id="${x.id}">Accept</button><button class="linkbtn" data-action="friend-decline" data-id="${x.id}">Decline</button></div>`).join("")}
         ${outgoing.map((x) => `<div class="friend-row">${face(x.avatar)}<div><div class="feed-name">${esc(x.name)}</div><div class="feed-meta">Request sent · waiting for them to accept</div></div>
           <button class="linkbtn" data-action="friend-remove" data-id="${x.id}">Cancel</button></div>`).join("")}</div>` : "";
       const board = leaderboard(me, social.friends, weekDays(today)[0]);
+      const champs = tavernChampions(me, social.friends, addDays(weekDays(today)[0], -7));
+      const isChamp = (p) => champs.some((c) => (c.isMe && p.isMe) || (!c.isMe && !p.isMe && c.id === p.id));
+      const crown = '<span class="crown-tag" title="Last week\'s Tavern Champion">' + px("crown", 13) + "</span>";
       const rows = board.map((p, i) => {
-        const inner = `<span class="lb-rank${i < 3 && board.length > 1 ? " medal m" + (i + 1) : ""}">${i + 1}</span>${face(p.avatar)}<span class="lb-name"><b>${esc(p.name)}${p.isMe ? '<span class="you-tag">You</span>' : ""}</b><small class="muted">Lv ${Number(p.level) || 1} · ${px("flame", 11)}${Number(p.streak) || 0}-day streak</small></span><span class="lb-xp">${p.xpNow} XP</span>`;
+        const inner = `<span class="lb-rank${i < 3 && board.length > 1 ? " medal m" + (i + 1) : ""}">${i + 1}</span>${face(p.avatar)}<span class="lb-name"><b>${esc(p.name)}${isChamp(p) ? crown : ""}${p.isMe ? '<span class="you-tag">You</span>' : ""}</b><small class="muted">Lv ${Number(p.level) || 1} · ${px("flame", 11)}${Number(p.streak) || 0}-day streak</small></span><span class="lb-xp">${p.xpNow} XP</span>`;
         return p.isMe ? `<div class="lb-row me">${inner}</div>` : `<button class="lb-row" data-action="friend-open" data-id="${p.id}" aria-label="${esc(p.name)}: ${p.xpNow} XP this week">${inner}</button>`;
       }).join("");
       const weekOf = nice(weekDays(today)[0], { month: "short", day: "numeric" });
       const board_ = `<div class="panel"><h3>This week's regulars</h3>
         ${board.length > 1 ? `<p class="muted" style="margin:-4px 0 10px">Week of ${weekOf} · XP from quests finished since Monday. Tap a friend to see their card.</p>`
           : `<p class="hand-note">Every quest is easier with friends.</p><p class="muted" style="margin:0 0 10px">Share your friend code, or add a friend with theirs below.</p>`}
-        <div class="lb">${rows}</div></div>`;
+        <div class="lb">${rows}</div>
+        ${champs.length ? `<p class="champion-note">${px("crown", 16)} Last week's Tavern Champion: ${champs.map((c) => (c.isMe ? "You" : esc(c.name))).join(" and ")}</p>` : ""}</div>`;
       const results = !social.results ? "" : social.results.length ? social.results.map((p) => {
         const known = social.friends.find((x) => x.code === p.code);
         return `<div class="friend-row">${face(p.avatar)}<div><div class="feed-name">${esc(p.name)}</div><div class="feed-meta">Level ${Number(p.level) || 1}</div></div>
@@ -3503,7 +3716,7 @@
       const add = `<div class="panel"><h3>Add a friend</h3>
         <p class="muted" style="margin:-4px 0 10px">Enter their friend code. They'll get a request and need to accept it.</p>
         <form id="friendSearch" class="friend-search"><input id="friendQuery" maxlength="6" placeholder="e.g. 4VXBLZ" value="${esc(social.query)}" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Friend code" /><button class="btn soft" type="submit">Find</button></form>${results}</div>`;
-      return card + requests + board_ + add;
+      return battlesPanel(today) + requests + card + board_ + add;
     }
 
     function loginActions() {
@@ -3515,7 +3728,7 @@
       const head = `<div class="page"><div class="board-head"><h2>The Tavern</h2></div>`;
       if (account.status === "off") return head + `<div class="panel" style="margin-top:0"><p class="muted">Friends need accounts, which aren't set up in this copy of DailyQuest.</p></div></div>`;
       if (!account.user) {
-        const perks = [["star", "Add your friends and cheer each other on"], ["trophy", "See who earns the most XP each week"], ["sword", "Challenge friends to 3-day duels (coming soon)"], ["shield", "Friends see your level and XP, never your quests"]];
+        const perks = [["star", "Add your friends and cheer each other on"], ["trophy", "See who earns the most XP each week"], ["sword", "Challenge friends to 3-day XP battles"], ["shield", "Friends see your level and XP, never your quests"]];
         return head + `<div class="panel sealed" style="margin-top:0">
           <div class="seal-wrap" aria-hidden="true"><div class="wax-seal">${px("tankard", 38)}</div></div>
           <h3>The tavern is for members</h3>
@@ -3906,7 +4119,7 @@
         const action = btn.dataset.action;
         // Undo only covers the latest completion; any other change closes that window.
         if (lastCompletion && !["undo-complete", "moment-next", "complete", "check-in"].includes(action)) lastCompletion = null;
-        if (/^(friend|hero)-/.test(action)) { socialAction(action, btn); return; }
+        if (/^(friend|hero|battle)-/.test(action)) { socialAction(action, btn); return; }
         switch (action) {
           case "complete": {
             const quest = state.quests.find((q) => q.id === id);
@@ -4109,6 +4322,7 @@
         if (e.target.id === "pasteForm") { findPastedQuests(); return; }
         if (e.target.id === "heroForm") { submitHeroCard(); return; }
         if (e.target.id === "friendSearch") { findByCode(); return; }
+        if (e.target.id === "battleForm") { submitBattle(); return; }
         const today = getToday();
         lastCompletion = null;
         if (e.target.id === "captureForm") {
@@ -4165,6 +4379,7 @@
           }
           return;
         }
+        if (e.target.dataset && e.target.dataset.social === "battles") { setBattlesOpen(e.target.checked); return; }
         if (e.target.dataset && e.target.dataset.feedQuests) { setFeedQuests(e.target.dataset.feedQuests, e.target.checked); return; }
         if (e.target.id === "themeSelect") { state.theme = e.target.value; save(); render(); }
         if (e.target.id === "eRepeat") $("eDays").hidden = e.target.value !== "days";

@@ -90,6 +90,16 @@ New tables `profiles` (each player's public hero card) and `friendships` (reques
 - **Tested in the browser** (fake server): a friend named `<img src=x onerror=…>` with a script in their avatar field shows as plain text and runs nothing.
 - **Supabase advisor:** warns that signed-in users can call the five functions. That is intended: they are the only way to reach friends data, and each checks the caller.
 
+### 10. Battles and the Tavern Champion (Build 4, Nov 25)
+New tables `battles` and `battle_players` and two new hero-card columns (`last_week_xp`, `last_week`), in `supabase/battles.sql`. Backup taken first.
+
+- **No direct table access.** Five functions (`start_battle`, `respond_battle`, `report_battle_xp`, `my_battles`, `claim_battle_prize`) check who is asking; two helpers live in a `private` schema the API can't reach.
+- **Who can be challenged:** only accepted friends who leave **Open to battles** on; 1 to 5 friends per battle; at most 3 battles at once and 10 new battles a day per player.
+- **XP is reported by each player's app** (the save lives in the browser), so the server limits it: only days inside the 3-day window and not in the future, at most **150 XP per day**, at most 7 days per report. A player who edits their own app could still claim up to the cap; that is the accepted limit for a friendly game.
+- **Prizes are paid once per player** (`claimed` flag) and only after the last day. Players in a battle see each other's name, avatar and battle XP, not friend codes or ids.
+- **Tested in the database** (rolled-back transaction, both real accounts, 24 checks): strangers, an empty list and a fake date are refused; the creator can't accept their own battle; invitees can accept once; it starts the next day; reports before the start count nothing; 500 XP is counted as 150, future days and junk keys are ignored; 8-key reports are refused; claiming early is refused; prizes (50 coins + trophy for the winner, 5 for the other) are paid once; a player with battles off can't be challenged and nobody can switch it on for them; a 4th battle is refused; declined battles disappear; signed-out visitors get `permission denied`.
+- **Supabase advisor:** the same expected warning for signed-in users calling these functions.
+
 ## What I fixed
 1. Added per-user rate limits to `fetch-calendar` (30/hour) and test notifications (5/hour), with friendly messages in the app; built the AI `suggest` function with a login requirement, 30/hour per user and a daily cap from the start.
 2. Removed user counts from the scheduled reminder run's reply.
