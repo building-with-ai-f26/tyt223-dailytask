@@ -130,6 +130,6 @@ revoke execute on function public.start_feast(bigint[], date), public.respond_fe
 grant execute on function public.start_feast(bigint[], date), public.respond_feast(bigint, boolean, date), public.cancel_feast(bigint),
   public.report_feast_xp(date, jsonb), public.my_feasts(), public.claim_feast_reward(bigint, date) to authenticated;
 
--- The old battle functions are removed once the app no longer calls them (see the second part, applied after the push):
--- drop function if exists public.start_battle(bigint[], date), public.respond_battle(bigint, boolean, date),
---   public.report_battle_xp(date, jsonb), public.my_battles(), public.claim_battle_prize(bigint, date);
+-- The old battle functions, removed after the feast app went live (Nov 25):
+drop function if exists public.start_battle(bigint[], date), public.respond_battle(bigint, boolean, date),
+  public.report_battle_xp(date, jsonb), public.my_battles(), public.claim_battle_prize(bigint, date);
