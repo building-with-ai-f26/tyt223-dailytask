@@ -168,7 +168,7 @@ test("Feasts: the tavern picture invites friends, joining a feast swaps in the t
     r.sendCountsFriends = q("#feastSendLabel").textContent === "Seal & send to 1 friend";
     q("#feastForm").requestSubmit();
     r.invitationsSent = await until(() => sheet().hidden && text().includes("Waiting for Ana to say yes"));
-    r.tableReplacesPicture = !q(".tav-hero") && !!q(".feast-table.bare");
+    r.tableReplacesPicture = !q(".tav-hero") && !!q(".feast-art") && document.querySelectorAll(".feast-art .dish-full").length === 0;
     q('[data-action="feast-cancel"]').click();
     r.cancelBringsTavernBack = await until(() => !!q(".tav-hero"));
     // Ana invites me; I join from "Waiting at the door"
@@ -186,7 +186,7 @@ test("Feasts: the tavern picture invites friends, joining a feast swaps in the t
     state.quests.push({ id: 9001, name: "Big quest", day: t, done: true, completedOn: t, xpEarned: 200, category: "Class", difficulty: "Hard" });
     await reportFeastXp(true); render();
     r.reportedCapped = __db.reports.length > 0 && __db.reports[__db.reports.length - 1].p_days[t] === 150;
-    r.dishesOnTable = document.querySelectorAll(".feast-table .dish:not(.open)").length === 4 && text().includes("290 / 360 XP together");
+    r.dishesOnTable = document.querySelectorAll(".feast-art .dish-full").length === 4 && text().includes("290 / 360 XP together");
     r.thanksLine = text().includes("You brought 150 XP · Ana 140");
     q('[data-tab="today"]').click(); await w(80);
     r.todayStrip = !!q(".feast-strip") && q(".feast-strip").textContent.includes("Feast · 290 / 360 XP") && q(".feast-strip").textContent.includes("Day 1 of 3");

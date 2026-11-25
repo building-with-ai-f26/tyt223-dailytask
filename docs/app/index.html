@@ -375,6 +375,7 @@
     .tav-hero:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
     .tav-hero:disabled { cursor: default; }
     .tav-art { width: 100%; height: auto; display: block; }
+    .tav-hero { background: linear-gradient(#FBF4E6, #F3E6CC); }
     .tav-name { display: block; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-ink); font-weight: 700; margin-top: 2px; }
     .tav-hero b { font-family: var(--serif); font-weight: 400; font-size: 21px; display: block; margin: 2px 0 2px; }
     .tav-hero > span { display: block; font-size: 13px; color: var(--muted); }
@@ -383,17 +384,13 @@
     .feast-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
     .feast-head b { font-family: var(--serif); font-weight: 400; font-size: 19px; overflow-wrap: anywhere; }
     .feast-head .muted { font-size: 12px; white-space: nowrap; }
-    .guests { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 12px; margin-bottom: -6px; position: relative; z-index: 1; }
+    .guests { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 0; position: relative; z-index: 1; }
     .guest { display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 600; max-width: 56px; overflow-wrap: anywhere; text-align: center; }
     .guest .face { width: 40px; height: 40px; }
     .guest.invited { opacity: .45; }
-    .feast-table { position: relative; min-height: 54px; border-radius: 10px 10px 4px 4px; background: linear-gradient(#C08A5E, #9C6A45); box-shadow: inset 0 -6px 0 rgba(0,0,0,.12), 0 3px 0 #6B4630; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-around; gap: 4px; padding: 10px 8px; }
-    .feast-table.bare { background: linear-gradient(#CDA27C, #B08561); }
-    .dish { width: 27px; height: 27px; flex: none; border-radius: 50%; display: grid; place-items: center; background: #FBF4E4; box-shadow: 0 0 0 2px #E4D3AE, 0 2px 0 rgba(0,0,0,.15); }
-    .dish.open { background: rgba(255,250,240,.22); box-shadow: 0 0 0 2px rgba(255,250,240,.55); }
-    .dish.open::after { content: ""; width: 12px; height: 12px; border-radius: 50%; border: 1.5px dashed rgba(255,250,240,.7); }
-    .feast-legs { display: flex; justify-content: space-between; padding: 0 26px; height: 12px; }
-    .feast-legs i { width: 8px; height: 12px; background: #6B4630; border-radius: 0 0 3px 3px; }
+    .feast-art { width: 100%; height: auto; display: block; margin-top: -4px; }
+    .tav-note { font-family: var(--hand); font-size: 12px; fill: #5E4A38; opacity: .85; }
+    .tav-note.big { font-size: 17px; opacity: 1; }
     .feast-bar { margin: 10px 0 4px; height: 10px; border-radius: 6px; background: var(--gold-soft); box-shadow: inset 0 0 0 1px rgba(198,154,80,.5); overflow: hidden; }
     .feast-bar div { height: 100%; background: linear-gradient(#E9C77A, var(--gold)); transition: width .5s ease; }
     .feast-meta { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
@@ -3612,39 +3609,136 @@
       const t = feastTable(cur.f.players);
       return `<button class="feast-strip" data-tab="tavern" aria-label="Tavern feast: ${t.total} of ${t.goal} XP together. Open the Tavern.">${px("pancake", 22)}<span>Feast · ${t.total} / ${t.goal} XP</span><span class="muted">Day ${feastDayNumber(cur.f, today)} of ${FEAST_DAYS}</span></button>`;
     }
-    // A hand-drawn tavern in the same ink style as the adventure map.
+    // ---------- Pen-and-ink drawings for the Tavern (same hand as the adventure map) ----------
+    const TAV_INK = "#5E4A38", TAV_PAPER = "#F8EEDB";
+    const tavPen = (w = .7, c = TAV_INK) => `fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`;
+    const tavFill = (w = .7, fill = TAV_PAPER) => tavPen(w).replace('fill="none"', `fill="${fill}"`);
+    const tavWash = (cx, cy, rx, ry, c, o = .3) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" opacity="${o}" filter="url(#tavSoft)"/>`;
+    const tavStar = (x, y, r = 2.4) => `<path d="M${x} ${y - r} Q${x} ${y} ${x + r} ${y} Q${x} ${y} ${x} ${y + r} Q${x} ${y} ${x - r} ${y} Q${x} ${y} ${x} ${y - r} Z" fill="#C9A15A" opacity=".8"/>`;
+    const TAV_DEFS = `<defs><filter id="tavSoft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.2"/></filter>
+      <filter id="tavHand"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="1" seed="3"/><feDisplacementMap in="SourceGraphic" scale=".7"/></filter></defs>`;
+
+    // The Sprout & Tankard, sketched at dusk: a timbered inn in three-quarter view with a tiled roof, latticed
+    // windows glowing, a lantern by the door, ivy, a cat on the barrel, the moon and a few stars.
     function tavernArt() {
-      return `<svg class="tav-art" viewBox="0 0 340 178" aria-hidden="true">
-        <defs><filter id="tavInk"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
-        <radialGradient id="tavGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFE2A0" stop-opacity=".9"/><stop offset="1" stop-color="#FFE2A0" stop-opacity="0"/></radialGradient></defs>
-        <g filter="url(#tavInk)" stroke="#3a2f26" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
-          <path d="M10 162 Q90 156 170 160 T330 158" fill="none"/>
-          <path d="M60 175 Q120 166 150 162 M190 162 Q230 168 280 176" fill="none" stroke-width="1" opacity=".5"/>
-          <rect x="232" y="24" width="16" height="30" fill="#B07A55"/>
-          <path d="M240 20 q-8 -6 0 -11 q8 -5 0 -9 M247 15 q5 -4 2 -8" fill="none" stroke-width="1.2" opacity=".55"/>
-          <path d="M58 78 L170 20 L282 78 Z" fill="#8E5E40"/>
-          <path d="M78 68 L170 30 L262 68 M98 58 L170 40 L242 58" fill="none" stroke-width="1" opacity=".45"/>
-          <rect x="72" y="76" width="196" height="86" fill="#F4E4C4"/>
-          <path d="M72 98 H268 M120 76 V162 M220 76 V162 M72 76 L120 98 M268 76 L220 98" fill="none" stroke-width="2.2" stroke="#6B4630"/>
-          <circle cx="96" cy="126" r="26" fill="url(#tavGlow)" stroke="none"/><circle cx="244" cy="126" r="26" fill="url(#tavGlow)" stroke="none"/>
-          <rect x="84" y="112" width="24" height="26" rx="3" fill="#F6CB6E"/><path d="M96 112 V138 M84 125 H108" stroke-width="1.2"/>
-          <rect x="232" y="112" width="24" height="26" rx="3" fill="#F6CB6E"/><path d="M244 112 V138 M232 125 H256" stroke-width="1.2"/>
-          <path d="M150 162 V122 Q170 100 190 122 V162 Z" fill="#7A4E34"/>
-          <path d="M170 162 V104 Q182 108 190 122 V162 Z" fill="#F6CB6E"/>
-          <circle cx="164" cy="140" r="1.6" fill="#3a2f26"/>
-          <path d="M190 86 H226 M200 86 V92 M218 86 V92" fill="none" stroke-width="1.4"/>
-          <rect x="194" y="92" width="30" height="20" rx="4" fill="#FBF2E0"/>
-          <path d="M140 102 v6" fill="none"/><rect x="135" y="108" width="10" height="13" rx="2" fill="#F6CB6E"/>
-          <ellipse cx="128" cy="154" rx="9" ry="3" fill="#B07A55"/><path d="M119 154 V140 Q128 136 137 140 V154" fill="#B07A55"/><path d="M119 146 Q128 149 137 146" fill="none" stroke-width="1"/>
-          <path d="M206 162 q-4 -12 2 -18 M210 162 q4 -14 10 -16 M214 162 q0 -10 -6 -14" fill="none" stroke="#4f7d55" stroke-width="1.6"/>
+      const roofRows = [60, 67, 74, 81, 88].map((y) => {           // scalloped tiles across the roof, row by row
+        const l = 116 - (y - 52) * .74, r = 220 + (y - 52) * .7, n = Math.floor((r - l) / 6.2);
+        let d = `M${l.toFixed(1)} ${y}`;
+        for (let i = 0; i < n; i++) d += " q3.1 3 6.2 0";
+        return `<path d="${d}" ${tavPen(.4)} opacity=".75"/>`;
+      }).join("");
+      const sideHatch = Array.from({ length: 8 }, (_, i) => { const x = 239 + i * 3.6; return `<path d="M${x} ${95 - i * 1.4} V${173 - i * 1.6}" ${tavPen(.35)} opacity=".45"/>`; }).join("");
+      const lattice = (x, y, w, h) => {
+        let d = "";
+        for (let k = -h; k < w; k += 4) d += `M${Math.max(x, x + k).toFixed(1)} ${(k < 0 ? y - k : y).toFixed(1)} L${Math.min(x + w, x + k + h).toFixed(1)} ${(k + h > w ? y + (w - k) : y + h).toFixed(1)} `;
+        for (let k = 0; k < w + h; k += 4) d += `M${Math.min(x + w, x + k).toFixed(1)} ${(k > w ? y + (k - w) : y).toFixed(1)} L${Math.max(x, x + k - h).toFixed(1)} ${(k - h < 0 ? y + k : y + h).toFixed(1)} `;
+        return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1" fill="#F3D694" opacity=".9"/><path d="${d}" ${tavPen(.3)} opacity=".7"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1" ${tavPen(.7)}/>`;
+      };
+      const stones = [[166, 182, 4], [178, 184, 3.4], [160, 189, 4.4], [175, 191, 4], [189, 188, 3.6], [153, 197, 5], [168, 199, 4.6], [184, 198, 4.6], [199, 196, 4], [146, 205, 5.4], [163, 207, 5], [181, 207, 5.2], [199, 205, 5], [214, 203, 4.4]]
+        .map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${(r * .45).toFixed(1)}" ${tavPen(.4)} opacity=".6"/>`).join("");
+      const ivyLeaf = (x, y, a) => `<path transform="translate(${x} ${y}) rotate(${a})" d="M0 0 q2.4 -1.4 4.4 0 q-2 1.6 -4.4 0 Z" fill="#DCE6CF" stroke="#5F7F5C" stroke-width=".4"/>`;
+      return `<svg class="tav-art" viewBox="0 0 340 214" aria-hidden="true">${TAV_DEFS}
+        ${tavWash(170, 46, 190, 50, "#C3CED8", .16)}${tavWash(128, 147, 30, 18, "#F2C66B", .5)}${tavWash(210, 146, 18, 14, "#F2C66B", .45)}${tavWash(176, 160, 18, 22, "#F2C66B", .4)}${tavWash(98, 146, 9, 26, "#9DBB8C", .18)}
+        <g filter="url(#tavHand)">
+          <path d="M283 22 a10 10 0 1 0 9 15 a8 8 0 1 1 -9 -15 Z" ${tavFill(.55)}/>
+          ${tavStar(246, 20)}${tavStar(318, 46, 2)}${tavStar(58, 26, 2)}${tavStar(28, 60, 1.6)}${tavStar(214, 14, 1.6)}
+          <path d="M0 126 Q34 110 70 117 T150 113 T240 108 T340 119" ${tavPen(.45)} opacity=".55"/>
+          ${[[22, 124, .8], [34, 120, .9], [306, 118, .85], [320, 121, .7]].map(([x, y, k]) => `<path transform="translate(${x} ${y}) scale(${k})" d="M0 -9 L3.4 -3 H1.7 L4 1.6 H-4 L-1.7 -3 H-3.4 Z M0 1.6 V4" ${tavFill(.55)}/>`).join("")}
+          <path d="M0 179 Q60 175 120 178 T240 177 T340 180" ${tavPen(.75)}/>
+          <path d="M18 186 q10 -2 20 0 M262 187 q12 -2 24 0 M300 183 q8 -1.5 16 0" ${tavPen(.4)} opacity=".5"/>
+          ${stones}
+          <!-- side wall, in shadow -->
+          <path d="M236 94 L268 82 V164 L236 178 Z" ${tavFill(.7, "#EEE0C6")}/>${sideHatch}
+          <!-- roof: front and side planes, tiled -->
+          <path d="M84 95 L116 52 L220 52 L252 95 Z" ${tavFill(.8, "#EADCC2")}/>
+          <path d="M220 52 L252 95 L282 82 L250 44 Z" ${tavFill(.8, "#E0CDAE")}/>
+          ${roofRows}
+          <path d="M226 58 L251 89 M232 55 L258 86 M238 52 L265 84 M244 49 L272 83" ${tavPen(.35)} opacity=".5"/>
+          <!-- dormer -->
+          <path d="M158 76 V62 H182 V76" ${tavFill(.7)}/><path d="M154 63 L170 50 L186 63" ${tavFill(.75, "#EADCC2")}/>${lattice(163, 64, 14, 10)}
+          <!-- chimney and smoke -->
+          <path d="M238 66 V36 H250 V61" ${tavFill(.7)}/><path d="M236 36 H252 M238 44 H250 M238 52 H250 M244 36 V44 M241 44 V52 M247 44 V52" ${tavPen(.35)} opacity=".7"/>
+          <path d="M244 32 c-7 -5 5 -10 -1 -16 c-5 -5 7 -9 3 -15 M249 30 c4 -3 1 -7 4 -10" ${tavPen(.45)} opacity=".55"/>
+          <!-- front wall with timber frame -->
+          <rect x="96" y="94" width="140" height="84" ${tavFill(.8)}/>
+          <path d="M96 126 H236 M96 94 V178 M130 94 V126 M166 94 V126 M202 94 V126 M236 94 V178" ${tavPen(1, "#6B5340")}/>
+          <path d="M98 124 L128 96 M132 96 L164 124 M204 124 L234 96" ${tavPen(.7, "#6B5340")}/>
+          <path d="M100 170 h8 M112 174 h7 M222 170 h9 M214 174 h7 M100 162 h5 M226 162 h6" ${tavPen(.35)} opacity=".6"/>
+          ${lattice(138, 100, 22, 18)}${lattice(172, 100, 22, 18)}
+          <path d="M136 120 H162 M170 120 H196" ${tavPen(.6)}/>
+          ${[141, 147, 153, 159, 175, 181, 187, 193].map((x, i) => `<circle cx="${x}" cy="119" r="1.1" fill="${i % 2 ? "#B5543A" : "#D98A6A"}" opacity=".85"/>`).join("")}
+          <!-- bay window, bench, door, small window -->
+          ${lattice(106, 136, 44, 24)}<path d="M128 136 V160 M104 134 H152 M104 161 H152" ${tavPen(.7)}/>
+          <path d="M106 170 H146 M110 170 V176 M142 170 V176" ${tavPen(.6)}/>
+          <path d="M162 178 V148 Q174 132 186 148 V178" ${tavFill(.8, "#D8C3A2")}/>
+          <path d="M174 178 V140 Q181 141 186 148 V178 Z" fill="#F3D694" opacity=".95"/>
+          <path d="M162 178 V148 Q174 132 186 148 V178" ${tavPen(.8)}/>
+          <path d="M166 146 V178 M170 140 V178 M174 138 V178" ${tavPen(.35)} opacity=".6"/>
+          <path d="M162 154 h5 M162 170 h5" ${tavPen(.7, "#6B5340")}/><circle cx="171.5" cy="161" r=".9" fill="${TAV_INK}"/>
+          <ellipse cx="174" cy="179.5" rx="16" ry="2.4" ${tavFill(.5)}/>
+          ${lattice(206, 138, 18, 16)}
+          <!-- lantern -->
+          <path d="M196 132 h4 v3" ${tavPen(.6)}/><path d="M197.5 135 h5 l1 2 v8 l-1 2 h-5 l-1 -2 v-8 Z" ${tavFill(.55, "#F3D694")}/><path d="M200 135 v12" ${tavPen(.3)}/>
+          ${tavWash(200, 141, 9, 9, "#F2C66B", .6)}
+          <!-- hanging sign with a tankard -->
+          <path d="M96 108 H70 q-4 0 -4 4 q0 3 3 3" ${tavPen(.8)}/><path d="M74 108 V114 M88 108 V114" ${tavPen(.45)}/>
+          <ellipse cx="81" cy="124" rx="14" ry="10" ${tavFill(.7)}/><ellipse cx="81" cy="124" rx="11.5" ry="7.8" ${tavPen(.35)} opacity=".6"/>
+          <path d="M77 129 V120 H85 V129 Z M76.4 120 q1.3 -2.2 2.6 0 q1.3 -2.2 2.6 0 q1.3 -2.2 2.6 0 M85 122 q3 0 3 2.6 q0 2.4 -3 2.4" ${tavFill(.55, "#F0D9A3")}/>
+          <!-- ivy climbing the corner -->
+          <path d="M98 178 q-6 -16 2 -28 q7 -11 -1 -24 q-5 -9 3 -20" ${tavPen(.55, "#5F7F5C")}/>
+          ${[[96, 168, -20], [101, 158, 40], [95, 148, -30], [102, 138, 30], [97, 128, -40], [101, 116, 20], [96, 108, -10]].map(([x, y, a]) => ivyLeaf(x, y, a)).join("")}
+          <!-- barrel, and the cat on it -->
+          <path d="M210 178 V164 Q220 160 230 164 V178" ${tavFill(.7, "#E3CBA6")}/><ellipse cx="220" cy="164" rx="10" ry="3" ${tavFill(.6, "#EADBC0")}/>
+          <path d="M210 169 Q220 172 230 169 M210 175 Q220 178 230 175 M216 165 V178 M224 165 V178" ${tavPen(.35)} opacity=".7"/>
+          <path d="M215 162 q-1 -6 2 -8 l1 -3 l1.6 2.4 h1.8 l1.6 -2.4 l1 3 q3 2 2 8 Z" fill="${TAV_INK}" opacity=".88"/>
+          <path d="M224 161 q6 0 5 -6 q-1 -3 1.5 -4" ${tavPen(.8)}/>
+          <!-- crates by the wall -->
+          <path d="M240 178 V166 H254 V178 Z M240 166 L254 178 M254 166 L240 178" ${tavFill(.55, "#E3CBA6")}/>
         </g>
-        <g transform="translate(201 94)">${px("tankard", 16)}</g>
+        <text x="16" y="26" class="tav-note big">The Sprout &amp; Tankard</text>
+        <path d="M16 31 q40 4 92 -1" ${tavPen(.5)} opacity=".7"/>
+        <text x="262" y="200" class="tav-note">mind the cat</text>
+        <path d="M262 195 q-14 -4 -26 -22" ${tavPen(.45)} opacity=".7"/><path d="M236 173 l.6 4.2 M236 173 l3.6 2" ${tavPen(.45)} opacity=".7"/>
+        <text x="20" y="160" class="tav-note">warm cider,</text><text x="22" y="170" class="tav-note">good company</text>
       </svg>`;
     }
+
+    // Small ink drawings of what the party brings to the table.
+    const FEAST_FOOD = [
+      `<path d="M-7 0 Q-7 -6.5 0 -6.5 Q7 -6.5 7 0 Z" ${tavFill(.55, "#E7C38E")}/><path d="M-3.5 -5.6 l2 2 M-.2 -6 l2 2 M3 -5.6 l2 2" ${tavPen(.4)}/>`,
+      `<path d="M-7 0 L-6 -3.2 H6 L7 0 Z" ${tavFill(.55, "#D9A066")}/><path d="M-6 -3.2 Q0 -7.6 6 -3.2 M-3 -4.6 l2 1.4 M1 -5 l2 1.6 M-1 -5.2 l-1.6 1.8 M3 -4.6 l-1.6 1.6" ${tavPen(.45)}/>`,
+      `<path d="M-3.2 0 V-8 H3.2 V0 Z" ${tavFill(.55, "#F3D58B")}/><path d="M-3.8 -8 q1.27 -2.2 2.53 0 q1.27 -2.2 2.53 0 q1.27 -2.2 2.53 0 Z" ${tavFill(.45)}/><path d="M3.2 -6 q3.2 0 3.2 2.6 q0 2.6 -3.2 2.6" ${tavPen(.55)}/>`,
+      `<circle cx="-3" cy="-2.4" r="2.6" ${tavFill(.5, "#C96B53")}/><circle cx="3" cy="-2.4" r="2.6" ${tavFill(.5, "#D98A6A")}/><circle cx="0" cy="-6.2" r="2.6" ${tavFill(.5, "#C96B53")}/><path d="M0 -8.8 q.6 -1.6 2 -2" ${tavPen(.45, "#5F7F5C")}/>`,
+      `<path d="M-7 0 Q-6.4 -7 .8 -6.2 Q6.6 -5.4 6 0 Z" ${tavFill(.55, "#C98A52")}/><path d="M4.4 -4.4 l3.6 -3 M8 -7.4 a1.1 1.1 0 1 1 1.2 1.1" ${tavPen(.55)}/><path d="M-3 -3.6 q2 -1.2 4 0" ${tavPen(.35)} opacity=".7"/>`,
+      `<path d="M-6.6 0 H6.6 V-4.2 L-6.6 -1.2 Z" ${tavFill(.55, "#EFD07E")}/><circle cx="-1.6" cy="-1" r=".8" ${tavPen(.35)}/><circle cx="2.8" cy="-2.2" r="1" ${tavPen(.35)}/>`,
+    ];
+    // A long trestle table by candlelight; each filled plate holds a dish, empty plates are faint dotted rings.
+    function feastTableArt(t) {
+      const n = t.plates, x0 = 46, x1 = 274;
+      const plates = Array.from({ length: n }, (_, i) => {
+        const x = (x0 + ((x1 - x0) * i) / (n - 1)).toFixed(1), full = i < t.dishes;
+        return full
+          ? `<g class="dish-full" transform="translate(${x} 47)"><ellipse rx="13" ry="4.8" ${tavFill(.6)}/><ellipse rx="8.4" ry="2.9" ${tavPen(.3)} opacity=".6"/><g transform="translate(0 -1.2) scale(1.35)">${FEAST_FOOD[i % FEAST_FOOD.length]}</g></g>`
+          : `<g class="dish-empty" transform="translate(${x} 47)"><ellipse rx="13" ry="4.8" fill="none" stroke="${TAV_INK}" stroke-width=".6" stroke-dasharray="1.4 2.2" opacity=".55"/></g>`;
+      }).join("");
+      const candle = (x) => `<path d="M${x - 2} 46 h4 M${x} 46 V30" ${tavPen(.6)}/><path d="M${x - 1.6} 44 V31 H${x + 1.6} V44 Z" ${tavFill(.5)}/><path d="M${x} 30 q-2 -3 0 -6 q2 3 0 6 Z" fill="#E8B04F" stroke="${TAV_INK}" stroke-width=".35"/>${tavWash(x, 27, 9, 9, "#F2C66B", .55)}`;
+      return `<svg class="feast-art" viewBox="0 16 320 80" role="img" aria-label="${t.dishes} of ${t.plates} dishes on the table">${TAV_DEFS}
+        ${tavWash(160, 50, 150, 26, "#E7CFA2", .35)}
+        <g filter="url(#tavHand)">
+          <path d="M22 34 H298 L314 58 H6 Z" ${tavFill(.8, "#EBDDC3")}/>
+          <path d="M30 40 H290 M18 52 H302 M60 37 q50 -1 100 0 M150 55 q60 1 120 0" ${tavPen(.35)} opacity=".45"/>
+          <path d="M6 58 H314 V65 H6 Z" ${tavFill(.7, "#DCC5A1")}/><path d="M12 61.5 H308" ${tavPen(.3)} opacity=".5"/>
+          <path d="M40 65 L64 93 M64 65 L40 93 M256 65 L280 93 M280 65 L256 93 M34 93 H70 M250 93 H286 M52 79 H268" ${tavPen(.75)}/>
+          ${candle(22)}${candle(298)}
+          ${plates}
+        </g>
+      </svg>`;
+    }
+
     function tavernHero() {
       const friends = social.friends.filter((x) => x.status === "accepted");
       return `<button class="tav-hero" data-action="feast-new" ${friends.length ? "" : "disabled"} aria-label="Gather your friends for a three-day feast">${tavernArt()}
-        <small class="tav-name">The Sprout &amp; Tankard</small><b>Gather your friends</b>
+        <b>Gather your friends</b>
         <span>Plan a 3-day feast together. Every quest you finish brings food to the table.</span>
         <span class="hand">${friends.length ? "Tap the tavern to send invitations" : "Add a friend below, then gather here"}</span></button>`;
     }
@@ -3656,7 +3750,6 @@
       const when = phase === "waiting" ? "Waiting for a yes" : phase === "scheduled" ? "Begins " + relative(f.start_day, today).toLowerCase()
         : phase === "active" ? `Day ${feastDayNumber(f, today)} of ${FEAST_DAYS} · ends ${relative(f.end_day, today).toLowerCase()}` : "The feast is over";
       const guests = seated.concat(invited).map((p) => `<span class="guest${p.status === "invited" ? " invited" : ""}">${face(p.avatar)}${p.me ? "You" : esc(p.name)}</span>`).join("");
-      const plates = Array.from({ length: t.plates }, (_, i) => (i < t.dishes ? `<span class="dish">${px(FEAST_DISHES[i % FEAST_DISHES.length], 16)}</span>` : '<span class="dish open"></span>')).join("");
       let below;
       if (phase === "waiting") {
         below = invited.length ? `<p class="feast-note">Waiting for ${names(invited)} to say yes. The feast begins the day after someone does.</p>` : '<p class="feast-note">No one could make it this time.</p>';
@@ -3671,7 +3764,7 @@
         if (phase === "over") below += `<button class="btn" data-action="feast-claim" data-id="${f.id}">${px("chest", 16)} Collect your reward</button>`;
       }
       return `<div class="feast"><div class="feast-head"><b>Feast with ${names(others) || "friends"}</b><span class="muted">${when}</span></div>
-        <div class="guests">${guests}</div><div class="feast-table${phase === "waiting" ? " bare" : ""}">${plates}</div><div class="feast-legs"><i></i><i></i></div>${below}</div>`;
+        <div class="guests">${guests}</div>${feastTableArt(t)}${below}</div>`;
     }
     // The top of the Tavern: the tavern picture, or the feast table while you're in one.
     function feastTop(today) {
